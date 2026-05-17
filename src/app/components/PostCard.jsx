@@ -27,9 +27,9 @@ const LIGHT_BLUE = "#90baef";
 const GOLD = "#FBBC04";
 const RED = "#C32929";
 
-export function PostCard({ postId, author, role, content, avatarColor, rtl = false,highlighted = false }) {
+export function PostCard({ postId, author, role, content, avatarColor, rtl = false, highlighted = false, profileType }) {
   const { posts, onLike, onSave } = useCommunity();
-  const { profile } = useAppContext();
+  const { profile, company } = useAppContext();
   const postState = posts[postId] ?? { liked: false, saved: false, likeCount: 0 };
   const { liked, saved, likeCount } = postState;
 
@@ -49,7 +49,16 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
       return () => clearTimeout(timer);
     }
   }, [highlighted]);
-
+  const displayName = () => {
+    if (profileType === "company") return company?.name;
+    if (profileType === "user") return profile?.name;
+    return "Unknown";
+  };
+  const displayPhoto = () => {
+    if (profileType === "company") return company?.photo;
+    if (profileType === "user") return profile?.photo;
+    return "Unknown";
+  };
   const handleSubmitComment = () => {
     const trimmed = commentInput.trim();
     if (!trimmed) return;
@@ -58,8 +67,8 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
       {
         id: Date.now().toString(),
         text: trimmed,
-        author: profile.name || "Marina Abdallah",
-        avatarSrc: profile.photo || defaultPhoto,
+        author: displayName() || "UnKnown",
+        avatarSrc: displayPhoto() || defaultPhoto,
         time: "Just now",
       },
     ]);

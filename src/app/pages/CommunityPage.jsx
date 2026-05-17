@@ -180,6 +180,7 @@ function CommunityFeed({ showWritePost, showApplyNow, onCloseApplyNow, highlight
                   avatarColor={post.avatarColor}
                   rtl={post.rtl || false}
                   highlighted={highlightedPostId === post.id}
+                  profileType = "user"
                 />
               )
             )

@@ -240,6 +240,7 @@ function CommunityFeed({ allPosts, highlightedPostId }) {
               avatarColor={post.avatarColor}
               rtl={post.rtl || false}
               highlighted={highlightedPostId === post.id}
+              profileType = "company"
             />
           )
         )
