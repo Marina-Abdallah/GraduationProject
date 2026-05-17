@@ -68,12 +68,31 @@ export function CreatePost() {
           </Typography>
           <AddCircleOutlineIcon sx={{ color: GREEN, fontSize: 22 }} />
         </Box>
+        <Box
+            onClick={onWritePost}
+            sx={{
+              bgcolor: GREEN,
+              color: NAVY,
+              fontWeight: 700,
+              fontSize: 13,
+              fontFamily: "'Inter', sans-serif",
+              px: 2.5,
+              py: 0.7,
+              borderRadius: "20px",
+              cursor: "pointer",
+              "&:hover": { bgcolor: "#6ef094" },
+              transition: "background 0.2s",
+              userSelect: "none",
+            }}
+          >
+            Post
+          </Box>
       </Box>
 
-      <Divider sx={{ my: 1.5, borderColor: `${NAVY}12` }} />
+      {/* <Divider sx={{ my: 1.5, borderColor: `${NAVY}12` }} /> */}
 
       {/* Bottom quick actions */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 1 }}>
+      {/* <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 1 }}>
         <QuickAction icon={<ImageOutlinedIcon />} label="Photo / Video" onClick={onWritePost} />
         <QuickAction icon={<ShareOutlinedIcon />} label="Share Link" onClick={onWritePost} />
         <Box sx={{ ml: "auto" }}>
@@ -96,8 +115,8 @@ export function CreatePost() {
           >
             Post
           </Box>
-        </Box>
-      </Box>
+        </Box> 
+      </Box>*/}
     </Box>
   );
 }

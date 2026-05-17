@@ -66,42 +66,51 @@ export function CompanyProfile() {
                     }}>
                         <CompanyImageCard />
                         {/* Action Buttons */}
-                        <Button
-                            onClick={() => setSavedPostsOpen(true)}
+                        <Box
                             sx={{
-                                textAlign: "center",
-                                width: "250px",
-                                py: 1.5,
-                                borderRadius: "20px",
-                                bgcolor: "#84fba2",
-                                color: "#13206d",
-                                fontFamily: "'Inter', sans-serif",
-                                fontWeight: 600,
-                                fontSize: "16px",
-                                textTransform: "none",
-                                "&:hover": { bgcolor: "#6ef094", boxShadow: "0px 6px 16px rgba(132,251,162,0.6)" },
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: 2,
+                                width: "100%",
                             }}
                         >
-                            Saved Posts
-                        </Button>
-                        <Button
-                            onClick={() => setLogoutOpen(true)}
-                            sx={{
-                                width: "250px",
-                                py: 1.5,
-                                borderRadius: "20px",
-                                bgcolor: "#ff383c",
-                                color: "white",
-                                fontFamily: "'Inter', sans-serif",
-                                fontWeight: 600,
-                                fontSize: "16px",
-                                textTransform: "none",
-                                "&:hover": { bgcolor: "#e02020", boxShadow: "0px 6px 16px rgba(255,56,60,0.45)" },
-                            }}
-                        >
-                            Log out
-                        </Button>
-
+                            <Button
+                                onClick={() => setSavedPostsOpen(true)}
+                                sx={{
+                                    textAlign: "center",
+                                    width: "250px",
+                                    py: 1.5,
+                                    borderRadius: "20px",
+                                    bgcolor: "#84fba2",
+                                    color: "#13206d",
+                                    fontFamily: "'Inter', sans-serif",
+                                    fontWeight: 600,
+                                    fontSize: "16px",
+                                    textTransform: "none",
+                                    "&:hover": { bgcolor: "#6ef094", boxShadow: "0px 6px 16px rgba(132,251,162,0.6)" },
+                                }}
+                            >
+                                Saved Posts
+                            </Button>
+                            <Button
+                                onClick={() => setLogoutOpen(true)}
+                                sx={{
+                                    width: "250px",
+                                    py: 1.5,
+                                    borderRadius: "20px",
+                                    bgcolor: "#ff383c",
+                                    color: "white",
+                                    fontFamily: "'Inter', sans-serif",
+                                    fontWeight: 600,
+                                    fontSize: "16px",
+                                    textTransform: "none",
+                                    "&:hover": { bgcolor: "#e02020", boxShadow: "0px 6px 16px rgba(255,56,60,0.45)" },
+                                }}
+                            >
+                                Log out
+                            </Button>
+                        </Box>
                     </Box>
 
                     {/* ── Right Column ── */}

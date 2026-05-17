@@ -151,7 +151,7 @@ function CompanySignUpCard() {
                 <TextField
                     fullWidth
                     id="outlined"
-                    label="Company Adress"
+                    label="Company Address"
                     size="small"
 
                 />
@@ -240,7 +240,7 @@ function CompanySignUpCard() {
                     backgroundColor: 'transparent',
                 },
             }}
-                size="small" onClick={() => goToPage("/CompanyLogin")}>Register Now</Button>
+                size="small" onClick={() => goToPage("/CompanyLogin")}>Login Now</Button>
         </div>
     );
 }

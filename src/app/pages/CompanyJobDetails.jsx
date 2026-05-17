@@ -43,31 +43,6 @@ const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
-// ── 4-square MS logo (mirrored from JobCard) ─────────────────────────────────
-function MSLogo({ size = 44 }) {
-  return (
-    <Box
-      sx={{
-        width: size,
-        height: size,
-        bgcolor: "white",
-        borderRadius: "10px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-      }}
-    >
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px", p: "8px", width: "100%", height: "100%" }}>
-        <Box sx={{ bgcolor: "#F25022", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#7FBA00", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#00A4EF", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#FFB900", borderRadius: "2px" }} />
-      </Box>
-    </Box>
-  );
-}
 
 export function CompanyJobDetailsPage() {
   const { jobId } = useParams();

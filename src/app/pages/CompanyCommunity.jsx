@@ -82,42 +82,6 @@ function matchesSearch(post, query) {
   );
 }
 
-// ─── MS Logo for the create bar ───────────────────────���───────────────────────
-// function MSLogoSmall() {
-//   return (
-//     <Box
-//       sx={{
-//         width: 44,
-//         height: 44,
-//         bgcolor: "white",
-//         borderRadius: "10px",
-//         border: "1px solid rgba(19,32,109,0.1)",
-//         display: "flex",
-//         alignItems: "center",
-//         justifyContent: "center",
-//         flexShrink: 0,
-//         boxShadow: "0 2px 6px rgba(0,0,0,0.07)",
-//       }}
-//     >
-//       <Box
-//         sx={{
-//           display: "grid",
-//           gridTemplateColumns: "1fr 1fr",
-//           gap: "3px",
-//           p: "7px",
-//           width: "100%",
-//           height: "100%",
-//         }}
-//       >
-//         <Box sx={{ bgcolor: "#F25022", borderRadius: "1px" }} />
-//         <Box sx={{ bgcolor: "#7FBA00", borderRadius: "1px" }} />
-//         <Box sx={{ bgcolor: "#00A4EF", borderRadius: "1px" }} />
-//         <Box sx={{ bgcolor: "#FFB900", borderRadius: "1px" }} />
-//       </Box>
-//     </Box>
-//   );
-// }
-
 // ─── Create bar: "Write a post" + "Post a new job" ────────────────────────────
 function CreateBar({ onWritePost, onCreateJob }) {
   const { company } = useAppContext();
@@ -135,7 +99,7 @@ function CreateBar({ onWritePost, onCreateJob }) {
         gap: 2,
       }}
     >
-      {/* <MSLogoSmall /> */}
+      {/* MS Logo */}
       <Avatar
         src={company.photo || defaultPhoto}
         alt={company.name}

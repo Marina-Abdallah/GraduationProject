@@ -1,54 +1,30 @@
 import React from "react";
-import { Box, Card, Typography } from "@mui/material";
+import { Box, Card, Typography, Avatar } from "@mui/material";
 import { Link } from "react-router-dom";
 
 // ── Banner images (imported from Figma assets via relative path) ──────────────
 import bannerFrontend from "../../assets/FrontendJob.png";
-import bannerBackend  from "../../assets/BackendJob.png";
-import bannerGraphic  from "../../assets/GraphicJob.png";
-import bannerUIUX1    from "../../assets/UI&UXJob1.png";
+import bannerBackend from "../../assets/BackendJob.png";
+import bannerGraphic from "../../assets/GraphicJob.png";
+import bannerUIUX1 from "../../assets/UI&UXJob1.png";
 import bannerSoftware from "../../assets/SoftwareJob.png";
-import bannerUIUX2    from "../../assets/UI&UXJob2.png";
+import bannerUIUX2 from "../../assets/UI&UXJob2.png";
+import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
+import { useAppContext } from "../components/AppContext";
 
 const BANNER_MAP = {
   frontend: bannerFrontend,
-  backend:  bannerBackend,
-  graphic:  bannerGraphic,
-  uiux1:    bannerUIUX1,
+  backend: bannerBackend,
+  graphic: bannerGraphic,
+  uiux1: bannerUIUX1,
   software: bannerSoftware,
-  uiux2:    bannerUIUX2,
+  uiux2: bannerUIUX2,
 };
 
-const NAVY       = "#13206d";
-const GREEN      = "#84fba2";
+const NAVY = "#13206d";
+const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
-// ── Microsoft 4-square logo ───────────────────────────────────────────────────
-function MSLogo({ size = 36 }) {
-  const q = Math.floor((size - 6) / 2);
-  return (
-    <Box
-      sx={{
-        width: size,
-        height: size,
-        bgcolor: "white",
-        borderRadius: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-      }}
-    >
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px", p: "7px", width: "100%", height: "100%" }}>
-        <Box sx={{ bgcolor: "#F25022", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#7FBA00", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#00A4EF", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#FFB900", borderRadius: "2px" }} />
-      </Box>
-    </Box>
-  );
-}
 
 // ── Stacked applicant avatars + count ─────────────────────────────────────────
 function ApplicationsBadge({ count }) {
@@ -95,6 +71,7 @@ function ApplicationsBadge({ count }) {
 export function JobCard({ job }) {
   const banner = BANNER_MAP[job.bannerKey] || bannerFrontend;
   const isActive = job.status === "Active";
+  const { company } = useAppContext();
 
   return (
     <Link
@@ -141,7 +118,22 @@ export function JobCard({ job }) {
               gap: 1,
             }}
           >
-            <MSLogo size={40} />
+            <Avatar
+              src={company.photo || defaultPhoto}
+              alt={company.name}
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "white",
+                borderRadius: "10px",
+                border: "1px solid rgba(19,32,109,0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.07)",
+              }}
+            />
             <Box>
               <Typography
                 sx={{

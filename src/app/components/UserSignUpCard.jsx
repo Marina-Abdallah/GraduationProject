@@ -13,6 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
 import OtpModal from "./OTPoverlay";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
 
 function UserSignUpCard() {
     const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +41,43 @@ function UserSignUpCard() {
         }];
     const [openOtp, setOpenOtp] = useState(false);
 
+    const [form, setForm] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        birthdate: "",
+        countryCode: "+20",
+        phone: ""
+    });
+    const handleChange = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+
+            const dataToSend = {
+                ...form,
+                phone: `${form.countryCode}${form.phone}`
+            };
+
+            const res = await api.post("/Users/Register", dataToSend);
+
+            console.log(res.data);
+
+            // open OTP modal
+            setOpenOtp(true);
+
+        } catch (err) {
+            console.log(err.response?.data);
+            alert("Error registering user");
+        }
+    };
+
     return (
         <div className="SignUp-card">
             <h1
@@ -52,6 +90,9 @@ function UserSignUpCard() {
                 User Account</h1>
             <div style={{ marginBottom: 15 }}>
                 <TextField
+                    name="firstName"
+                    value={form.firstName}
+                    onChange={handleChange}
                     fullWidth
                     id="outlined"
                     label="First Name"
@@ -61,6 +102,9 @@ function UserSignUpCard() {
             </div>
             <div style={{ marginBottom: 15 }}>
                 <TextField
+                    name="lastName"
+                    value={form.lastName}
+                    onChange={handleChange}
                     fullWidth
                     id="outlined"
                     label="Last Name"
@@ -69,6 +113,9 @@ function UserSignUpCard() {
             </div>
             <div style={{ marginBottom: 18 }}>
                 <TextField
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
                     fullWidth
                     type="email"
                     id="outlined"
@@ -81,6 +128,9 @@ function UserSignUpCard() {
                 <FormControl fullWidth variant="outlined">
                     <InputLabel htmlFor="outlined-adornment-password" sx={{ top: "-7px" }}>Password</InputLabel>
                     <OutlinedInput
+                        name="password"
+                        value={form.password}
+                        onChange={handleChange}
                         size="small"
                         label="Password"
                         id="outlined-adornment-password"
@@ -108,6 +158,9 @@ function UserSignUpCard() {
                 <FormControl fullWidth variant="outlined">
                     <InputLabel htmlFor="outlined-adornment-password" sx={{ top: "-7px" }}>Confirm</InputLabel>
                     <OutlinedInput
+                        name="confirmPassword"
+                        value={form.confirmPassword}
+                        onChange={handleChange}
                         size="small"
                         label="Password"
                         id="outlined-adornment-password"
@@ -133,7 +186,9 @@ function UserSignUpCard() {
             </div>
             <div style={{ marginBottom: 15 }}>
                 <TextField
-
+                    name="birthdate"
+                    value={form.birthdate}
+                    onChange={handleChange}
                     size="small"
                     type="date"
                     fullWidth
@@ -149,7 +204,9 @@ function UserSignUpCard() {
             </div>
             <Box sx={{ display: "flex", gap: 1 }}>
                 <TextField
-
+                    name="countryCode"
+                    value={form.countryCode}
+                    onChange={handleChange}
                     id="outlined-select-currency"
                     select
                     sx={{ width: 130, marginBottom: '15px' }}
@@ -164,6 +221,9 @@ function UserSignUpCard() {
                 </TextField>
                 <div style={{ width: 300, marginBottom: 15 }}>
                     <TextField
+                        name="phone"
+                        value={form.phone}
+                        onChange={handleChange}
                         fullWidth
                         id="outlined"
                         label="Phone Number"
@@ -173,8 +233,9 @@ function UserSignUpCard() {
                 </div>
             </Box>
             <Button
+                onClick={handleSubmit}
                 fullWidth
-                onClick={() => setOpenOtp(true)}
+                //onClick={() => setOpenOtp(true)}
                 sx={{
 
                     fontWeight: 'bold',
@@ -191,6 +252,7 @@ function UserSignUpCard() {
                 open={openOtp}
                 handleClose={() => setOpenOtp(false)}
                 redirectPath="/MyJobApplication"
+                email={form.email}
             />
 
             <p style={{ color: "gray", margin: 10 }}>- OR -</p>
@@ -213,7 +275,7 @@ function UserSignUpCard() {
                     backgroundColor: 'transparent',
                 },
             }}
-                size="small" onClick={() => goToPage("/UserLogin")}>Register Now</Button>
+                size="small" onClick={() => goToPage("/UserLogin")}>Login Now</Button>
         </div>
     );
 }

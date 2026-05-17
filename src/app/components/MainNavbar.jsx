@@ -21,13 +21,13 @@ export function MainNavbar() {
       {/* Navigation Pill */}
       <div className="bg-white/60 backdrop-blur-sm rounded-[2rem] shadow-sm px-6 md:px-8 py-3 flex items-center justify-between w-full gap-4 md:gap-8 border border-white/40">
         
-        {/* Logo */}
-        <div className="text-blue-900 font-bold tracking-tighter flex items-center shrink-0">
+        {/* Logo — clicks back to home */}
+        <Link to="/MyJobApplication" className="text-blue-900 font-bold tracking-tighter flex items-center shrink-0">
           <div className="flex items-center gap-2">
             <img src={logo} alt="Logo" className=" h-7 sm:h-9 md:h-14 w-auto object-contain" />
             <img src={ProGrow} alt="ProGrow" className="h-6 sm:h-8 md:h-12 w-auto object-contain" />
           </div>
-        </div>
+        </Link>
 
         {/* Navigation and Profile on the right */}
         <div className="flex items-center gap-2 sm:gap-4 md:gap-8 shrink-0 ml-auto">
@@ -40,8 +40,8 @@ export function MainNavbar() {
                 <Link
                   key={item.label}
                   to={item.path}
-                  className={`flex items-center gap-2.5 text-sm sm:text-base md:text-lg font-medium transition-all [&>svg]:scale-90 sm:[&>svg]:scale-100 md:[&>svg]:scale-110 ${
-                    isActive ? "text-green-400" : "text-[#13206d] hover:text-green-400 hover:scale-105"
+                  className={`flex items-center gap-2.5 text-sm sm:text-base md:text-lg font-medium transition-all [&>svg]:scale-90 sm:[&>svg]:scale-100 md:[&>svg]:scale-110 
+                    ${isActive ? "text-green-400" : "text-[#13206d] hover:text-green-400 hover:scale-105"
                   }`}
                 >
                   {item.icon}

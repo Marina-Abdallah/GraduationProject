@@ -11,6 +11,9 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
 import OtpModal from "./OTPoverlay";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
+
+
 
 
 
@@ -35,6 +38,44 @@ function UserLoginCard() {
     navigate(path);
     handleClose();
   };
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const [form, setForm] = React.useState({
+      email: "",
+      password: ""
+    });
+    
+  const handleLogin = async () => {
+
+    const email = form.email;
+    const password = form.password;
+
+    try {
+      const res = await api.post("/Users/Login", {
+        email,
+        password
+      });
+
+      alert("Login successful!");
+
+      // save token
+      localStorage.setItem("token", res.data.Token);
+
+      // go to home
+      navigate("/MyJobApplication");
+
+    } catch (err) {
+      console.log(err.response?.data);
+
+      alert(err.response?.data || "Login failed");
+    }
+  };
+
 
   return (
     <div className="login-card">
@@ -58,6 +99,9 @@ function UserLoginCard() {
       {/* <input type="email" placeholder="Email Address" /> */}
       <div>
         <TextField
+          name="email"
+          value={form.email}
+          onChange={handleChange}
           fullWidth
           type="email"
           id="outlined"
@@ -70,6 +114,9 @@ function UserLoginCard() {
         <FormControl fullWidth variant="outlined">
           <InputLabel htmlFor="outlined-adornment-password" sx={{ top: "-7px" }}>Password</InputLabel>
           <OutlinedInput
+            name="password"
+            value={form.password}
+            onChange={handleChange}
             size="small"
             label="Password"
             id="outlined-adornment-password"
@@ -106,7 +153,7 @@ function UserLoginCard() {
 
 
       <Button fullWidth
-        onClick={() => setOpenOtp(true)}
+        onClick={() => handleLogin()}
         sx={{
           fontWeight: 'bold',
           color: '#13206D',
@@ -117,11 +164,6 @@ function UserLoginCard() {
         variant="contained" >
         Login
       </Button>
-      <OtpModal
-        open={openOtp}
-        handleClose={() => setOpenOtp(false)}
-        redirectPath="/MyJobApplication"
-      />
 
       <p style={{ color: "gray", margin: 10 }}>- OR -</p>
       <Button fullWidth

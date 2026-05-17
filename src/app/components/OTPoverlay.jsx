@@ -8,8 +8,9 @@ import {
   Button,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
 
-function OtpModal({ open, handleClose, redirectPath }) {
+function OtpModal({ open, handleClose, redirectPath, email }) {
   const navigate = useNavigate();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const inputsRef = useRef([]);
@@ -25,18 +26,31 @@ function OtpModal({ open, handleClose, redirectPath }) {
     }
   };
 
-  const verifyOtp = () => {
-    const code = otp.join("");
+  const verifyOtp = async () => {
 
-    if (code === "123456") {
-      alert("Verified Successfully");
-      handleClose();
-      navigate(redirectPath); // 🔥 THIS LINE FIXES NAVIGATION
+    try {
 
-    } else {
-      alert("Wrong OTP");
+        const code = otp.join("");
+
+        const res = await api.post("/Users/verify-email", {
+          email,
+            Otp:code
+        });
+
+        alert(res.data);
+
+        handleClose();
+
+        navigate(redirectPath);
+
+    } catch (err) {
+
+        console.log(err.response?.data);
+
+        alert("Invalid OTP");
+
     }
-  };
+};
 
   const resendOtp = () => {
     alert("OTP resent!");
