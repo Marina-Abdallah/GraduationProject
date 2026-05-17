@@ -104,22 +104,6 @@ function CommunityFeed({ showWritePost, showApplyNow, onCloseApplyNow, highlight
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
           <CommunitySearchBar value={searchQuery} onChange={setSearchQuery} />
           <CreatePost />
-
-          {/* {POSTS.map((post) =>
-            post.type === "job" ? (
-              <JobPostCard key={post.id} postId={post.id} />
-            ) : (
-              <PostCard
-                key={post.id}
-                postId={post.id}
-                author={post.author}
-                role={post.role}
-                content={post.content}
-                avatarColor={post.avatarColor}
-                rtl={post.rtl || false}
-              />
-            )
-          )} */}
           {filteredPosts.length === 0 ? (
             <Box
               sx={{

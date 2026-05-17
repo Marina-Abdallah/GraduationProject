@@ -11,35 +11,29 @@ import {
   MenuItem,
   InputBase,
   InputAdornment,
+    Avatar,
 } from "@mui/material";
-import CloseIcon              from "@mui/icons-material/Close";
+import CloseIcon from "@mui/icons-material/Close";
 //import AttachMoneyIcon              from "@mui/icons-material/AttachMoney";
-import ForumOutlinedIcon      from "@mui/icons-material/ForumOutlined";
-import AddIcon                from "@mui/icons-material/Add";
-import SendIcon               from "@mui/icons-material/Send";
-import BookmarkBorderIcon     from "@mui/icons-material/BookmarkBorder";
+import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
+import AddIcon from "@mui/icons-material/Add";
+import SendIcon from "@mui/icons-material/Send";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import { useAppContext } from "../components/AppContext";
+import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
 
 // ── Brand colors ─────────────────────────────────────────────────────────────
-const NAVY       = "#13206d";
-const GREEN      = "#84fba2";
+const NAVY = "#13206d";
+const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
-const CATEGORIES     = ["Design","Engineering","Marketing","Sales","Operations","Finance","HR","Product","Data Science","Customer Support"];
-const LOCATION_MODES = ["On-site","Remote","Hybrid"];
+const CATEGORIES = ["Design", "Engineering", "Marketing", "Sales", "Operations", "Finance", "HR", "Product", "Data Science", "Customer Support"];
+const LOCATION_MODES = ["On-site", "Remote", "Hybrid"];
+const JOB_TYPES = ["Full-time", "Part-time", "Internship", "Apprenticeship", "Temporary", "Contract","Other"];
 
-// ── Microsoft 4-square logo ───────────────────────────────────────────────────
-function MSLogo({ size = 48 }) {
-  return (
-    <div style={{ width: size, height: size, padding: 4, background: "#fff", borderRadius: 10, border: `1px solid rgba(19,32,109,0.1)`, flexShrink: 0 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, width: "100%", height: "100%" }}>
-        <div style={{ background: "#F25022", borderRadius: 2 }} />
-        <div style={{ background: "#7FBA00", borderRadius: 2 }} />
-        <div style={{ background: "#00A4EF", borderRadius: 2 }} />
-        <div style={{ background: "#FFB900", borderRadius: 2 }} />
-      </div>
-    </div>
-  );
-}
+
+
+
 
 // ── ALL-CAPS field label ──────────────────────────────────────────────────────
 function FieldLabel({ children, optional = false }) {
@@ -80,43 +74,92 @@ const selectSx = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 export function CreateJobDialog({ open, onClose, onSubmit }) {
-  const [jobTitle,         setJobTitle]         = useState("");
-  const [category,         setCategory]         = useState("Design");
-  const [locationMode,     setLocationMode]     = useState("On-site");
-  const [city,             setCity]             = useState("");
-  const [skills,           setSkills]           = useState(["UI Design", "Figma", "Prototyping"]);
-  const [skillInput,       setSkillInput]       = useState("");
-  const [salaryType,       setSalaryType]       = useState("range");
-  const [salaryMin,        setSalaryMin]        = useState("");
-  const [salaryMax,        setSalaryMax]        = useState("");
-  const [aboutRole,        setAboutRole]        = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [category, setCategory] = useState("Design");
+  const [locationMode, setLocationMode] = useState("On-site");
+  const [jobType, setJobType] = useState("Full-time");
+  const [city, setCity] = useState("");
+  const [skills, setSkills] = useState(["UI Design", "Figma", "Prototyping"]);
+  const [skillInput, setSkillInput] = useState("");
+  const [salaryType, setSalaryType] = useState("range");
+  const [salaryMin, setSalaryMin] = useState("");
+  const [salaryMax, setSalaryMax] = useState("");
+  const [aboutRole, setAboutRole] = useState("");
+  const [shortDesc, setShortDesc] = useState("");
   const [responsibilities, setResponsibilities] = useState("");
-  const [requirements,     setRequirements]     = useState("");
+  const [requirements, setRequirements] = useState("");
+  const { company } = useAppContext();
+  const [bannerImage, setBannerImage] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState("");
 
   // ── Skills helpers ────────────────────────────────────────────────────────
-  const handleAddSkill  = () => {
+  const handleAddSkill = () => {
     const t = skillInput.trim();
     if (t && !skills.includes(t)) setSkills(p => [...p, t]);
     setSkillInput("");
   };
-  const handleSkillKey    = (e) => { if (e.key === "Enter") { e.preventDefault(); handleAddSkill(); } };
-  const handleRemoveSkill = (s)  => setSkills(p => p.filter(x => x !== s));
+  const handleSkillKey = (e) => { if (e.key === "Enter") { e.preventDefault(); handleAddSkill(); } };
+  const handleRemoveSkill = (s) => setSkills(p => p.filter(x => x !== s));
+
+  const handleBannerUpload = (e) => {
+    const file = e.target.files[0];
+
+    if (file) {
+      setBannerImage(file);
+
+      const previewURL = URL.createObjectURL(file);
+      setBannerPreview(previewURL);
+    }
+  };
 
   // ── Submit / reset ────────────────────────────────────────────────────────
   const resetForm = () => {
-    setJobTitle(""); setCategory("Design"); setLocationMode("On-site"); setCity("");
-    setSkills(["UI Design","Figma","Prototyping"]); setSkillInput("");
+    setJobTitle(""); setCategory("Design"); setLocationMode("On-site"); setJobType("Full-time"); setCity("");
+    setSkills(["UI Design", "Figma", "Prototyping"]); setSkillInput("");
     setSalaryType("range"); setSalaryMin(""); setSalaryMax("");
-    setAboutRole(""); setResponsibilities(""); setRequirements("");
+    setAboutRole(""); setShortDesc(""); setResponsibilities(""); setRequirements("");
+    setBannerImage(null);
+    setBannerPreview("");
   };
 
-  const handlePost      = () => {
-    if (!jobTitle.trim()) return;
-    onSubmit?.({ jobTitle: jobTitle.trim(), category, locationMode, city: city.trim(), skills: [...skills], salaryType, salaryMin, salaryMax, aboutRole: aboutRole.trim(), responsibilities: responsibilities.trim(), requirements: requirements.trim() });
+  const isFormValid =
+    jobTitle.trim() &&
+    category.trim() &&
+    locationMode.trim() &&
+    jobType.trim() &&
+    city.trim() &&
+    bannerImage &&
+    skills.length > 0 &&
+    aboutRole.trim() &&
+    responsibilities.trim() &&
+    requirements.trim() &&
+    (
+      salaryType === "discuss" ||
+      (salaryMin.trim() && salaryMax.trim())
+    );
+
+  const handlePost = () => {
+    if (!isFormValid) return;
+    onSubmit?.({
+      jobTitle: jobTitle.trim(),
+      category, 
+      locationMode,
+      jobType,
+      city: city.trim(),
+      skills: [...skills],
+      salaryType,
+      salaryMin,
+      salaryMax,
+      aboutRole: aboutRole.trim(),
+      responsibilities: responsibilities.trim(),
+      requirements: requirements.trim(),
+      bannerImage,
+      bannerPreview,
+    });
     resetForm(); onClose();
   };
   const handleSaveDraft = () => { resetForm(); onClose(); };
-  const handleClose     = () => { resetForm(); onClose(); };
+  const handleClose = () => { resetForm(); onClose(); };
 
   return (
     <Dialog
@@ -133,7 +176,7 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
         },
       }}
     >
-      
+
       <DialogContent sx={{ p: 0, display: "flex", flexDirection: "row", overflow: "hidden" }}>
 
         {/* ══════════════════════════════════════════════════════════════════
@@ -151,7 +194,22 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
         >
           {/* Company identity */}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-            <MSLogo size={52} />
+            <Avatar
+              src={company.photo || defaultPhoto}
+              alt={company.name}
+              sx={{
+                width: 52,
+                height: 52,
+                bgcolor: "white",
+                borderRadius: "10px",
+                border: "1px solid rgba(19,32,109,0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.07)",
+              }}
+            />
             <div>
               <div style={{ color: NAVY, fontWeight: 700, fontSize: 18, lineHeight: 1.3 }}>Microsoft</div>
               <div style={{ color: LIGHT_BLUE, fontSize: 13, marginTop: 2 }}>Technology Company</div>
@@ -171,7 +229,9 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>JOB TITLE</FieldLabel>
             <TextField
-              fullWidth size="small"
+              required
+              fullWidth
+              size="small"
               placeholder="e.g. Senior Product Designer"
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
@@ -183,13 +243,46 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>CATEGORY</FieldLabel>
             <Select
-              fullWidth 
+              fullWidth
               size="small"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               sx={selectSx}
             >
               {CATEGORIES.map((c) => (
+                <MenuItem key={c} value={c} sx={{ fontSize: 14, color: NAVY }}>{c}</MenuItem>
+              ))}
+            </Select>
+          </div>
+           {/* ── Short Description ───────────────────────────────────────── */}
+          <div style={{ marginBottom: 22 }}>
+            <FieldLabel>Short Description of the role</FieldLabel>
+            <TextField
+              fullWidth
+              multiline
+              minRows={1}
+              maxRows={2}
+              required
+              placeholder="Describe the role in 100 characters or less…"
+              value={shortDesc}
+              onChange={(e) => setShortDesc(e.target.value)}
+              inputProps={{maxLength: 100 }}
+              helperText={<span style={{ color: NAVY }}>{`${shortDesc.length}/100 characters`}</span>}
+              sx={inputSx}
+            />
+          </div>
+
+          {/* ── JOB TYPE ──────────────────────────────────────────── */}
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>JOB TYPE</FieldLabel>
+            <Select
+              fullWidth
+              size="small"
+              value={jobType}
+              onChange={(e) => setJobType(e.target.value)}
+              sx={selectSx}
+            >
+              {JOB_TYPES.map((c) => (
                 <MenuItem key={c} value={c} sx={{ fontSize: 14, color: NAVY }}>{c}</MenuItem>
               ))}
             </Select>
@@ -226,7 +319,9 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
           <div style={{ marginBottom: 20 }}>
             <FieldLabel>CITY &amp; OFFICE</FieldLabel>
             <TextField
-              fullWidth size="small"
+              required
+              fullWidth
+              size="small"
               placeholder="Cairo, Egypt"
               value={city}
               onChange={(e) => setCity(e.target.value)}
@@ -264,13 +359,19 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
             {salaryType === "range" ? (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <TextField
-                  fullWidth size="small" placeholder="50,000"
+                  required
+                  fullWidth
+                  size="small"
+                  placeholder="6,000"
                   value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)}
                   InputProps={{ startAdornment: <InputAdornment position="start"><p style={{ fontSize: 15, color: `${NAVY}45` }}>EGP</p></InputAdornment> }}
                   sx={inputSx}
                 />
                 <TextField
-                  fullWidth size="small" placeholder="90,000"
+                  required
+                  fullWidth
+                  size="small"
+                  placeholder="50,000"
                   value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)}
                   InputProps={{ startAdornment: <InputAdornment position="start"><p style={{ fontSize: 15, color: `${NAVY}45` }}>EGP</p></InputAdornment> }}
                   sx={inputSx}
@@ -346,12 +447,67 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
           <h2 style={{ color: NAVY, fontSize: 22, fontWeight: 700, margin: "0 0 28px" }}>
             Post a New Job
           </h2>
+          {/* ── BANNER IMAGE ───────────────────────────────────── */}
+          <div style={{ marginBottom: 20 }}>
+            <FieldLabel>JOB BANNER IMAGE</FieldLabel>
+
+            <label
+              htmlFor="banner-upload"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: 180,
+                border: `2px dashed rgba(19,32,109,0.2)`,
+                borderRadius: 16,
+                cursor: "pointer",
+                overflow: "hidden",
+                background: "rgba(19,32,109,0.03)",
+                transition: "0.2s",
+              }}
+            >
+              {bannerPreview ? (
+                <img
+                  src={bannerPreview}
+                  alt="Banner Preview"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    textAlign: "center",
+                    color: `${NAVY}70`,
+                    fontSize: 14,
+                    fontWeight: 500,
+                  }}
+                >
+                  Click to upload banner image
+                </div>
+              )}
+            </label>
+
+            <input
+              id="banner-upload"
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleBannerUpload}
+            />
+          </div>
 
           {/* ── ABOUT THE ROLE ───────────────────────────────────────── */}
           <div style={{ marginBottom: 22 }}>
             <FieldLabel>ABOUT THE ROLE</FieldLabel>
             <TextField
-              fullWidth multiline minRows={4} maxRows={6}
+              required
+              fullWidth
+              multiline
+              minRows={4}
+              maxRows={6}
               placeholder="Describe the role and what a typical day looks like…"
               value={aboutRole}
               onChange={(e) => setAboutRole(e.target.value)}
@@ -363,7 +519,11 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
           <div style={{ marginBottom: 22 }}>
             <FieldLabel>RESPONSIBILITIES</FieldLabel>
             <TextField
-              fullWidth multiline minRows={4} maxRows={6}
+              required
+              fullWidth
+              multiline
+              minRows={4}
+              maxRows={6}
               placeholder={"List key responsibilities, one per line…\n• Build and maintain React applications\n• Collaborate with designers"}
               value={responsibilities}
               onChange={(e) => setResponsibilities(e.target.value)}
@@ -375,7 +535,11 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
           <div style={{ marginBottom: 28 }}>
             <FieldLabel>REQUIREMENTS</FieldLabel>
             <TextField
-              fullWidth multiline minRows={4} maxRows={6}
+              required
+              fullWidth
+              multiline
+              minRows={4}
+              maxRows={6}
               placeholder={"List required qualifications, one per line…\n• 3+ years of React experience\n• Strong TypeScript skills"}
               value={requirements}
               onChange={(e) => setRequirements(e.target.value)}
@@ -388,10 +552,10 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
             fullWidth variant="contained"
             endIcon={<SendIcon />}
             onClick={handlePost}
-            disabled={!jobTitle.trim()}
+            disabled={!isFormValid}
             sx={{
               py: 1.6, borderRadius: "14px",
-              background: jobTitle.trim()
+              background: isFormValid
                 ? `linear-gradient(135deg, ${GREEN} 0%, #6ef094 100%)`
                 : "rgba(132,251,162,0.3)",
               color: NAVY, fontWeight: 700, fontSize: 16, textTransform: "none",

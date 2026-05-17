@@ -73,13 +73,13 @@ export function JobDetailsModal({ job, open, onClose }) {
 
           <div className="text-[#13206d]">
             <h3 className="text-2xl font-bold mb-3">Job Description:</h3>
-            <p className="text-lg leading-relaxed">{job.fullDescription}</p>
+            <p className="text-lg leading-relaxed">{job.jobDescription}</p>
           </div>
 
           <div className="flex flex-col items-center mt-4">
             <h3 className="text-2xl font-bold text-[#13206d] mb-4">Required Skills:</h3>
             <div className="flex flex-wrap justify-center gap-4">
-              {job.skills.map((skill, index) => (
+              {job.jobSkills.map((skill, index) => (
                 <div 
                   key={index}
                   className="bg-[#84fba2] text-[#13206d] px-6 py-2 rounded-xl text-lg font-medium shadow-sm"

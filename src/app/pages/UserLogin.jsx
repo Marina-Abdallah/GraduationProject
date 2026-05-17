@@ -2,11 +2,24 @@ import Navbar from '../components/Navbar';
 import LoginCard from "../components/UserLogincard";
 import { Footer } from "../components/Footer";
 import { Box } from "@mui/material";
+import backgroundImg from "../../assets/Background.png";
+
 import "../../styles/App.css";
 
 function UserLogin() {
   return (
-    <div className="page-container">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: `url(${backgroundImg})`,
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "top center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
+      }}
+    >
       <Box
         sx={{
           width: "100%",
@@ -16,6 +29,7 @@ function UserLogin() {
           zIndex: 20,
         }}
       >
+
         <Navbar />
       </Box>
       <LoginCard />
@@ -28,7 +42,7 @@ function UserLogin() {
       >
         <Footer />
       </Box>
-    </div>
+    </Box>
   );
 }
 

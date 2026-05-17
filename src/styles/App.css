@@ -1,7 +1,7 @@
 body {
-  background-image: url("../assets/Background.png");
+  /* background-image: url("../assets/Background.png");
   background-size: cover;
-  background-repeat: no-repeat;
+  background-repeat: no-repeat; */
   height: 100vh;
   font-family: "Inter", sans-serif;
   line-height: 1;

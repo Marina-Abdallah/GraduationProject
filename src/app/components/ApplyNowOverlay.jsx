@@ -8,6 +8,7 @@ import {
   Chip,
   Divider,
   LinearProgress,
+  Avatar
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
@@ -20,7 +21,10 @@ import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SendIcon from "@mui/icons-material/Send";
+import CategoryIcon from "@mui/icons-material/Category";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import { useAppContext } from "../components/AppContext";
+import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
 
 // ── Brand colors ────────────────────────────────────────────────────────────
 const NAVY = "#13206d";
@@ -33,9 +37,10 @@ const JOB = {
   title: "Frontend Developer",
   company: "MicroSoft",
   type: "Full-time",
+  category: "Software Engineering",
   location: "Cairo, Egypt",
   salary: "$90k – $120k",
-  tags: ["React", "TypeScript", "Tailwind CSS", "Next.js"],
+  skills: ["React", "TypeScript", "Tailwind CSS", "Next.js"],
   about:
     "MicroSoft is seeking a talented Frontend Developer to join our growing product team. You will work closely with designers and backend engineers to craft world-class user experiences that reach millions of people worldwide.",
   responsibilities: [
@@ -89,6 +94,7 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const { company } = useAppContext();
 
   const MAX_COVER = 1000;
 
@@ -169,7 +175,23 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
         >
           {/* Header */}
           <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
-            <MSLogo size={56} />
+            {/* MS Logo  */}
+            <Avatar
+              src={company.photo || defaultPhoto}
+              alt={company.name}
+              sx={{
+                width: 65,
+                height: 65,
+                bgcolor: "white",
+                borderRadius: "10px",
+                border: "1px solid rgba(19,32,109,0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.07)",
+              }}
+            />
             <div>
               <h2 style={{ margin: 0, color: NAVY, fontSize: 22, fontWeight: 700, lineHeight: 1.3 }}>
                 {JOB.title}
@@ -183,12 +205,16 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
                 <WorkOutlineIcon sx={{ fontSize: 14, color: LIGHT_BLUE }} />
                 <span style={{ color: LIGHT_BLUE, fontSize: 14 }}>{JOB.type}</span>
               </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
+              <CategoryIcon sx={{ fontSize: 14, color: LIGHT_BLUE }} />
+              <span style={{ color: LIGHT_BLUE, fontSize: 14 }}>{JOB.category}</span> 
+              </div>
             </div>
           </div>
 
           {/* Tags */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
-            {JOB.tags.map((t) => (
+            {JOB.skills.map((t) => (
               <Chip
                 key={t}
                 label={t}

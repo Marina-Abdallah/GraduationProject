@@ -150,7 +150,7 @@ export function FunctionalWritePost() {
             </button>
 
             {/* Share icon */}
-            <button className="relative shrink-0 size-[32px] cursor-pointer hover:opacity-70 transition-opacity" title="Share">
+            {/* <button className="relative shrink-0 size-[32px] cursor-pointer hover:opacity-70 transition-opacity" title="Share">
               <svg className="absolute block inset-[4.17%_4.17%_6.25%_16.67%]" fill="none" viewBox="0 0 25.3333 28.6667">
                 <path
                   d="M17.3333 6.66667L9.33333 10.6667M17.3333 22L9.33333 18M24 4C24 5.47276 22.8061 6.66667 21.3333 6.66667C19.8606 6.66667 18.6667 5.47276 18.6667 4C18.6667 2.52724 19.8606 1.33333 21.3333 1.33333C22.8061 1.33333 24 2.52724 24 4ZM24 24.6667C24 26.1394 22.8061 27.3333 21.3333 27.3333C19.8606 27.3333 18.6667 26.1394 18.6667 24.6667C18.6667 23.1939 19.8606 22 21.3333 22C22.8061 22 24 23.1939 24 24.6667ZM6.66667 14.3333C6.66667 15.8061 5.47276 17 4 17C2.52724 17 1.33333 15.8061 1.33333 14.3333C1.33333 12.8606 2.52724 11.6667 4 11.6667C5.47276 11.6667 6.66667 12.8606 6.66667 14.3333Z"
@@ -159,7 +159,7 @@ export function FunctionalWritePost() {
                   strokeLinecap="round"
                 />
               </svg>
-            </button>
+            </button> */}
 
             {/* Post button */}
             <button

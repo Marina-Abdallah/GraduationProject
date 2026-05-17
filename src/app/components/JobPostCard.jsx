@@ -31,40 +31,13 @@ const LIGHT_BLUE = "#90baef";
 const GOLD = "#FBBC04";
 const RED = "#C32929";
 
-// Microsoft-style 4-square logo
-function MSLogo({ size = 52 }) {
-  const q = Math.floor(size / 2) - 2;
-  return (
-    <Box
-      sx={{
-        width: size,
-        height: size,
-        bgcolor: "white",
-        borderRadius: "12px",
-        border: "1px solid rgba(19,32,109,0.1)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-      }}
-    >
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px", p: "7px", width: "100%", height: "100%" }}>
-        <Box sx={{ bgcolor: "#F25022", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#7FBA00", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#00A4EF", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#FFB900", borderRadius: "2px" }} />
-      </Box>
-    </Box>
-  );
-}
-
 export function JobPostCard({
   postId = "post3",
   company = "MicroSoft",
   companyLocation = "Cairo, Egypt",
   jobTitle = "Frontend Developer",
   jobType = "Full time",
+  jobCategory="Software Engineering",
   jobDescription = "A Full time Frontend Developer at MicroSoft, creating user-friendly web experiences.",
   Img = bannerImg,
 }) {
@@ -76,7 +49,7 @@ export function JobPostCard({
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
   const [localComments, setLocalComments] = useState([]);
-  //const { company } = useAppContext();
+ // const { company } = useAppContext();
 
 
   const handleSubmitComment = () => {
@@ -292,6 +265,19 @@ export function JobPostCard({
             <WorkOutlineIcon sx={{ fontSize: 14, color: LIGHT_BLUE }} />
             <Chip
               label={jobType}
+              size="small"
+              sx={{
+                bgcolor: `rgba(132,251,162,0.18)`,
+                color: NAVY,
+                fontWeight: 700,
+                fontSize: 12,
+                border: `1px solid rgba(132,251,162,0.4)`,
+                borderRadius: "8px",
+                height: 22,
+              }}
+            />
+            <Chip
+              label={jobCategory}
               size="small"
               sx={{
                 bgcolor: `rgba(132,251,162,0.18)`,

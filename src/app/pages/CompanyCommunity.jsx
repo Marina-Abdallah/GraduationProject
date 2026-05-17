@@ -227,6 +227,7 @@ function CommunityFeed({ allPosts, highlightedPostId }) {
               companyLocation={post.companyLocation}
               jobTitle={post.jobTitle}
               jobType={post.jobType}
+              jobCategory={post.jobCategory}
               jobDescription={post.jobDescription}
               highlighted={highlightedPostId === post.id}
             />

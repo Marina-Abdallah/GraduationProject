@@ -1,12 +1,24 @@
 import Navbar from "../components/Navbar";
 import SignUpCard from "../components/UserSignUpCard";
 import { Footer } from "../components/Footer";
-import "../../styles/App.css";
 import { Box } from "@mui/material";
+import backgroundImg from "../../assets/Background.png";
+
 
 function UserSignUp() {
   return (
-    <div className="page-container">
+    <Box
+          sx={{
+            minHeight: "100vh",
+            background: `url(${backgroundImg})`,
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "top center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "stretch",
+          }}
+        >
       <Box
         sx={{
           width: "100%",
@@ -28,7 +40,7 @@ function UserSignUp() {
       >
         <Footer />
       </Box>
-    </div>
+    </Box>
   );
 }
 

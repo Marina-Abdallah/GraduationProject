@@ -46,10 +46,10 @@ function UserLoginCard() {
   };
 
   const [form, setForm] = React.useState({
-      email: "",
-      password: ""
-    });
-    
+    email: "",
+    password: ""
+  });
+
   const handleLogin = async () => {
 
     const email = form.email;
@@ -62,9 +62,8 @@ function UserLoginCard() {
       });
 
       alert("Login successful!");
-
       // save token
-      localStorage.setItem("token", res.data.Token);
+      localStorage.setItem("token", res.data.token);
 
       // go to home
       navigate("/MyJobApplication");
