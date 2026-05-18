@@ -50,7 +50,7 @@ export function CompanyJobsPage() {
         backgroundPosition: "top center",
       }}
     >
-      <Box sx={{ width: "100%", pt: 4, px: { xs: 2, md: 4 }, position: "relative", zIndex: 20 }}>
+      <Box sx={{ width: "100%", pt: 3, px: { xs: 2, md: 4 }, position: "relative", zIndex: 20 }}>
         <CompanyNavbar />
       </Box>
 

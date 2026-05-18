@@ -24,8 +24,8 @@ export function MainNavbar() {
         {/* Logo — clicks back to home */}
         <Link to="/MyJobApplication" className="text-blue-900 font-bold tracking-tighter flex items-center shrink-0">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="Logo" className=" h-7 sm:h-9 md:h-14 w-auto object-contain" />
-            <img src={ProGrow} alt="ProGrow" className="h-6 sm:h-8 md:h-12 w-auto object-contain" />
+            <img src={logo} alt="Logo" className=" h-7 sm:h-10 md:h-12 w-auto object-contain" />
+            <img src={ProGrow} alt="ProGrow" className="h-6 sm:h-8 md:h-10 w-auto object-contain" />
           </div>
         </Link>
 
@@ -33,7 +33,7 @@ export function MainNavbar() {
         <div className="flex items-center gap-2 sm:gap-4 md:gap-8 shrink-0 ml-auto">
           {/* Navigation */}
           {/* <div className="hidden md:flex items-center gap-12"> */}
-          <div className="flex items-center gap-3 sm:gap-6 md:gap-12">
+          <div className="flex items-center gap-2 sm:gap-6 md:gap-12">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path || (item.label === 'Home' && location.pathname === '/');
               return (

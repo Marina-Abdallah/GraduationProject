@@ -40,8 +40,8 @@ export function CompanyNavbar() {
         {/* Logo — clicks back to company home */}
         <Link to="/CompanyJobs" className="text-blue-900 font-bold tracking-tighter flex items-center shrink-0">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="Logo" className=" h-7 sm:h-9 md:h-14 w-auto object-contain" />
-            <img src={ProGrow} alt="ProGrow" className="h-6 sm:h-8 md:h-12 w-auto object-contain" />
+            <img src={logo} alt="Logo" className=" h-7 sm:h-10 md:h-12 w-auto object-contain" />
+            <img src={ProGrow} alt="ProGrow" className="h-6 sm:h-8 md:h-10 w-auto object-contain" />
           </div>
         </Link>
 

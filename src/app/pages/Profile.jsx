@@ -31,7 +31,7 @@ export function ProfilePage() {
       <Box
         sx={{
           width: "100%",
-          pt: 4,
+          pt: 3,
           px: { xs: 2, md: 4 },
           position: "relative",
           zIndex: 20,
