@@ -15,7 +15,7 @@ export function JobActionDialog({
                 sx: {
                     borderRadius: "24px",
                     overflow: "hidden",
-                    maxWidth: 520,
+                    maxWidth: 600,
                     width: "100%",
                 },
             }}
