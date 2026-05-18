@@ -22,48 +22,31 @@ const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
-// Microsoft 4-square logo
-function MSLogo({ size = 48 }) {
-  return (
-    <Box
-      sx={{
-        width: size,
-        height: size,
-        bgcolor: "white",
-        borderRadius: "10px",
-        border: "1px solid rgba(19,32,109,0.1)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-      }}
-    >
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "3px",
-          p: "7px",
-          width: "100%",
-          height: "100%",
-        }}
-      >
-        <Box sx={{ bgcolor: "#F25022", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#7FBA00", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#00A4EF", borderRadius: "2px" }} />
-        <Box sx={{ bgcolor: "#FFB900", borderRadius: "2px" }} />
-      </Box>
-    </Box>
-  );
-}
 
-export function WritePostDialog({ open, onClose, onSubmit }) {
-  const { company } = useAppContext();
+export function WritePostDialog({ open, onClose, onSubmit, profileType }) {
+  const { company, profile } = useAppContext();
   const [content, setContent] = useState("");
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaUrl, setMediaUrl] = useState(null);
   const fileInputRef = useRef(null);
+
+  const isCompany = profileType === "company";
+
+  const displayName = isCompany
+    ? company?.name || "company"
+    : profile?.name || "Marina Abdallah";
+
+  const displayRole = isCompany
+    ? company?.industry || "company"
+    : profile?.headline || "UI/UX Designer";
+
+  const displayPhoto = isCompany
+    ? company?.photo || defaultPhoto
+    : profile?.photo || defaultPhoto;
+
+  const placeholderText = isCompany
+    ? `What's on your mind, ${displayName}?`
+    : `Share your thoughts, ${displayName}...`;
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -176,8 +159,8 @@ export function WritePostDialog({ open, onClose, onSubmit }) {
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               {/* <MSLogo size={52} /> */}
               <Avatar
-                src={company.photo || defaultPhoto}
-                alt={company.name}
+                src={displayPhoto}
+                alt={displayName}
                 sx={{
                   width: 52,
                   height: 52,
@@ -201,7 +184,7 @@ export function WritePostDialog({ open, onClose, onSubmit }) {
                     lineHeight: 1.3,
                   }}
                 >
-                  Microsoft
+                  {displayName}
                 </Typography>
                 <Typography
                   sx={{
@@ -211,7 +194,7 @@ export function WritePostDialog({ open, onClose, onSubmit }) {
                     fontFamily: "'Inter', sans-serif",
                   }}
                 >
-                  Technology Company
+                  {displayRole}
                 </Typography>
               </Box>
             </Box>
@@ -220,7 +203,7 @@ export function WritePostDialog({ open, onClose, onSubmit }) {
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's on your mind, Microsoft??"
+              placeholder={placeholderText}
               style={{
                 flex: 1,
                 minHeight: 140,

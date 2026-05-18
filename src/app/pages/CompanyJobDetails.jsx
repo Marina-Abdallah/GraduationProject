@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -23,6 +23,7 @@ import bannerSoftware from "../../assets/SoftwareJob.png";
 import bannerUIUX2 from "../../assets/UI&UXJob2.png";
 import backgroundImg from "../../assets/Background.png";
 
+import { JobActionDialog } from "../components/JobActivationDialog";
 import { CompanyNavbar } from "../components/CompanyNavbar";
 import { Footer } from "../components/Footer";
 import { ApplicantsList } from "../components/ApplicantsList";
@@ -47,7 +48,31 @@ const LIGHT_BLUE = "#90baef";
 export function CompanyJobDetailsPage() {
   const { jobId } = useParams();
   const navigate = useNavigate();
-  const job = COMPANY_JOBS.find((j) => j.id === jobId);
+  const [jobs, setJobs] = React.useState(COMPANY_JOBS);
+  const job = jobs.find((j) => j.id === jobId);
+  const { company } = useAppContext();
+
+  const [openActionDialog, setOpenActionDialog] = useState(false);
+  const [jobStatus, setJobStatus] = useState(job.status);
+
+  const isActive = jobStatus === "Active";
+
+
+  const handleConfirmAction = () => {
+    const updatedStatus = isActive ? "Closed" : "Active";
+
+    const jobIndex = COMPANY_JOBS.findIndex(
+      (j) => j.id === jobId
+    );
+
+    if (jobIndex !== -1) {
+      COMPANY_JOBS[jobIndex].status = updatedStatus;
+    }
+
+    setJobStatus(updatedStatus);
+    setOpenActionDialog(false);
+  };
+
 
   // ── 404 guard ─────────────────────────────────────────────────────────────
   if (!job) {
@@ -89,9 +114,9 @@ export function CompanyJobDetailsPage() {
     );
   }
 
+
+
   const banner = BANNER_MAP[job.bannerKey] || bannerFrontend;
-  const isActive = job.status === "Active";
-  const { company } = useAppContext();
 
   return (
     <Box
@@ -174,7 +199,7 @@ export function CompanyJobDetailsPage() {
               gap: 1.5,
             }}
           >
-            {/* <MSLogo size={48} /> */}
+            {/* MS Logo */}
             <Avatar
               src={company.photo || defaultPhoto}
               alt={company.name}
@@ -273,7 +298,7 @@ export function CompanyJobDetailsPage() {
               }}
             />
             <Typography sx={{ color: NAVY, fontSize: 14, fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
-              {job.status}
+              {jobStatus}
             </Typography>
           </Box>
 
@@ -320,119 +345,175 @@ export function CompanyJobDetailsPage() {
           }}
         >
           {/* ── Left: description card ── */}
-          <Box
-            sx={{
-              bgcolor: "white",
-              borderRadius: "20px",
-              p: { xs: "20px 18px", sm: "28px 32px" },
-              boxShadow: "0 4px 20px rgba(19,32,109,0.07)",
-              width: { xs: "100%", md: 320 },
-              flexShrink: 0,
-            }}
-          >
-            {/* Section title */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-              <WorkOutlineIcon sx={{ fontSize: 20, color: LIGHT_BLUE }} />
-              <Typography
-                sx={{
-                  color: NAVY,
-                  fontSize: 17,
-                  fontWeight: 700,
-                  fontFamily: "'Inter', sans-serif",
-                }}
-              >
-                Job Description
-              </Typography>
-            </Box>
-
-            <Typography
-              sx={{
-                color: NAVY,
-                fontSize: 14,
-                lineHeight: 1.85,
-                fontFamily: "'Inter', sans-serif",
-                opacity: 0.78,
-              }}
-            >
-              {job.description}
-            </Typography>
-
-            {/* Divider */}
-            <Box sx={{ height: "1px", bgcolor: "rgba(19,32,109,0.08)", my: 2.5 }} />
-
-            {/* Requirements */}
-            <Typography
-              sx={{
-                color: NAVY,
-                fontSize: 14,
-                fontWeight: 700,
-                fontFamily: "'Inter', sans-serif",
-                mb: 1.5,
-              }}
-            >
-              Requirements
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {job.requirements.map((req) => (
-                <Chip
-                  key={req}
-                  label={req}
-                  sx={{
-                    bgcolor: `${LIGHT_BLUE}22`,
-                    color: NAVY,
-                    fontFamily: "'Inter', sans-serif",
-                    fontWeight: 600,
-                    fontSize: 12,
-                    height: 28,
-                    border: `1px solid ${LIGHT_BLUE}88`,
-                  }}
-                />
-              ))}
-            </Box>
-
-            {/* Applicant summary */}
+          <Box>
             <Box
               sx={{
-                mt: 3,
-                p: "14px 18px",
-                bgcolor: `${GREEN}22`,
-                borderRadius: "14px",
-                border: `1px solid ${GREEN}`,
+                bgcolor: "white",
+                borderRadius: "20px",
+                p: { xs: "20px 18px", sm: "28px 32px" },
+                boxShadow: "0 4px 20px rgba(19,32,109,0.07)",
+                width: { xs: "100%", md: 320 },
+                flexShrink: 0,
+                mb: 2,
               }}
             >
+              {/* Section title */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                <WorkOutlineIcon sx={{ fontSize: 20, color: LIGHT_BLUE }} />
+                <Typography
+                  sx={{
+                    color: NAVY,
+                    fontSize: 17,
+                    fontWeight: 700,
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
+                  Job Description
+                </Typography>
+              </Box>
+
               <Typography
                 sx={{
                   color: NAVY,
-                  fontSize: 13,
+                  fontSize: 14,
+                  lineHeight: 1.85,
                   fontFamily: "'Inter', sans-serif",
-                  opacity: 0.7,
-                  mb: 0.3,
+                  opacity: 0.78,
                 }}
               >
-                Total Applicants
+                {job.description}
               </Typography>
+
+              {/* Divider */}
+              <Box sx={{ height: "1px", bgcolor: "rgba(19,32,109,0.08)", my: 2.5 }} />
+
+              {/* Requirements */}
               <Typography
                 sx={{
                   color: NAVY,
-                  fontSize: 28,
-                  fontWeight: 800,
+                  fontSize: 14,
+                  fontWeight: 700,
                   fontFamily: "'Inter', sans-serif",
-                  lineHeight: 1.2,
+                  mb: 1.5,
                 }}
               >
-                {job.applicationsCount}
+                Requirements Skills
               </Typography>
-              <Typography
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {job.skills.map((req) => (
+                  <Chip
+                    key={req}
+                    label={req}
+                    sx={{
+                      bgcolor: `${LIGHT_BLUE}22`,
+                      color: NAVY,
+                      fontFamily: "'Inter', sans-serif",
+                      fontWeight: 600,
+                      fontSize: 12,
+                      height: 28,
+                      border: `1px solid ${LIGHT_BLUE}88`,
+                    }}
+                  />
+                ))}
+              </Box>
+
+              {/* Applicant summary */}
+              <Box
                 sx={{
-                  color: NAVY,
-                  fontSize: 12,
-                  fontFamily: "'Inter', sans-serif",
-                  opacity: 0.55,
-                  mt: 0.5,
+                  mt: 3,
+                  p: "14px 18px",
+                  bgcolor: `${GREEN}22`,
+                  borderRadius: "14px",
+                  border: `1px solid ${GREEN}`,
                 }}
               >
-                {job.applicants.length} loaded for review
-              </Typography>
+                <Typography
+                  sx={{
+                    color: NAVY,
+                    fontSize: 13,
+                    fontFamily: "'Inter', sans-serif",
+                    opacity: 0.7,
+                    mb: 0.3,
+                  }}
+                >
+                  Total Applicants
+                </Typography>
+                <Typography
+                  sx={{
+                    color: NAVY,
+                    fontSize: 28,
+                    fontWeight: 800,
+                    fontFamily: "'Inter', sans-serif",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {job.applicationsCount}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: NAVY,
+                    fontSize: 12,
+                    fontFamily: "'Inter', sans-serif",
+                    opacity: 0.55,
+                    mt: 0.5,
+                  }}
+                >
+                  {job.applicants.length} loaded for review
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                width: "100%",
+              }}
+            >
+              {isActive ? (
+                <Button
+                  onClick={() => setOpenActionDialog(true)}
+                  sx={{
+                    width: "250px",
+                    py: 1,
+                    borderRadius: "20px",
+                    bgcolor: "#ff383c",
+                    color: "white",
+                    fontFamily: "'Inter', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "16px",
+                    textTransform: "none",
+                    "&:hover": {
+                      bgcolor: "#e02020",
+                      boxShadow: "0px 6px 16px rgba(255,56,60,0.45)",
+                    },
+                  }}
+                >
+                  {isActive ? "Close The Job" : "Activate The Job"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setOpenActionDialog(true)}
+                  sx={{
+                    width: "250px",
+                    py: 1,
+                    borderRadius: "20px",
+                    bgcolor: "#84fba2",
+                    color: "#13206d",
+                    fontFamily: "'Inter', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "16px",
+                    textTransform: "none",
+                    "&:hover": {
+                      bgcolor: "#6ef094",
+                      boxShadow: "0px 6px 16px rgba(132,251,162,0.6)",
+                    },
+                  }}
+                >
+                  {isActive ? "Close The Job" : "Activate The Job"}
+                </Button>
+              )}
             </Box>
           </Box>
 
@@ -451,6 +532,13 @@ export function CompanyJobDetailsPage() {
           </Box>
         </Box>
       </Box>
+
+      <JobActionDialog
+        open={openActionDialog}
+        onClose={() => setOpenActionDialog(false)}
+        onConfirm={handleConfirmAction}
+        isActive={isActive}
+      />
 
       {/* ── Footer ── */}
       <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>

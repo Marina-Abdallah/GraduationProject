@@ -33,13 +33,13 @@ const RED = "#C32929";
 
 export function JobPostCard({
   postId = "post3",
-  company = "MicroSoft",
-  companyLocation = "Cairo, Egypt",
-  jobTitle = "Frontend Developer",
-  jobType = "Full time",
-  jobCategory="Software Engineering",
-  jobDescription = "A Full time Frontend Developer at MicroSoft, creating user-friendly web experiences.",
-  Img = bannerImg,
+  company , 
+  jobTitle , 
+  companyLocation , 
+  jobType ,
+  jobCategory ,
+  jobShortDescription ,
+  Img,
 }) {
   const { posts, onLike, onSave, onApplyNow } = useCommunity();
   const { profile } = useAppContext();
@@ -167,7 +167,7 @@ export function JobPostCard({
         }}
       >
         <img
-          src={Img}
+          src={Img || bannerImg}
           alt="Job banner"
           style={{
             width: "100%",
@@ -196,23 +196,23 @@ export function JobPostCard({
             gap: 1.5,
           }}
         >
-          <Box
+
+            <Avatar
+            src={company.photo || defaultCompanyPhoto}
+            alt={company.name}
             sx={{
-              bgcolor: "white",
-              borderRadius: "8px",
-              p: "4px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "2px",
               width: 36,
               height: 36,
+              bgcolor: "white",
+              borderRadius: "8px",
+              border: "1px solid rgba(19,32,109,0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.07)",
             }}
-          >
-            <Box sx={{ bgcolor: "#F25022", borderRadius: "1px" }} />
-            <Box sx={{ bgcolor: "#7FBA00", borderRadius: "1px" }} />
-            <Box sx={{ bgcolor: "#00A4EF", borderRadius: "1px" }} />
-            <Box sx={{ bgcolor: "#FFB900", borderRadius: "1px" }} />
-          </Box>
+          />
           <Box>
             <Typography
               sx={{
@@ -300,7 +300,7 @@ export function JobPostCard({
               maxWidth: 400,
             }}
           >
-            {jobDescription}
+            {jobShortDescription}
           </Typography>
         </Box>
 

@@ -2,7 +2,10 @@ import React from "react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import api from "../../api/axios";
 
+
+
 export function JobApplicationCard({ job, onClick }) {
+  
   return (
     <div
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col h-auto"

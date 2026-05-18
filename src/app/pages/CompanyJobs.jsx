@@ -19,8 +19,8 @@ export function CompanyJobsPage() {
 
     if (activeFilter === "active") {
       jobs = jobs.filter((j) => j.status === "Active");
-    } else if (activeFilter === "canceled") {
-      jobs = jobs.filter((j) => j.status === "Canceled");
+    } else if (activeFilter === "closed") {
+      jobs = jobs.filter((j) => j.status === "Closed");
     }
 
     if (searchQuery.trim()) {

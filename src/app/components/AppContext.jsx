@@ -49,7 +49,6 @@ const DEFAULT_COMPANY = {
   name: "Microsoft",
   email: "[EMAIL_ADDRESS]",
   overview: "Every company has a mission. What's ours? To empower every person and every organization to achieve more. We believe technology can and should be a force for good and that meaningful innovation contributes to a brighter world in the future and today. Our culture doesn’t just encourage curiosity; it embraces it. Each day we make progress together by showing up as our authentic selves. We show up with a learn-it-all mentality. We show up cheering on others, knowing their success doesn't diminish our own. We show up every day open to learning our own biases, changing our behavior, and inviting in differences. Because impact matters.  Microsoft operates in 190 countries and is made up of approximately 228,000 passionate employees worldwide.",
-  major: "Software Industry and Multimedia",
   industry: "Software Industry",
   website: "www.microsoft.com",
   address: "Cairo, Egypt",

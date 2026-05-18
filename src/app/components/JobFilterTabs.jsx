@@ -7,7 +7,7 @@ const GREEN = "#84fba2";
 const FILTERS = [
   { key: "all",      label: "All Jobs" },
   { key: "active",   label: "Active" },
-  { key: "canceled", label: "Canceled" },
+  { key: "closed", label: "Closed" },
 ];
 
 export function JobFilterTabs({ active, onChange }) {

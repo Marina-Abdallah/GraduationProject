@@ -13,7 +13,7 @@ import { CommunitySearchBar } from "../components/CommunitySearchBar";
 import { CreatePost } from "../components/CreatePost";
 import { PostCard } from "../components/PostCard";
 import { JobPostCard } from "../components/JobPostCard";
-import { FunctionalWritePost } from "../components/FunctionalWritePost";
+import { WritePostDialog } from "../components/WritePostDialog";
 import { ApplyNowOverlay } from "../components/ApplyNowOverlay";
 import backgroundImg from "../../assets/Background.png";
 
@@ -51,6 +51,7 @@ const POSTS = [
       'شركه كانت مكلماني علشان اعمل Interviews لمتقدمين علشان كانت محتاجه "Senior" في ال Team بتاعها لان مفيش حد فاضي عندهم في الشركه، فوافقت.\n\nبعمل انترفيو لناس بقالها علي الاقل ٥ سنين في المجال وفيه ناس منهم عندهم خبره آكبر.\n\nالشركه كانت مسؤله عن مشروع ضخم وعليه ترافيك عالي والمشروع كان Distributed system وفيه مشاكل كثير في ال Production.\n\nبعض الآسئله كانت كالآتي:\n- ACID properties and Isolation levels\n- Consistency models\n- CAP theorem and when to use AP or CP\n- FIRST principles of unit testing\n- OOAD and how to design a given use case\n\nبعد كام انترفيو الشركه قررت اني مكملش معاهم لاني بعقد ال Process.\n\nوالنتيجه سيئه.',
   },
 ];
+const LIGHT_BLUE = "#90baef";
 
 // ─── Search matching logic ────────────────────────────────────────────────────
 function matchesSearch(post, query) {
@@ -75,10 +76,28 @@ function matchesSearch(post, query) {
 }
 
 // ─── Inner layout (uses CommunityProvider context) ────────────────────────────
-function CommunityFeed({ showWritePost, showApplyNow, onCloseApplyNow, highlightedPostId }) {
-    const [searchQuery, setSearchQuery] = useState("");
+function CommunityFeed({ showWritePost, onCloseWritePost, showApplyNow, onCloseApplyNow, highlightedPostId }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dynamicPosts, setDynamicPosts] = useState([]);
+  const { profile } = useAppContext();
+  const handlePostSubmit = (content, mediaUrl) => {
+    const newPost = {
+      id: `dyn-post-${Date.now()}`,
+      type: "post",
+      author: profile.name,
+      role: profile.headline,
+      content,
+      avatarColor: LIGHT_BLUE,
+      mediaUrl,
+    };
+    setDynamicPosts((prev) => [newPost, ...prev]);
+  };
 
-  const filteredPosts = POSTS.filter((p) => matchesSearch(p, searchQuery));
+  const allPosts = [...dynamicPosts, ...POSTS];
+  const filteredPosts = allPosts.filter((p) =>
+    matchesSearch(p, searchQuery)
+  );
+
   return (
     <>
       {/* Two-column layout */}
@@ -96,7 +115,7 @@ function CommunityFeed({ showWritePost, showApplyNow, onCloseApplyNow, highlight
         }}
       >
         {/* Left: Sidebar (position: "sticky", top: 5, alignSelf: "flex-start" )*/}
-        <Box sx={{ display: { xs: "none", lg: "block" },position: "sticky", top: 5, alignSelf: "flex-start"}}>
+        <Box sx={{ display: { xs: "none", lg: "block" }, position: "sticky", top: 5, alignSelf: "flex-start" }}>
           <SidebarProfile />
         </Box>
 
@@ -164,7 +183,7 @@ function CommunityFeed({ showWritePost, showApplyNow, onCloseApplyNow, highlight
                   avatarColor={post.avatarColor}
                   rtl={post.rtl || false}
                   highlighted={highlightedPostId === post.id}
-                  profileType = "user"
+                  profileType="user"
                 />
               )
             )
@@ -173,7 +192,12 @@ function CommunityFeed({ showWritePost, showApplyNow, onCloseApplyNow, highlight
       </Box>
 
       {/* Modals / Overlays */}
-      {showWritePost && <FunctionalWritePost />}
+      {<WritePostDialog
+        open={showWritePost}
+        onClose={onCloseWritePost}
+        onSubmit={handlePostSubmit}
+        profileType="user"
+      />}
       <ApplyNowOverlay open={showApplyNow} onClose={onCloseApplyNow} />
     </>
   );
@@ -183,7 +207,7 @@ function CommunityFeed({ showWritePost, showApplyNow, onCloseApplyNow, highlight
 export function CommunityPage() {
   const [showWritePost, setShowWritePost] = useState(false);
   const [showApplyNow, setShowApplyNow] = useState(false);
-  const { toggleUserSavedPost,} = useAppContext();  
+  const { toggleUserSavedPost, } = useAppContext();
   const location = useLocation();
 
   // Read highlight target from router state (set by SavedPostsModal)
@@ -215,8 +239,8 @@ export function CommunityPage() {
       onOpenComments={() => { }}
       onApplyNow={handleOpenApplyNow}
       onCloseApplyNow={handleCloseApplyNow}
-      onSaveGlobal={toggleUserSavedPost}    
-      >
+      onSaveGlobal={toggleUserSavedPost}
+    >
       <Box
         sx={{
           minHeight: "100vh",
@@ -246,9 +270,10 @@ export function CommunityPage() {
         <Box sx={{ width: "100%", flex: 1 }}>
           <CommunityFeed
             showWritePost={showWritePost}
+            onCloseWritePost={handleCloseWritePost}
             showApplyNow={showApplyNow}
             onCloseApplyNow={handleCloseApplyNow}
-             highlightedPostId={highlightedPostId}
+            highlightedPostId={highlightedPostId}
           />
         </Box>
 

@@ -189,21 +189,15 @@ function CreateBar({ onWritePost, onCreateJob }) {
 }
 
 // ─── Inner feed (needs CommunityProvider context) ────────────────────────────
-function CommunityFeed({ allPosts, highlightedPostId }) {
-  const [searchQuery, setSearchQuery] = useState("");
+function CommunityFeed({ posts, highlightedPostId }) {
 
-  const filteredPosts = useMemo(
-    () => allPosts.filter((p) => matchesSearch(p, searchQuery)),
-    [allPosts, searchQuery]
-  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-      {/* Search */}
-      <CommunitySearchBar value={searchQuery} onChange={setSearchQuery} />
+      
 
       {/* Feed */}
-      {filteredPosts.length === 0 ? (
+      {posts.length === 0 ? (
         <Box
           sx={{
             textAlign: "center",
@@ -218,17 +212,18 @@ function CommunityFeed({ allPosts, highlightedPostId }) {
           </Typography>
         </Box>
       ) : (
-        filteredPosts.map((post) =>
+        posts.map((post) =>
           post.type === "job" ? (
             <JobPostCard
               key={post.id}
               postId={post.id}
               company={post.company}
-              companyLocation={post.companyLocation}
               jobTitle={post.jobTitle}
-              jobType={post.jobType}
               jobCategory={post.jobCategory}
-              jobDescription={post.jobDescription}
+              jobShortDescription={post.jobShortDescription}
+              companyLocation={post.companyLocation}
+              jobType={post.jobType}
+              Img={post.Img}
               highlighted={highlightedPostId === post.id}
             />
           ) : (
@@ -241,7 +236,7 @@ function CommunityFeed({ allPosts, highlightedPostId }) {
               avatarColor={post.avatarColor}
               rtl={post.rtl || false}
               highlighted={highlightedPostId === post.id}
-              profileType = "company"
+              profileType="company"
             />
           )
         )
@@ -254,6 +249,7 @@ function CommunityFeed({ allPosts, highlightedPostId }) {
 export function CompanyCommunityPage() {
   const { toggleCompanySavedPost } = useAppContext();
   const location = useLocation();
+  
 
   const [highlightedPostId, setHighlightedPostId] = useState(
     location.state?.highlightPostId || null
@@ -279,6 +275,7 @@ export function CompanyCommunityPage() {
   const [createJobOpen, setCreateJobOpen] = useState(false);
   const [applyJobOpen, setApplyJobOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Dynamic posts (prepended to feed)
   const [dynamicPosts, setDynamicPosts] = useState([]);
@@ -289,6 +286,11 @@ export function CompanyCommunityPage() {
   const allPosts = useMemo(
     () => [...dynamicPosts, ...INITIAL_POSTS],
     [dynamicPosts]
+  );
+
+  const filteredPosts = useMemo(
+    () => allPosts.filter((p) => matchesSearch(p, searchQuery)),
+    [allPosts, searchQuery]
   );
 
   // Apply Now handler — always opens the overlay; overlay handles the error internally
@@ -320,10 +322,20 @@ export function CompanyCommunityPage() {
       id: `dyn-job-${Date.now()}`,
       type: "job",
       company: "Microsoft",
-      companyLocation: jobData.city || "Alexandria, Egypt",
       jobTitle: jobData.jobTitle,
-      jobType: jobData.locationMode,
-      jobDescription: jobData.description || `${jobData.jobTitle} at Microsoft.`,
+      jobCategory: jobData.category,
+      jobShortDescription: jobData.jobShortDescription || `${jobData.jobTitle} at Microsoft.`,
+      jobType: jobData.jobType,
+      jobLocationMode:jobData.locationMode,
+      companyLocation: jobData.city || "Alexandria, Egypt",
+      jobsalaryType:jobData.salaryType,
+      jobsalaryMin:jobData.salaryMin,
+      jobsalaryMax:jobData.salaryMax,
+      jobSkills:jobData.skills,
+      jobbannerImg:jobData.bannerImage,
+      jobAboutRole:jobData.aboutRole,
+      jobResponsibilities:jobData.responsibilities,
+      jobRequirements:jobData.requirements,
     };
     setDynamicPosts((prev) => [newJob, ...prev]);
   };
@@ -384,6 +396,12 @@ export function CompanyCommunityPage() {
 
             {/* RIGHT: Create bar + Feed */}
             <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+              {/* Search */}
+              <CommunitySearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
+
               {/* Create bar */}
               <CreateBar
                 onWritePost={() => setWritePostOpen(true)}
@@ -392,7 +410,7 @@ export function CompanyCommunityPage() {
 
               {/* Feed with search */}
               <CommunityFeed
-                allPosts={allPosts}
+                posts={filteredPosts}
                 highlightedPostId={highlightedPostId}
               />
             </Box>
@@ -412,6 +430,7 @@ export function CompanyCommunityPage() {
         open={writePostOpen}
         onClose={() => setWritePostOpen(false)}
         onSubmit={handlePostSubmit}
+        profileType="company"
       />
 
       {/* Create Job */}
