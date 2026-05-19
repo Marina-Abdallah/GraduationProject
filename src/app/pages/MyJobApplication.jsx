@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { MainNavbar } from "../components/MainNavbar";
-import { SearchBar } from "../components/SearchBar";
+import { JobSearchBar } from "../components/JobSearchBar";
 import { ApplicationFilters } from "../components/ApplicationFilters";
 import { JobApplicationCard } from "../components/JobApplicationCard";
 import { JobDetailsModal } from "../components/JobDetailsModal";
@@ -35,6 +35,7 @@ export function MyJobApplication() {
       console.log(err);
     }
   };
+  const [searchQuery, setSearchQuery]   = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("All Applications");
   const [selectedJob, setSelectedJob] = useState(null);
@@ -63,11 +64,13 @@ export function MyJobApplication() {
   }, []);
 
   return (
-    <div
-      //if i want navbar to be bold i should add "font-sans" in class name tag
-      className="min-h-screen flex flex-col items-center"
-      style={{
-        backgroundImage: `url(${backgroundImg})`,
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        background: `url(${backgroundImg})`,
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center",
@@ -85,16 +88,31 @@ export function MyJobApplication() {
         <MainNavbar />
       </Box>
 
-      <div className="w-full max-w-6xl px-4 flex-grow flex flex-col mt-12 mb-8">
-        <div className="w-full max-w-5xl mx-auto">
-          <h1 className="text-[#13206d] text-4xl font-bold mb-8">My Job Application</h1>
-          <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        </div>
+      <Box sx={{ flex: 1, width: "100%", maxWidth: 1200, px: { xs: 2, md: 4 }, pt: 4, pb: 8 }}>
+        <Typography
+          sx={{
+            color: NAVY,
+            fontSize: { xs: 28, sm: 36 },
+            fontWeight: 800,
+            fontFamily: "'Inter', sans-serif",
+            mb: 3,
+          }}
+        >
+          My Job Application
+        </Typography>
 
-        <ApplicationFilters
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-        />
+        <Box sx={{ mb: 2.5 }}>
+          {/* <SearchBar value={searchTerm} onChange={setSearchTerm} /> */}
+          <JobSearchBar value={searchQuery} onChange={setSearchQuery} />
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+          <ApplicationFilters
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+          />
+        </Box>
+
 
         {/* Jobs Grid */}
         {filteredJobs.length > 0 ? (
@@ -113,7 +131,7 @@ export function MyJobApplication() {
             No applications.
           </div>
         )}
-      </div>
+      </Box>
 
       <Footer />
 
@@ -122,6 +140,6 @@ export function MyJobApplication() {
         open={!!selectedJob}
         onClose={() => setSelectedJob(null)}
       />
-    </div>
+    </Box>
   );
 }

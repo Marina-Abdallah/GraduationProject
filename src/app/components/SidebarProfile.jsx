@@ -256,22 +256,26 @@ export function SidebarProfile() {
         <>
           <Divider sx={{ width: "100%", borderColor: `${NAVY}18` }} />
           <Box sx={{ width: "100%", display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            {skills.slice(0, 6).map((skill) => (
-              <Chip
-                key={skill}
-                label={skill}
-                size="small"
-                sx={{
-                  bgcolor: `rgba(144,186,239,0.15)`,
-                  color: NAVY,
-                  fontWeight: 600,
-                  fontSize: 11,
-                  border: `1px solid rgba(144,186,239,0.4)`,
-                  borderRadius: "8px",
-                  height: 24,
-                }}
-              />
-            ))}
+            {skills.slice(0, 6).map((skill) => {
+              const skillId = typeof skill === 'object' ? skill.id : skill;
+              const skillName = typeof skill === 'object' ? (skill.name || skill.skillName || "Unknown") : skill;
+              return (
+                <Chip
+                  key={skillId}
+                  label={skillName}
+                  size="small"
+                  sx={{
+                    bgcolor: `rgba(144,186,239,0.15)`,
+                    color: NAVY,
+                    fontWeight: 600,
+                    fontSize: 11,
+                    border: `1px solid rgba(144,186,239,0.4)`,
+                    borderRadius: "8px",
+                    height: 24,
+                  }}
+                />
+              );
+            })}
           </Box>
         </>
       )}

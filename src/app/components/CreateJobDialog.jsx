@@ -143,6 +143,7 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
     onSubmit?.({
       jobTitle: jobTitle.trim(),
       category, 
+      shortDesc,
       locationMode,
       jobType,
       city: city.trim(),

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
+import api from "../../api/axios";
 
 export const COMMUNITY_POSTS_DATA = {
   post1: {
@@ -34,13 +35,13 @@ export function useAppContext() {
 }
 
 const DEFAULT_PROFILE = {
-  name: "Marina Abdallah",
-  email: "mrmr.abdallah.gerges@gmail.com",
-  phone: "+20 109 104 3336",
-  birthdate: "21 March 2004",
-  bio: "I am a dedicated student majoring in Software Industry & Multimedia, specializing in .NET Core development, database management, APIs, and Razor Pages, with a strong passion for learning and building innovative solutions. Expected to graduate in 2026, I enjoy tackling technical challenges and turning ideas into functional prototypes. Currently, I am expanding my knowledge in back-end development using .NET while refining my skills in user-centric design, cybersecurity, and software development.",
-  headline: "UI/UX Designer",
-  major: "Software Industry and Multimedia",
+  name: "[FIRSTNAME]+[LASTNAME]",
+  email: "[EMAIL_ADDRESS]",
+  phone: "[PHONE_NUMBER]",
+  birthdate: "[BIRTHDATE]",
+  bio: "[BIO]",
+  headline: "[HEADLINE]",
+  major: "[MAJOR]",
   photo: null,
   resumeFileName: "",
   resumeScore: 0,
@@ -56,7 +57,7 @@ const DEFAULT_COMPANY = {
   photo: null,
 };
 
-const DEFAULT_SKILLS = ["APIs", "UI/UX", "SQL", "Entity Framework Core", "HTML", "ADO.NET", "MVC", "C#", "C++"];
+const DEFAULT_SKILLS = [];
 
 export function AppProvider({ children }) {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
@@ -65,25 +66,88 @@ export function AppProvider({ children }) {
   const [userSavedPostIds, setUserSavedPostIds] = useState(new Set());
   const [companySavedPostIds, setCompanySavedPostIds] = useState(new Set());
 
-  const updateProfile = useCallback((updates) => {
+  const updateProfile = useCallback(async (updates) => {
+    // Optimistically update the UI state
     setProfile((prev) => ({ ...prev, ...updates }));
+
+    // Send the partial update to the backend
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const dto = {};
+
+      if (updates.bio !== undefined) dto.bio = updates.bio;
+      if (updates.headline !== undefined) dto.headline = updates.headline;
+      if (updates.major !== undefined) dto.major = updates.major;
+      if (updates.university !== undefined) dto.university = updates.university;
+      if (updates.photo !== undefined) dto.pictureUrl = updates.photo;
+      if (updates.resumeFileName !== undefined) dto.cvUrl = updates.resumeFileName;
+      if (updates.phone !== undefined) dto.phone = updates.phone;
+      if (updates.birthdate !== undefined) dto.birthdate = updates.birthdate;
+      if (updates.address !== undefined) dto.address = updates.address;
+
+      if (updates.name !== undefined) {
+        const parts = updates.name.trim().split(" ");
+        dto.firstName = parts[0] || "";
+        dto.lastName = parts.length > 1 ? parts.slice(1).join(" ") : "";
+      }
+
+      // Send a PATCH request with the updated fields
+      const response = await api.patch("/Users/me/profile", dto, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // If the backend returns the updated profile object, sync the state with it
+      if (response.data && typeof response.data === 'object' && response.data.firstName !== undefined) {
+        const data = response.data;
+        setProfile((prev) => ({
+          ...prev,
+          name: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : (data.firstName || prev.name),
+          phone: data.phone ?? prev.phone,
+          birthdate: data.birthdate ?? prev.birthdate,
+          bio: data.bio ?? prev.bio,
+          headline: data.headline ?? prev.headline,
+          major: data.major ?? prev.major,
+          photo: data.pictureUrl ?? prev.photo,
+          resumeFileName: data.cvUrl ?? prev.resumeFileName,
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to update profile on backend", err);
+    }
   }, []);
   const updateCompany = useCallback((updates) => {
     setCompany((prev) => ({ ...prev, ...updates }));
   }, []);
 
   const addSkill = useCallback(
-    (skill) => {
-      const trimmed = skill?.trim();
-      if (trimmed && !skills.includes(trimmed)) {
-        setSkills((prev) => [...prev, trimmed]);
+    (skillObj) => {
+      if (typeof skillObj === 'string') {
+        const trimmed = skillObj.trim();
+        if (trimmed && !skills.find(s => s === trimmed || s.name === trimmed)) {
+          setSkills((prev) => [...prev, { id: trimmed, name: trimmed }]);
+        }
+      } else if (skillObj && skillObj.id) {
+        if (!skills.find(s => s.id === skillObj.id)) {
+          setSkills((prev) => [...prev, skillObj]);
+        }
       }
     },
     [skills]
   );
 
-  const removeSkill = useCallback((skill) => {
-    setSkills((prev) => prev.filter((s) => s !== skill));
+  const setSkillsList = useCallback((newSkills) => {
+    setSkills(newSkills);
+  }, []);
+
+  const removeSkill = useCallback((skillId) => {
+    setSkills((prev) => prev.filter((s) => {
+      if (typeof s === 'object') return s.id !== skillId;
+      return s !== skillId;
+    }));
   }, []);
 
   const toggleUserSavedPost = useCallback((postId) => {
@@ -132,6 +196,7 @@ export function AppProvider({ children }) {
         skills,
         addSkill,
         removeSkill,
+        setSkillsList,
         userSavedPostIds,
         companySavedPostIds,
         userSavedPosts,

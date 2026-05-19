@@ -1,11 +1,11 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "progrow",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite --host --open"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
