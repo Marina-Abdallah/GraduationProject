@@ -13,6 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
 import OtpModal from "./OTPoverlay";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
 
 function CompanySignUpCard() {
     const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +35,6 @@ function CompanySignUpCard() {
         handleClose();
     };
 
-    const [industry, setIndustry] = useState("");
     const industries = [
         { id: 1, label: 'Software Industry', },
         { id: 2, label: 'Marketing Agency', }
@@ -45,6 +45,52 @@ function CompanySignUpCard() {
     ];
 
     const [openOtp, setOpenOtp] = useState(false);
+
+    const [form, setForm] = useState({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        industryId: "",
+        address: "",
+        countryCode: "+20",
+        phone: "",
+        websiteUrl: "",
+        pictureUrl: "",
+    });
+
+    const handleChange = (e) => {
+        setForm((prev) => ({
+            ...prev,
+            [e.target.name]: e.target.value,
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            const dataToSend = {
+                name: form.name,
+                email: form.email,
+                password: form.password,
+                confirmPassword: form.confirmPassword,
+                industryId: Number(form.industryId),
+                address: form.address,
+                phone: `${form.countryCode}${form.phone}`,
+                websiteUrl: form.websiteUrl,
+                pictureUrl: form.pictureUrl,
+            };
+
+            const res = await api.post("/Companies/Register", dataToSend);
+
+            alert(res.data || "Company registered. OTP sent to email.");
+            setOpenOtp(true);
+        } catch (err) {
+            console.log(err.response?.data);
+            alert("Error registering company");
+        }
+    };
 
     return (
         <div className="SignUp-card">
@@ -58,6 +104,9 @@ function CompanySignUpCard() {
                 Company Account</h1>
             <div style={{ marginBottom: 15 }}>
                 <TextField
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
                     fullWidth
                     id="outlined"
                     label="Company Name"
@@ -68,6 +117,9 @@ function CompanySignUpCard() {
 
             <div style={{ marginBottom: 18 }}>
                 <TextField
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
                     fullWidth
                     type="email"
                     id="outlined"
@@ -80,6 +132,9 @@ function CompanySignUpCard() {
                 <FormControl fullWidth variant="outlined">
                     <InputLabel htmlFor="outlined-adornment-password" sx={{ top: "-7px" }}>Password</InputLabel>
                     <OutlinedInput
+                        name="password"
+                        value={form.password}
+                        onChange={handleChange}
                         size="small"
                         label="Password"
                         id="outlined-adornment-password"
@@ -107,6 +162,9 @@ function CompanySignUpCard() {
                 <FormControl fullWidth variant="outlined">
                     <InputLabel htmlFor="outlined-adornment-password" sx={{ top: "-7px" }}>Confirm</InputLabel>
                     <OutlinedInput
+                        name="confirmPassword"
+                        value={form.confirmPassword}
+                        onChange={handleChange}
                         size="small"
                         label="Password"
                         id="outlined-adornment-password"
@@ -137,8 +195,9 @@ function CompanySignUpCard() {
                     select
                     size="small"
                     label="Industry"
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}>
+                    name="industryId"
+                    value={form.industryId}
+                    onChange={handleChange}>
 
                     {industries.map((option) => (
                         <MenuItem key={option.id} value={option.id}>
@@ -149,6 +208,9 @@ function CompanySignUpCard() {
             </div>
             <div style={{ marginBottom: 15 }}>
                 <TextField
+                    name="address"
+                    value={form.address}
+                    onChange={handleChange}
                     fullWidth
                     id="outlined"
                     label="Company Address"
@@ -160,6 +222,9 @@ function CompanySignUpCard() {
             <Box sx={{ display: "flex", gap: 1 }}>
                 <TextField
                     id="outlined-select-currency"
+                    name="countryCode"
+                    value={form.countryCode}
+                    onChange={handleChange}
                     select
                     sx={{ width: 130, marginBottom: '15px' }}
                     size="small"
@@ -173,6 +238,9 @@ function CompanySignUpCard() {
                 </TextField>
                 <div style={{ width: 300, marginBottom: 15 }}>
                     <TextField
+                        name="phone"
+                        value={form.phone}
+                        onChange={handleChange}
                         fullWidth
                         id="outlined"
                         label="Phone Number"
@@ -183,6 +251,9 @@ function CompanySignUpCard() {
             </Box>
             <div style={{ marginBottom: 18 }}>
                 <TextField
+                    name="websiteUrl"
+                    value={form.websiteUrl}
+                    onChange={handleChange}
                     fullWidth
                     type="URL"
                     id="outlined"
@@ -192,6 +263,9 @@ function CompanySignUpCard() {
             </div>
             <div style={{ marginBottom: 18 }}>
                 <TextField
+                    name="pictureUrl"
+                    value={form.pictureUrl}
+                    onChange={handleChange}
                     fullWidth
                     type="URL"
                     id="outlined"
@@ -201,7 +275,7 @@ function CompanySignUpCard() {
             </div>
             <Button
                 fullWidth
-                onClick={() => setOpenOtp(true)}
+                onClick={handleSubmit}
                 sx={{
 
                     fontWeight: 'bold',
@@ -217,7 +291,9 @@ function CompanySignUpCard() {
             <OtpModal
                 open={openOtp}
                 handleClose={() => setOpenOtp(false)}
-                redirectPath="/CompanyJobs"
+                redirectPath="/CompanyLogin"
+                email={form.email}
+                verifyPath="/Companies/verify-email"
             />
 
             <p style={{ color: "gray" ,margin:10 }}>- OR -</p>

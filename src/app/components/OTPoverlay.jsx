@@ -10,7 +10,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 
-function OtpModal({ open, handleClose, redirectPath, email }) {
+function OtpModal({ open, handleClose, redirectPath, email, verifyPath = "/Users/verify-email" }) {
   const navigate = useNavigate();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const inputsRef = useRef([]);
@@ -32,7 +32,7 @@ function OtpModal({ open, handleClose, redirectPath, email }) {
 
         const code = otp.join("");
 
-        const res = await api.post("/Users/verify-email", {
+        const res = await api.post(verifyPath, {
           email,
             Otp:code
         });
