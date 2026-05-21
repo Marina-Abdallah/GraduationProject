@@ -48,14 +48,15 @@ const DEFAULT_PROFILE = {
   resumeScore: 0,
 };
 const DEFAULT_COMPANY = {
-  name: "Microsoft",
+  name: "[COMPANY_NAME]",
   email: "[EMAIL_ADDRESS]",
-  overview: "Every company has a mission. What's ours? To empower every person and every organization to achieve more. We believe technology can and should be a force for good and that meaningful innovation contributes to a brighter world in the future and today. Our culture doesn’t just encourage curiosity; it embraces it. Each day we make progress together by showing up as our authentic selves. We show up with a learn-it-all mentality. We show up cheering on others, knowing their success doesn't diminish our own. We show up every day open to learning our own biases, changing our behavior, and inviting in differences. Because impact matters.  Microsoft operates in 190 countries and is made up of approximately 228,000 passionate employees worldwide.",
-  industry: "Software Industry",
-  website: "www.microsoft.com",
-  address: "Cairo, Egypt",
-  phone: "+20 109 104 3336",
-  photo: null,
+  overview: "[OVERVIEW]",
+  industry: "[INDUSTRY]",
+  industryId: "",
+  website: "[WEBSITE]",
+  address: "[ADDRESS]",
+  phone: "[PHONE_NUMBER]",
+  photo: defaultPhoto,
 };
 
 const DEFAULT_SKILLS = [];
@@ -63,6 +64,7 @@ const DEFAULT_SKILLS = [];
 export function AppProvider({ children }) {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [company, setCompany] = useState(DEFAULT_COMPANY);
+  const [industries, setIndustries] = useState([]);
   const [skills, setSkills] = useState(DEFAULT_SKILLS);
   const [userSavedPostIds, setUserSavedPostIds] = useState(new Set());
   const [companySavedPostIds, setCompanySavedPostIds] = useState(new Set());
@@ -103,6 +105,75 @@ export function AppProvider({ children }) {
       }
     };
 
+    const fetchCompanyData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const response = await api.get("/Companies/me/overview", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = response.data;
+
+        const photoUrl = data.pictureUrl
+          ? `https://localhost:7292${data.pictureUrl}`
+          : defaultPhoto;
+
+        setCompany((prev) => ({
+          ...prev,
+          name: data.name ?? prev.name,
+          email: data.email ?? prev.email,
+          overview: data.overview ?? prev.overview,
+          industry: data.industry ?? data.industryName ?? prev.industry,
+          industryId: data.industryId ?? prev.industryId,
+          website: data.websiteUrl ?? data.website ?? prev.website,
+          address: data.address ?? prev.address,
+          phone: data.phone ?? prev.phone,
+          photo: photoUrl,
+        }));
+      } catch (error) {
+        console.error("Error fetching company data:", error);
+      }
+    };
+
+    const fetchIndustriesData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const requestIndustryList = async (url) => {
+          const resp = await api.get(url, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          return resp.data;
+        };
+
+        let data = null;
+        try {
+          data = await requestIndustryList("/Companies/industries");
+        } catch (err) {
+          if (err.response?.status === 404) {
+            data = await requestIndustryList("/Industries");
+          } else {
+            throw err;
+          }
+        }
+
+        if (Array.isArray(data)) {
+          const normalized = data.map((item) => ({
+            id: item.id ?? item.industryId ?? item.value ?? item.label ?? item.name,
+            name: item.name ?? item.label ?? item.industryName ?? item.value ?? item,
+          }));
+          setIndustries(normalized.filter((item) => item.id !== undefined));
+        }
+      } catch (error) {
+        console.error("Error fetching industries:", error);
+      }
+    };
+
     const fetchSkillsData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -127,6 +198,8 @@ export function AppProvider({ children }) {
     };
 
     fetchProfileData();
+    fetchCompanyData();
+    fetchIndustriesData();
     fetchSkillsData();
   }, []);
 
@@ -221,9 +294,56 @@ export function AppProvider({ children }) {
       console.error("Failed to update profile on backend", err);
     }
   }, []);
-  const updateCompany = useCallback((updates) => {
+  const updateCompany = useCallback(async (updates) => {
+    const previousCompany = company;
     setCompany((prev) => ({ ...prev, ...updates }));
-  }, []);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const dto = {};
+      if (updates.name !== undefined) dto.name = updates.name;
+      if (updates.email !== undefined) dto.email = updates.email;
+      if (updates.overview !== undefined) dto.overview = updates.overview;
+      if (updates.industryId !== undefined) dto.industryId = updates.industryId;
+      if (updates.website !== undefined) dto.websiteUrl = updates.website;
+      if (updates.address !== undefined) dto.address = updates.address;
+      if (updates.phone !== undefined) dto.phone = updates.phone;
+
+      const response = await api.patch("/Companies/me/overview", dto, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = response.data;
+      if (data && typeof data === "object") {
+        setCompany((prev) => ({
+          ...prev,
+          name: data.name ?? prev.name,
+          email: data.email ?? prev.email,
+          overview: data.overview ?? prev.overview,
+          industryId: data.industryId ?? prev.industryId,
+          website: data.websiteUrl ?? data.website ?? prev.website,
+          address: data.address ?? prev.address,
+          phone: data.phone ?? prev.phone,
+          photo: data.pictureUrl
+            ? `https://localhost:7292${data.pictureUrl}`
+            : prev.photo,
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to update company on backend", {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        request: err.request,
+        config: err.config,
+      });
+      setCompany(previousCompany);
+    }
+  }, [company]);
 
   const addSkill = useCallback(
     (skillObj) => {
@@ -293,6 +413,7 @@ export function AppProvider({ children }) {
       value={{
         profile,
         company,
+        industries,
         updateProfile,
         updateCompany,
         skills,

@@ -48,22 +48,26 @@ const labelSx = {
     fontFamily: "'Inter', sans-serif",
     mb: "4px",
 };
-const Industries = ["Software Industry", "Marketing Agency",];
+const Industries = [];
 
 export function CompanyDescriptionCard() {
-    const { company = {}, updateCompany } = useAppContext();
+    const { company = {}, industries = [], updateCompany } = useAppContext();
     const [editMode, setEditMode] = useState(false);
     const [draft, setDraft] = useState({});
+
+    const industryOptions = industries.length > 0
+        ? industries
+        : [{ id: company.industryId ?? company.industry ?? "", name: company.industry ?? "Industry" }];
 
     const handleEdit = () => {
         setDraft({
             name: company.name,
             email: company.email,
             overview: company.overview,
-            industry: company.industry,
+            industryId: company.industryId ?? "",
             website: company.website,
             address: company.address,
-            phoneNumber: company.phoneNumber,
+            phone: company.phone,
         });
         setEditMode(true);
     };
@@ -82,6 +86,11 @@ export function CompanyDescriptionCard() {
         if (editMode) {
             return draft?.[key] ?? "";
         }
+
+        if (key === "industryId") {
+            return company.industryId ?? industries.find((item) => item.name === company.industry)?.id ?? "";
+        }
+
         return company?.[key] ?? "";
     };
 
@@ -221,13 +230,13 @@ export function CompanyDescriptionCard() {
                         select
                         size="small"
                         disabled={!editMode}
-                        value={val("industry")}
-                        onChange={set("industry")}
+                        value={val("industryId")}
+                        onChange={set("industryId")}
                         sx={inputFieldSx}
                     >
-                        {Industries.map((item) => (
-                            <MenuItem key={item} value={item} sx={{ fontSize: 14, color: NAVY }}>
-                                {item}
+                        {industryOptions.map((item) => (
+                            <MenuItem key={item.id} value={item.id} sx={{ fontSize: 14, color: NAVY }}>
+                                {item.name}
                             </MenuItem>
                         ))}
                     </TextField>

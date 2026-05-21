@@ -6,46 +6,12 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useAppContext } from "./AppContext";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
+import defaultPhoto from "../../assets/defaultImg.png";
 
 
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
-
-// function MSLogoCircle() {
-//   return (
-//     <Box
-//       sx={{
-//         width: 100,
-//         height: 100,
-//         bgcolor: "white",
-//         borderRadius: "50%",
-//         display: "flex",
-//         alignItems: "center",
-//         justifyContent: "center",
-//         boxShadow: "0 4px 20px rgba(132,251,162,0.45), 0 2px 8px rgba(0,0,0,0.06)",
-//         border: "3px solid rgba(132,251,162,0.4)",
-//       }}
-//     >
-//       <Box
-//         sx={{
-//           display: "grid",
-//           gridTemplateColumns: "1fr 1fr",
-//           gap: "4px",
-//           width: 58,
-//           height: 58,
-//           p: "7px",
-//         }}
-//       >
-//         <Box sx={{ bgcolor: "#F25022", borderRadius: "2px" }} />
-//         <Box sx={{ bgcolor: "#7FBA00", borderRadius: "2px" }} />
-//         <Box sx={{ bgcolor: "#00A4EF", borderRadius: "2px" }} />
-//         <Box sx={{ bgcolor: "#FFB900", borderRadius: "2px" }} />
-//       </Box>
-//     </Box>
-//   );
-// }
 
 function StatBox({ value, label }) {
   
@@ -144,7 +110,7 @@ export function CompanySidebar() {
             lineHeight: 1.3,
           }}
         >
-          Microsoft
+          {company.name || "[COMPANY NAME]"}
         </Typography>
         <Box
           sx={{
@@ -163,7 +129,7 @@ export function CompanySidebar() {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            Alexandria, Egypt
+            {company.location || "[LOCATION]"}
           </Typography>
         </Box>
       </Box>
@@ -180,7 +146,7 @@ export function CompanySidebar() {
           textAlign: "center",
         }}
       >
-        Technology Company
+        {company.category || "[INDUSTRY]"}
       </Typography>
 
       {/* Description */}
@@ -194,9 +160,7 @@ export function CompanySidebar() {
           lineHeight: 1.65,
         }}
       >
-        We believe technology can and should be a force for good and that
-        meaningful innovation contributes to a brighter world in the future and
-        today
+        {company.description || "[COMPANY DESCRIPTION]"}
       </Typography>
 
       <Divider sx={{ width: "100%", borderColor: `${NAVY}18` }} />
