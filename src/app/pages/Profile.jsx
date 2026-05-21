@@ -17,66 +17,7 @@ export function ProfilePage() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const { updateProfile, setSkillsList } = useAppContext();
 
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
 
-        // Replace "/Users/Profile" with your actual backend endpoint if different
-        const response = await api.get("/Users/me/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        const data = response.data;
-        
-        // Map the backend response to the context state based on ProfileResponseDto
-        updateProfile({
-          name: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : (data.firstName || ""),
-          phone: data.phone,
-          birthdate: data.birthdate,
-          bio: data.bio,
-          headline: data.headline,
-          major: data.major,
-          photo: data.pictureUrl,
-          resumeFileName: data.cvUrl,
-        });
-
-      } catch (error) {
-        console.error("Error fetching profile data:", error);
-      }
-    };
-
-    const fetchSkillsData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        const response = await api.get("/Users/skills", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        // Assuming response.data is an array of skill objects [{id, name}, ...]
-        if (Array.isArray(response.data)) {
-           // We will handle objects in AppContext, or if they are strings, handle them
-           const formattedSkills = response.data.map(skill => {
-             if (typeof skill === 'string') return { id: skill, name: skill };
-             return { id: skill.id || skill.skillId || skill.name, name: skill.name || skill.skillName || "Unknown Skill" };
-           });
-           setSkillsList(formattedSkills);
-        }
-      } catch (error) {
-        console.error("Error fetching skills:", error);
-      }
-    };
-
-    fetchProfileData();
-    fetchSkillsData();
-  }, [updateProfile, setSkillsList]);
 
   return (
     <Box

@@ -62,8 +62,10 @@ function UserLoginCard() {
       });
 
       alert("Login successful!");
-      // save token
+      // save token and user ID
       localStorage.setItem("token", res.data.token);
+      if (res.data.id) localStorage.setItem("userId", res.data.id);
+      else if (res.data.userId) localStorage.setItem("userId", res.data.userId);
 
       // go to home
       navigate("/MyJobApplication");

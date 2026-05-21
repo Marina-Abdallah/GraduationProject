@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import api from "../../api/axios";
+import defaultPhoto from "../../assets/defaultImg.png";
 
 export const COMMUNITY_POSTS_DATA = {
   post1: {
@@ -42,7 +43,7 @@ const DEFAULT_PROFILE = {
   bio: "[BIO]",
   headline: "[HEADLINE]",
   major: "[MAJOR]",
-  photo: null,
+  photo: defaultPhoto,
   resumeFileName: "",
   resumeScore: 0,
 };
@@ -66,6 +67,95 @@ export function AppProvider({ children }) {
   const [userSavedPostIds, setUserSavedPostIds] = useState(new Set());
   const [companySavedPostIds, setCompanySavedPostIds] = useState(new Set());
 
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const response = await api.get("/Users/me/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = response.data;
+
+        const photoUrl = data.pictureUrl
+          ? `https://localhost:7292${data.pictureUrl}`
+          : defaultPhoto;
+
+        setProfile((prev) => ({
+          ...prev,
+          name: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : (data.firstName || ""),
+          email: data.email,
+          phone: data.phone,
+          birthdate: data.birthdate,
+          bio: data.bio,
+          headline: data.headline,
+          major: data.major,
+          photo: photoUrl || defaultPhoto,
+          resumeFileName: data.cvUrl,
+        }));
+
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      }
+    };
+
+    const fetchSkillsData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const response = await api.get("/Users/skills", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (Array.isArray(response.data)) {
+          const formattedSkills = response.data.map(skill => {
+            if (typeof skill === 'string') return { id: skill, name: skill };
+            return { id: skill.id || skill.skillId || skill.name, name: skill.name || skill.skillName || "Unknown Skill" };
+          });
+          setSkills(formattedSkills);
+        }
+      } catch (error) {
+        console.error("Error fetching skills:", error);
+      }
+    };
+
+    fetchProfileData();
+    fetchSkillsData();
+  }, []);
+
+  const uploadPhoto = async (file) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return null;
+
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      const response = await api.post(
+        "/Users/me/profile/photo",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      return response.data.pictureUrl || response.data.PictureUrl;
+    } catch (err) {
+      console.error("Photo upload failed:", err);
+      return null;
+    }
+  };
+
   const updateProfile = useCallback(async (updates) => {
     // Optimistically update the UI state
     setProfile((prev) => ({ ...prev, ...updates }));
@@ -75,17 +165,26 @@ export function AppProvider({ children }) {
       const token = localStorage.getItem("token");
       if (!token) return;
 
+      // Upload photo if file exists
+      if (updates.photoFile) {
+        const savedPhotoUrl = await uploadPhoto(updates.photoFile);
+
+        if (savedPhotoUrl) {
+          updates.photo = `https://localhost:7292${savedPhotoUrl}`;
+        }
+      }
+
       const dto = {};
 
       if (updates.bio !== undefined) dto.bio = updates.bio;
       if (updates.headline !== undefined) dto.headline = updates.headline;
       if (updates.major !== undefined) dto.major = updates.major;
       if (updates.university !== undefined) dto.university = updates.university;
-      if (updates.photo !== undefined) dto.pictureUrl = updates.photo;
       if (updates.resumeFileName !== undefined) dto.cvUrl = updates.resumeFileName;
       if (updates.phone !== undefined) dto.phone = updates.phone;
       if (updates.birthdate !== undefined) dto.birthdate = updates.birthdate;
       if (updates.address !== undefined) dto.address = updates.address;
+      if (updates.email !== undefined) dto.email = updates.email;
 
       if (updates.name !== undefined) {
         const parts = updates.name.trim().split(" ");
@@ -106,12 +205,15 @@ export function AppProvider({ children }) {
         setProfile((prev) => ({
           ...prev,
           name: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : (data.firstName || prev.name),
+          email: data.email ?? prev.email,
           phone: data.phone ?? prev.phone,
           birthdate: data.birthdate ?? prev.birthdate,
           bio: data.bio ?? prev.bio,
           headline: data.headline ?? prev.headline,
           major: data.major ?? prev.major,
-          photo: data.pictureUrl ?? prev.photo,
+          photo: data.pictureUrl
+            ? `https://localhost:7292${data.pictureUrl}`
+            : prev.photo,
           resumeFileName: data.cvUrl ?? prev.resumeFileName,
         }));
       }
