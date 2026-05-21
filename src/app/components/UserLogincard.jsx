@@ -9,7 +9,6 @@ import Button from '@mui/material/Button';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
-import OtpModal from "./OTPoverlay";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 
