@@ -43,8 +43,17 @@ function StatBox({ value, label }) {
 }
 
 export function CompanySidebar() {
-  const { company } = useAppContext();
+  const { company, industries = [], isCompanyLoading } = useAppContext();
   const navigate = useNavigate();
+
+  const industryName =
+    company.industry ||
+    industries.find((item) => item.id === company.industryId)?.name ||
+    "[INDUSTRY]";
+
+  const addressText = isCompanyLoading ? "Loading..." : (company.address || "[ADDRESS]");
+  const industryText = isCompanyLoading ? "Loading..." : industryName;
+  const overviewText = isCompanyLoading ? "Loading..." : (company.overview || "[OVERVIEW]");
 
   return (
     <Box
@@ -129,7 +138,7 @@ export function CompanySidebar() {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            {company.location || "[LOCATION]"}
+            {addressText}
           </Typography>
         </Box>
       </Box>
@@ -146,7 +155,7 @@ export function CompanySidebar() {
           textAlign: "center",
         }}
       >
-        {company.category || "[INDUSTRY]"}
+        {industryText}
       </Typography>
 
       {/* Description */}
@@ -160,7 +169,7 @@ export function CompanySidebar() {
           lineHeight: 1.65,
         }}
       >
-        {company.description || "[COMPANY DESCRIPTION]"}
+        {overviewText}
       </Typography>
 
       <Divider sx={{ width: "100%", borderColor: `${NAVY}18` }} />

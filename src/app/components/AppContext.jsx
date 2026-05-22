@@ -64,6 +64,7 @@ const DEFAULT_SKILLS = [];
 export function AppProvider({ children }) {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [company, setCompany] = useState(DEFAULT_COMPANY);
+  const [isCompanyLoading, setIsCompanyLoading] = useState(true);
   const [industries, setIndustries] = useState([]);
   const [skills, setSkills] = useState(DEFAULT_SKILLS);
   const [userSavedPostIds, setUserSavedPostIds] = useState(new Set());
@@ -107,8 +108,12 @@ export function AppProvider({ children }) {
 
     const fetchCompanyData = async () => {
       try {
+        setIsCompanyLoading(true);
         const token = localStorage.getItem("token");
-        if (!token) return;
+        if (!token) {
+          setIsCompanyLoading(false);
+          return;
+        }
 
         const response = await api.get("/Companies/me/overview", {
           headers: {
@@ -127,7 +132,7 @@ export function AppProvider({ children }) {
           name: data.name ?? prev.name,
           email: data.email ?? prev.email,
           overview: data.overview ?? prev.overview,
-          industry: data.industry ?? data.industryName ?? prev.industry,
+          industry: data.industryName ?? data.industry ?? prev.industry,
           industryId: data.industryId ?? prev.industryId,
           website: data.websiteUrl ?? data.website ?? prev.website,
           address: data.address ?? prev.address,
@@ -136,18 +141,18 @@ export function AppProvider({ children }) {
         }));
       } catch (error) {
         console.error("Error fetching company data:", error);
+      } finally {
+        setIsCompanyLoading(false);
       }
     };
 
     const fetchIndustriesData = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) return;
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
 
         const requestIndustryList = async (url) => {
-          const resp = await api.get(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const resp = await api.get(url, { headers });
           return resp.data;
         };
 
@@ -324,6 +329,7 @@ export function AppProvider({ children }) {
           name: data.name ?? prev.name,
           email: data.email ?? prev.email,
           overview: data.overview ?? prev.overview,
+          industry: data.industryName ?? data.industry ?? prev.industry,
           industryId: data.industryId ?? prev.industryId,
           website: data.websiteUrl ?? data.website ?? prev.website,
           address: data.address ?? prev.address,
@@ -413,6 +419,7 @@ export function AppProvider({ children }) {
       value={{
         profile,
         company,
+        isCompanyLoading,
         industries,
         updateProfile,
         updateCompany,

@@ -6,6 +6,7 @@ import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import Button from '@mui/material/Button';
+import Typography from "@mui/material/Typography";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
@@ -14,8 +15,10 @@ import Box from '@mui/material/Box';
 import OtpModal from "./OTPoverlay";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { useAppContext } from "./AppContext";
 
 function CompanySignUpCard() {
+    const { industries = [] } = useAppContext();
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -35,10 +38,9 @@ function CompanySignUpCard() {
         handleClose();
     };
 
-    const industries = [
-        { id: 1, label: 'Software Industry', },
-        { id: 2, label: 'Marketing Agency', }
-    ];
+    const industryOptions = industries.length > 0
+        ? industries
+        : [{ id: "", name: "Industry" }];
 
     const phones = [
         { value: +20, label: 'Egypt(+20)', }
@@ -58,6 +60,8 @@ function CompanySignUpCard() {
         websiteUrl: "",
         pictureUrl: "",
     });
+    const [photoFile, setPhotoFile] = useState(null);
+    const [photoError, setPhotoError] = useState("");
 
     const handleChange = (e) => {
         setForm((prev) => ({
@@ -66,23 +70,36 @@ function CompanySignUpCard() {
         }));
     };
 
+    const handlePhotoChange = (e) => {
+        const file = e.target.files?.[0] || null;
+        setPhotoFile(file);
+        if (file) setPhotoError("");
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        try {
-            const dataToSend = {
-                name: form.name,
-                email: form.email,
-                password: form.password,
-                confirmPassword: form.confirmPassword,
-                industryId: Number(form.industryId),
-                address: form.address,
-                phone: `${form.countryCode}${form.phone}`,
-                websiteUrl: form.websiteUrl,
-                pictureUrl: form.pictureUrl,
-            };
+        if (!photoFile) {
+            setPhotoError("Logo photo is required.");
+            return;
+        }
 
-            const res = await api.post("/Companies/Register", dataToSend);
+        try {
+            const dataToSend = new FormData();
+            dataToSend.append("name", form.name);
+            dataToSend.append("email", form.email);
+            dataToSend.append("password", form.password);
+            dataToSend.append("confirmPassword", form.confirmPassword);
+            dataToSend.append("industryId", String(Number(form.industryId)));
+            dataToSend.append("address", form.address);
+            dataToSend.append("phone", `${form.countryCode}${form.phone}`);
+            dataToSend.append("websiteUrl", form.websiteUrl);
+            dataToSend.append("pictureUrl", form.pictureUrl);
+            if (photoFile) dataToSend.append("photo", photoFile);
+
+            const res = await api.post("/Companies/Register", dataToSend, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
             alert(res.data || "Company registered. OTP sent to email.");
             setOpenOtp(true);
@@ -199,9 +216,9 @@ function CompanySignUpCard() {
                     value={form.industryId}
                     onChange={handleChange}>
 
-                    {industries.map((option) => (
-                        <MenuItem key={option.id} value={option.id}>
-                            {option.label}
+                    {industryOptions.map((option) => (
+                        <MenuItem key={option.id || option.name} value={option.id}>
+                            {option.name}
                         </MenuItem>
                     ))}
                 </TextField>
@@ -261,17 +278,38 @@ function CompanySignUpCard() {
                     size="small"
                 />
             </div>
-            <div style={{ marginBottom: 18 }}>
-                <TextField
-                    name="pictureUrl"
-                    value={form.pictureUrl}
-                    onChange={handleChange}
-                    fullWidth
-                    type="URL"
-                    id="outlined"
-                    label="Logo URL"
-                    size="small"
-                />
+            <div style={{ marginBottom: 18, textAlign: "left" }}>
+                <InputLabel sx={{ mb: 0.5, fontSize: 13 }}>Logo Photo</InputLabel>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Button
+                        variant="outlined"
+                        component="label"
+                        sx={{
+                            color: "#13206D",
+                            borderColor: "#84FBA2",
+                            textTransform: "none",
+                            fontWeight: 600,
+                            "&:hover": { borderColor: "#6ef094", bgcolor: "rgba(132,251,162,0.08)" },
+                        }}
+                    >
+                        {photoFile ? "Change Photo" : "Upload Photo"}
+                        <input
+                            hidden
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoChange}
+                            required
+                        />
+                    </Button>
+                    <Typography sx={{ fontSize: 12, color: "#5a6ba5" }}>
+                        {photoFile ? photoFile.name : "No file selected"}
+                    </Typography>
+                </Box>
+                {photoError && (
+                    <Typography sx={{ mt: 0.5, fontSize: 12, color: "#d32f2f" }}>
+                        {photoError}
+                    </Typography>
+                )}
             </div>
             <Button
                 fullWidth
