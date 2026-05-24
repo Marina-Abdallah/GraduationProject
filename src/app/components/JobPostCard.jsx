@@ -49,18 +49,18 @@ export function JobPostCard({
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
   const [localComments, setLocalComments] = useState([]);
- // const { company } = useAppContext();
+  //const { company } = useAppContext();
 
 
   const handleSubmitComment = () => {
     const trimmed = commentInput.trim();
-    if (!trimmed) return;
+    if (!trimmed) return
     setLocalComments((prev) => [
       ...prev,
       {
         id: Date.now().toString(),
         text: trimmed,
-        author: profile.name || "Marina Abdallah",
+        author: profile.name || "[NAME]",
         avatarSrc: profile.photo || defaultPhoto,
         time: "Just now",
       },

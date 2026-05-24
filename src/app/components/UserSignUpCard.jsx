@@ -253,6 +253,7 @@ function UserSignUpCard() {
                 handleClose={() => setOpenOtp(false)}
                 redirectPath="/MyJobApplication"
                 email={form.email}
+                verifyPath = "/Users/verify-email"
             />
 
             <p style={{ color: "gray", margin: 10 }}>- OR -</p>

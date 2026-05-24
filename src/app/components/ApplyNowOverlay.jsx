@@ -166,7 +166,7 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
         {/* ── Left panel: job detail ─────────────────────────────── */}
         <div
           style={{
-            flex: "0 0 45%",
+            flex: 1,//"0 0 45%",
             background: `linear-gradient(160deg, rgba(144,186,239,0.12) 0%, rgba(132,251,162,0.08) 100%)`,
             borderRight: `1px solid rgba(19,32,109,0.08)`,
             overflowY: "auto",
@@ -206,8 +206,8 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
                 <span style={{ color: LIGHT_BLUE, fontSize: 14 }}>{JOB.type}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
-              <CategoryIcon sx={{ fontSize: 14, color: LIGHT_BLUE }} />
-              <span style={{ color: LIGHT_BLUE, fontSize: 14 }}>{JOB.category}</span> 
+                <CategoryIcon sx={{ fontSize: 14, color: LIGHT_BLUE }} />
+                <span style={{ color: LIGHT_BLUE, fontSize: 14 }}>{JOB.category}</span>
               </div>
             </div>
           </div>
@@ -266,7 +266,7 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
         </div>
 
         {/* ── Right panel: form ──────────────────────────────────── */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "36px 32px", position: "relative" }}>
+        <div style={{flex: 1, overflowY: "auto", padding: "36px 32px", position: "relative", scrollbarWidth: "none",msOverflowStyle: "none" }}>
           {/* Close button */}
           <IconButton
             onClick={handleClose}
@@ -292,7 +292,7 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
               <CheckCircleIcon sx={{ fontSize: 72, color: GREEN }} />
               <h3 style={{ color: NAVY, fontSize: 20, fontWeight: 700, margin: 0 }}>Application Submitted!</h3>
               <p style={{ color: NAVY, opacity: 0.6, fontSize: 15, margin: 0 }}>
-                We've received your application for <strong>Frontend Developer</strong> at MicroSoft.
+                We've received your application for <strong>{job.title}</strong> at {company.name}.
               </p>
             </div>
           ) : submitResult === "error" ? (
@@ -432,7 +432,7 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
               <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" style={{ display: "none" }} onChange={handleFileChange} />
 
               {/* ── COVER LETTER ─────────────────────────── */}
-              <label style={{ display: "block", color: NAVY, fontSize: 12, fontWeight: 700, letterSpacing: 1, margin: "22px 0 10px" }}>
+              {/* <label style={{ display: "block", color: NAVY, fontSize: 12, fontWeight: 700, letterSpacing: 1, margin: "22px 0 10px" }}>
                 COVER LETTER <span style={{ color: NAVY, opacity: 0.4, fontWeight: 400, letterSpacing: 0, fontSize: 12 }}>(OPTIONAL)</span>
               </label>
 
@@ -463,7 +463,7 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false }) {
                 <span style={{ color: coverLetter.length >= MAX_COVER ? "#C32929" : NAVY, opacity: 0.5, fontSize: 12 }}>
                   {coverLetter.length} / {MAX_COVER}
                 </span>
-              </div>
+              </div> */}
 
               {/* ── PHONE + PORTFOLIO ─────────────────────── */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 22 }}>

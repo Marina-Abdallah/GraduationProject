@@ -43,7 +43,7 @@ function StatBox({ value, label }) {
 }
 
 export function CompanySidebar() {
-  const { company } = useAppContext();
+  const { company, industries=[] } = useAppContext();
   const navigate = useNavigate();
 
   return (
@@ -129,7 +129,7 @@ export function CompanySidebar() {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            {company.location || "[LOCATION]"}
+            {company.address || "[LOCATION]"}
           </Typography>
         </Box>
       </Box>
@@ -146,7 +146,7 @@ export function CompanySidebar() {
           textAlign: "center",
         }}
       >
-        {company.category || "[INDUSTRY]"}
+        {company.industry || industries.find((item) => item.id === company.industryId)?.name ||"[INDUSTRY]"}
       </Typography>
 
       {/* Description */}
@@ -160,7 +160,7 @@ export function CompanySidebar() {
           lineHeight: 1.65,
         }}
       >
-        {company.description || "[COMPANY DESCRIPTION]"}
+        {company.overview || "[COMPANY OVERVIEW]"}
       </Typography>
 
       <Divider sx={{ width: "100%", borderColor: `${NAVY}18` }} />

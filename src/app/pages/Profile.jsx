@@ -131,7 +131,7 @@ export function ProfilePage() {
         onClose={() => setSavedPostsOpen(false)}
         profileType="user"
       />
-      <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} />
+      <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} type="user" />
     </Box>
   );
 }

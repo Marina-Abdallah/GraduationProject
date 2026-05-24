@@ -145,7 +145,7 @@ export function JobCard({ job }) {
                   lineHeight: 1.2,
                 }}
               >
-                {job.company}
+                {company.name}
               </Typography>
               <Typography
                 sx={{
@@ -155,7 +155,7 @@ export function JobCard({ job }) {
                   textShadow: "0 1px 3px rgba(0,0,0,0.5)",
                 }}
               >
-                {job.location}
+                {job.location || "[ADDRESS]"}
               </Typography>
             </Box>
           </Box>

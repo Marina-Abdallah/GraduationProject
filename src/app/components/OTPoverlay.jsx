@@ -10,7 +10,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 
-function OtpModal({ open, handleClose, redirectPath, email, verifyPath = "/Users/verify-email" }) {
+function OtpModal({ open, handleClose, redirectPath, email, verifyPath }) {
   const navigate = useNavigate();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const inputsRef = useRef([]);

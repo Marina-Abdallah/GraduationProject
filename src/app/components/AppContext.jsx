@@ -127,7 +127,7 @@ export function AppProvider({ children }) {
           name: data.name ?? prev.name,
           email: data.email ?? prev.email,
           overview: data.overview ?? prev.overview,
-          industry: data.industry ?? data.industryName ?? prev.industry,
+          industry: data.industryName ?? data.industry ?? prev.industry,
           industryId: data.industryId ?? prev.industryId,
           website: data.websiteUrl ?? data.website ?? prev.website,
           address: data.address ?? prev.address,
@@ -142,12 +142,10 @@ export function AppProvider({ children }) {
     const fetchIndustriesData = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) return;
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
 
         const requestIndustryList = async (url) => {
-          const resp = await api.get(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const resp = await api.get(url, { headers });
           return resp.data;
         };
 
@@ -324,6 +322,7 @@ export function AppProvider({ children }) {
           name: data.name ?? prev.name,
           email: data.email ?? prev.email,
           overview: data.overview ?? prev.overview,
+          industry: data.industryName ?? data.industry ?? prev.industry,
           industryId: data.industryId ?? prev.industryId,
           website: data.websiteUrl ?? data.website ?? prev.website,
           address: data.address ?? prev.address,

@@ -1,13 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
 
-export function LogoutDialog({ open, onClose }) {
+export function LogoutDialog({ open, onClose, type }) {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleConfirm = () => {
-    onClose();
-    navigate("/");
+  const handleConfirm = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        const logoutPath = profileType === "company" ? "/Companies/logout" : "/Users/logout";
+        await api.post(
+          logoutPath,
+          null,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      setIsSubmitting(false);
+      onClose();
+      navigate("/");
+    }
   };
 
   return (
@@ -56,6 +82,7 @@ export function LogoutDialog({ open, onClose }) {
             {/* NO — green */}
             <Button
               onClick={onClose}
+              disabled={isSubmitting}
               sx={{
                 bgcolor: "#84fba2",
                 color: "#13206d",
@@ -75,6 +102,7 @@ export function LogoutDialog({ open, onClose }) {
             {/* Yes — red */}
             <Button
               onClick={handleConfirm}
+              disabled={isSubmitting}
               sx={{
                 bgcolor: "#ff383c",
                 color: "white",

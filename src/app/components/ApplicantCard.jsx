@@ -4,15 +4,15 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 
-const NAVY       = "#13206d";
-const GREEN      = "#84fba2";
+const NAVY = "#13206d";
+const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
 // ── AI match badge colour ─────────────────────────────────────────────────────
 function matchColor(score) {
-  if (score >= 75) return { bg: GREEN,      text: NAVY };
-  if (score >= 50) return { bg: "#FBBC04",  text: NAVY };
-  return             { bg: "#ff5a5a",  text: "white" };
+  if (score >= 75) return { bg: GREEN, text: NAVY };
+  if (score >= 50) return { bg: "#FBBC04", text: NAVY };
+  return { bg: "#ff5a5a", text: "white" };
 }
 
 // ── Avatar initials + color ──────────────────────────────────────────────────
@@ -31,9 +31,9 @@ function getInitials(name) {
 
 // ── Applied date label ────────────────────────────────────────────────────────
 function appliedLabel(daysAgo) {
-  if (daysAgo < 1)  return "Applied today";
+  if (daysAgo < 1) return "Applied today";
   if (daysAgo === 1) return "Applied 1 day ago";
-  if (daysAgo < 7)  return `Applied ${daysAgo} days ago`;
+  if (daysAgo < 7) return `Applied ${daysAgo} days ago`;
   if (daysAgo < 14) return "Applied 1 week ago";
   if (daysAgo < 21) return "Applied 2 weeks ago";
   if (daysAgo < 30) return "Applied 3 weeks ago";
@@ -42,7 +42,7 @@ function appliedLabel(daysAgo) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function ApplicantCard({ applicant, onAccept, onReject }) {
-  const mc   = matchColor(applicant.matchScore);
+  const mc = matchColor(applicant.matchScore);
   const color = getAvatarColor(applicant.name);
   const isAccepted = applicant.status === "accepted";
   const isRejected = applicant.status === "rejected";
@@ -59,8 +59,8 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
         border: isAccepted
           ? `1.5px solid ${GREEN}`
           : isRejected
-          ? "1.5px solid #ff5a5a"
-          : "1.5px solid rgba(19,32,109,0.08)",
+            ? "1.5px solid #ff5a5a"
+            : "1.5px solid rgba(19,32,109,0.08)",
         boxShadow: "0 2px 12px rgba(19,32,109,0.05)",
         transition: "border-color 0.2s",
         flexWrap: { xs: "wrap", sm: "nowrap" },
@@ -126,6 +126,42 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
         >
           {applicant.role}
         </Typography>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+          <Typography
+            sx={{
+              color: NAVY,
+              fontSize: 13,
+              opacity: 0.6,
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            {applicant.portofolioLink ? (
+              <a href={applicant.portofolioLink} target="_blank" rel="noopener noreferrer" style={{ color: "#1a0dab", textDecoration: "underline" }}>
+                View Portfolio
+              </a>
+            ) : (
+              "No portfolio link"
+            )}
+          </Typography>
+          <Typography
+            sx={{
+              color: NAVY,
+              fontSize: 13,
+              opacity: 0.6,
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            {applicant.phone ? (
+              <a href={`tel:${applicant.phone}`} style={{ color: "#1a0dab", textDecoration: "underline" }}>
+                {applicant.phone}
+              </a>
+            ) : (
+              "No phone number"
+            )}
+          </Typography>
+        </Box>
+
         <Typography
           sx={{
             color: NAVY,
@@ -137,6 +173,7 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
         >
           {appliedLabel(applicant.daysAgo)}
         </Typography>
+
       </Box>
 
       {/* Actions */}
@@ -154,8 +191,11 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
         <Tooltip title="View uploaded CV">
           <Button
             variant="contained"
-            href="#"
-            onClick={(e) => e.preventDefault()}
+            href={applicant.cvFile}
+            //onClick={(e) => e.preventDefault()}
+            component="a"
+            target="_blank"
+            rel="noopener noreferrer"
             sx={{
               bgcolor: LIGHT_BLUE,
               color: NAVY,

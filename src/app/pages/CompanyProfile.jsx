@@ -132,7 +132,7 @@ export function CompanyProfile() {
                 profileType="company"
             />
 
-            <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} />
+            <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false) } type="company" />
         </Box>
     );
 }

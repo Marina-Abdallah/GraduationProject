@@ -227,7 +227,7 @@ export function CompanyJobDetailsPage() {
                   lineHeight: 1.2,
                 }}
               >
-                {job.company}
+                {company.name}
               </Typography>
               <Typography
                 sx={{
@@ -237,7 +237,8 @@ export function CompanyJobDetailsPage() {
                   textShadow: "0 1px 4px rgba(0,0,0,0.4)",
                 }}
               >
-                {job.location}
+                {/* {job.location} */}
+                {company.address || "[ADDRESS]"}
               </Typography>
             </Box>
           </Box>

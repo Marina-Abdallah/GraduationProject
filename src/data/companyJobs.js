@@ -14,13 +14,13 @@ export const COMPANY_JOBS = [
       "We are looking for a skilled Frontend Developer to build responsive, interactive web interfaces using React and modern JavaScript frameworks. You will collaborate closely with design and product teams to ship pixel-perfect UI components at scale.",
     skills: ["React", "JavaScript", "HTML/CSS", "TypeScript", "Git", "Responsive Design"],
     applicants: [
-      { id: "a1", name: "Marina Abdallah",  role: "Frontend Developer",  daysAgo: 21, matchScore: 95, status: "pending", gender: "f" },
-      { id: "a2", name: "Fatma Hassan",     role: "Frontend Developer",  daysAgo: 14, matchScore: 88, status: "pending", gender: "f" },
-      { id: "a3", name: "Ahmed Mostafa",    role: "Frontend Developer",  daysAgo: 5,  matchScore: 78, status: "pending", gender: "m" },
-      { id: "a4", name: "Maria Shrif",      role: "Frontend Developer",  daysAgo: 7,  matchScore: 75, status: "pending", gender: "f" },
-      { id: "a5", name: "Omar Khalil",      role: "Frontend Developer",  daysAgo: 21, matchScore: 35, status: "pending", gender: "m" },
-      { id: "a6", name: "Sara Ahmed",       role: "Frontend Developer",  daysAgo: 14, matchScore: 12, status: "pending", gender: "f" },
-    ],
+      { id: "a1", name: "Marina Abdallah",  role: "Frontend Developer", portofolioLink: "https://www.MyPortfolio.com/", phone: "+201091043336", daysAgo: 21, matchScore: 95,cvFile: "#", status: "pending", gender: "f" },
+      { id: "a2", name: "Fatma Hassan",     role: "Frontend Developer",  portofolioLink: "https://www.MyPortfolio.com/", phone: "+201234567890", daysAgo: 14, matchScore: 88,cvFile: "#", status: "pending", gender: "f" },
+      { id: "a3", name: "Ahmed Mostafa",    role: "Frontend Developer",  portofolioLink: "https://www.MyPortfolio.com/", phone: "+201234567890", daysAgo: 5,  matchScore: 78, cvFile: "#", status: "pending", gender: "m" },
+      { id: "a4", name: "Maria Shrif",      role: "Frontend Developer",  portofolioLink: "https://www.MyPortfolio.com/", phone: "+201234567890", daysAgo: 7,  matchScore: 75, cvFile: "#", status: "pending", gender: "f" },
+      { id: "a5", name: "Omar Khalil",      role: "Frontend Developer",  portofolioLink: "https://www.MyPortfolio.com/", phone: "+201234567890", daysAgo: 21, matchScore: 35, cvFile: "#", status: "pending", gender: "m" },
+      //cvFile:{`http://localhost:5000/api/applications/${applicant.id}/cv`}
+    ],  
   },
   {
     id: "cj2",

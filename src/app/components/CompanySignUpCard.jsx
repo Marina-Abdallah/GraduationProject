@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import Typography from "@mui/material/Typography";
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
@@ -10,14 +11,27 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
 import MenuItem from '@mui/material/MenuItem';
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import Box from '@mui/material/Box';
 import OtpModal from "./OTPoverlay";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "./AppContext";
 import api from "../../api/axios";
 
+const NAVY = "#13206d";
+const GREEN = "#84fba2";
+const LIGHT_BLUE = "#90baef";
+
 function CompanySignUpCard() {
+    const { industries = [] } = useAppContext();
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
 
     const handleMouseDownPassword = (event) => {
         event.preventDefault();
@@ -35,10 +49,9 @@ function CompanySignUpCard() {
         handleClose();
     };
 
-    const industries = [
-        { id: 1, label: 'Software Industry', },
-        { id: 2, label: 'Marketing Agency', }
-    ];
+    const industryOptions = industries.length > 0
+        ? industries
+        : [{ id: "", name: "Industry" }];
 
     const phones = [
         { value: +20, label: 'Egypt(+20)', }
@@ -59,6 +72,9 @@ function CompanySignUpCard() {
         pictureUrl: "",
     });
 
+    const [photoFile, setPhotoFile] = useState(null);
+    const [photoError, setPhotoError] = useState("");
+
     const handleChange = (e) => {
         setForm((prev) => ({
             ...prev,
@@ -66,23 +82,36 @@ function CompanySignUpCard() {
         }));
     };
 
+    const handlePhotoChange = (e) => {
+        const file = e.target.files?.[0] || null;
+        setPhotoFile(file);
+        if (file) setPhotoError("");
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        try {
-            const dataToSend = {
-                name: form.name,
-                email: form.email,
-                password: form.password,
-                confirmPassword: form.confirmPassword,
-                industryId: Number(form.industryId),
-                address: form.address,
-                phone: `${form.countryCode}${form.phone}`,
-                websiteUrl: form.websiteUrl,
-                pictureUrl: form.pictureUrl,
-            };
+        if (!photoFile) {
+            setPhotoError("Logo photo is required.");
+            return;
+        }
 
-            const res = await api.post("/Companies/Register", dataToSend);
+        try {
+            const dataToSend = new FormData();
+            dataToSend.append("name", form.name);
+            dataToSend.append("email", form.email);
+            dataToSend.append("password", form.password);
+            dataToSend.append("confirmPassword", form.confirmPassword);
+            dataToSend.append("industryId", String(Number(form.industryId)));
+            dataToSend.append("address", form.address);
+            dataToSend.append("phone", `${form.countryCode}${form.phone}`);
+            dataToSend.append("websiteUrl", form.websiteUrl);
+            dataToSend.append("pictureUrl", form.pictureUrl);
+            if (photoFile) dataToSend.append("photo", photoFile);
+
+            const res = await api.post("/Companies/Register", dataToSend, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
             alert(res.data || "Company registered. OTP sent to email.");
             setOpenOtp(true);
@@ -94,7 +123,7 @@ function CompanySignUpCard() {
 
     return (
         <div className="SignUp-card">
-             <h1
+            <h1
                 style={{
                     marginBottom: "10px",
                     color: "#13206d",
@@ -199,9 +228,9 @@ function CompanySignUpCard() {
                     value={form.industryId}
                     onChange={handleChange}>
 
-                    {industries.map((option) => (
-                        <MenuItem key={option.id} value={option.id}>
-                            {option.label}
+                    {industryOptions.map((option) => (
+                        <MenuItem key={option.id || option.name} value={option.id}>
+                            {option.name}
                         </MenuItem>
                     ))}
                 </TextField>
@@ -249,7 +278,7 @@ function CompanySignUpCard() {
                     />
                 </div>
             </Box>
-            <div style={{ marginBottom: 18 }}>
+            <div style={{ marginBottom: 10 }}>
                 <TextField
                     name="websiteUrl"
                     value={form.websiteUrl}
@@ -261,18 +290,55 @@ function CompanySignUpCard() {
                     size="small"
                 />
             </div>
-            <div style={{ marginBottom: 18 }}>
-                <TextField
-                    name="pictureUrl"
-                    value={form.pictureUrl}
-                    onChange={handleChange}
-                    fullWidth
-                    type="URL"
-                    id="outlined"
-                    label="Logo URL"
-                    size="small"
-                />
+
+            <div style={{ marginBottom: 10, textAlign: "left" }}>
+                <InputLabel sx={{ mb: 0.25, fontSize: 12}}>Logo Photo</InputLabel>
+                <Box sx={{ alignItems: "center", gap: 1 }}>
+                    <Button
+                        variant="outlined"
+                        component="label"
+                        onClick={handleUploadClick}
+                        disabled={uploading}
+                        startIcon={<CloudUploadOutlinedIcon />}
+                        sx={{
+                            borderColor: "#bfbebe",
+                            color: "#656565",
+                            fontFamily: "'Inter', sans-serif",
+                            fontWeight: 500,
+                            fontSize: "16px",
+                            borderRadius: "4px",
+                            px: 4,
+                            py: 0.5,
+                            width: "100%",
+                            maxWidth: "320px",
+                            textTransform: "none",
+                            "&:hover": {borderColor: "#656565",borderWidth: "2px",bgcolor: "#f9f9fa" },
+                        }}
+                    >
+                        {uploading ? "Uploading..." : "Upload Company Logo"}
+                    </Button>
+                    <input
+                        hidden
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={handlePhotoChange}
+                        required
+                    />
+                    <Typography sx={{ fontSize: 12, color: "#656565" }}>
+                        {photoFile ? photoFile.name : "No file selected"}
+                    </Typography>
+                </Box>
+                {photoError && (
+                    <Typography sx={{ mt: 0.5, fontSize: 12, color: "#d32f2f" }}>
+                        {photoError}
+                    </Typography>
+                )}
             </div>
+
+
+
             <Button
                 fullWidth
                 onClick={handleSubmit}
@@ -296,7 +362,7 @@ function CompanySignUpCard() {
                 verifyPath="/Companies/verify-email"
             />
 
-            <p style={{ color: "gray" ,margin:10 }}>- OR -</p>
+            <p style={{ color: "gray", margin: 10 }}>- OR -</p>
             <Button fullWidth
                 sx={{
                     color: '#13206D',
