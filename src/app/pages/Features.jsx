@@ -41,8 +41,8 @@ export function FeaturesPage() {
         sx={{
           flexGrow: 1,
           width: "100%",
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 8, md: 12 },
+          pt: { xs: 3, md: 3 },
+          pb: { xs: 6, md: 6 },
           position: "relative",
           zIndex: 10,
         }}

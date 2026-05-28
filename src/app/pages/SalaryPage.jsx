@@ -63,7 +63,7 @@ const selectSx = {
   borderRadius: "12px",
   background: "#f8fbff",
   "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "rgba(144,186,239,0.4)",
+    borderColor: LIGHT_BLUE,
   },
   "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: LIGHT_BLUE },
   "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: NAVY },
@@ -285,7 +285,7 @@ export function SalaryPage() {
             {/* In Time */}
             <Typography
               sx={{
-                color: NAVY,
+                color: LIGHT_BLUE,
                 fontFamily: "Inter, sans-serif",
                 fontWeight: 600,
                 fontSize: "13px",
@@ -308,7 +308,7 @@ export function SalaryPage() {
             {/* Employment Type */}
             <Typography
               sx={{
-                color: NAVY,
+                color: LIGHT_BLUE,
                 fontFamily: "Inter, sans-serif",
                 fontWeight: 600,
                 fontSize: "13px",

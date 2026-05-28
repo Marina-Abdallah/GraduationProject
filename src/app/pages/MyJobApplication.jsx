@@ -103,7 +103,7 @@ export function MyJobApplication() {
 
         <Box sx={{ mb: 2.5 }}>
           {/* <SearchBar value={searchTerm} onChange={setSearchTerm} /> */}
-          <JobSearchBar value={searchQuery} onChange={setSearchQuery} />
+          <JobSearchBar value={searchTerm} onChange={setSearchTerm} />
         </Box>
 
         <Box sx={{ mb: 3 }}>
