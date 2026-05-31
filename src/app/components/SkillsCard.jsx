@@ -27,26 +27,33 @@ export function SkillsCard() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const response = await api.get(`/Users/skills/search?query=${encodeURIComponent(searchQuery)}`, {
+        const response = await api.get("/Users/skills", {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         if (active) {
           let data = response.data;
-          // Extract array if wrapped in an object
           if (data && typeof data === 'object' && !Array.isArray(data)) {
             data = data.data || data.items || data.skills || [];
           }
 
           const fetchedOptions = Array.isArray(data)
-            ? data.filter(
-              opt =>
-                !skills.some(
-                  s =>
-                    (typeof s === "object" ? s.id : s) ===
-                    (opt.id || opt.skillId)
-                )
-            )
+            ? data
+              .filter((opt) => {
+                const name = typeof opt === "string"
+                  ? opt
+                  : (opt.name || opt.skillName || opt.title || "");
+
+                return name.toLowerCase().includes(searchQuery.toLowerCase());
+              })
+              .filter(
+                opt =>
+                  !skills.some(
+                    s =>
+                      (typeof s === "object" ? s.id : s) ===
+                      (opt.id || opt.skillId || opt)
+                  )
+              )
             : [];
 
           setOptions(fetchedOptions);

@@ -11,9 +11,11 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { useAppContext } from "./AppContext";
 
 
 function CompanyLoginCard() {
+  const { setAuthToken } = useAppContext();
   const [showPassword, setShowPassword] = useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -57,6 +59,7 @@ function CompanyLoginCard() {
 
       alert("Login successful!");
       localStorage.setItem("token", res.data.token);
+      setAuthToken(res.data.token);
 
       navigate("/CompanyJobs");
     } catch (err) {
