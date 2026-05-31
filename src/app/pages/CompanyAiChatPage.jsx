@@ -5,6 +5,7 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  Alert,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CompanyNavbar } from "../components/CompanyNavbar";
@@ -12,6 +13,7 @@ import SendIcon from "@mui/icons-material/Send";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
+import api from "../../api/axios";
 import backgroundImg from "../../assets/Background.png";
 
 
@@ -30,49 +32,129 @@ const ROUTE_CONFIG = {
   "/company/ai-chat": {
     greeting: "Hey! How can I help you today? 🥔",
     pageTitle: "Talk with Potato AI 🌱🥔",
-    allowUpload: false,
+    allowUpload: true,
   },
 };
 
-// ── Mock AI general replies ─────────────────────────────────────────────────────
-const AI_REPLIES = [
-  "Great question! Let me look into that for you. Could you share more context so I can give you the best answer? 🤔",
-  "I'd love to help with that! Based on what you've shared, here are my top suggestions for moving forward. 💡",
-  "Absolutely! This is a common challenge in hiring. The key is to focus on measurable impact and cultural fit. 📊",
-  "Let me analyze that carefully. From a recruitment perspective, I recommend focusing on the candidate's unique value proposition. ✨",
-  "Good thinking! I'll help you craft the perfect approach. Start with clearly defined role requirements and back them up with measurable success criteria. 🚀",
-  "That's a great hiring challenge! I suggest structured interviews with consistent scoring rubrics to make objective decisions. 🎯",
-];
+// ── Helper Functions ────────────────────────────────────────────────────────────
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
-// ── Mock CV scoring response ────────────────────────────────────────────────────
-function generateCvScore(fileName) {
-  const technical = 70 + Math.floor(Math.random() * 28);
-  const experience = 65 + Math.floor(Math.random() * 30);
-  const education = 72 + Math.floor(Math.random() * 25);
-  const overall = Math.round((technical + experience + education) / 3);
-  const recommendation =
-    overall >= 80
-      ? "✅ Strong candidate — recommended for interview."
-      : overall >= 65
-      ? "⚠️ Moderate fit — consider a screening call first."
-      : "❌ Below threshold — may not match role requirements.";
+const isImageFile = (type) => type?.startsWith("image/");
 
-  return `📄 CV Analysis Complete${fileName ? ` — "${fileName}"` : ""}
+const extractText = (payload) => {
+  if (typeof payload === "string") {
+    return payload;
+  }
 
-📊 Score Breakdown:
-  • Technical Skills:    ${technical}/100
-  • Experience Match:    ${experience}/100
-  • Education Fit:       ${education}/100
-  ─────────────────────────
-  ⭐ Overall Score:      ${overall}/100
+  if (!payload || typeof payload !== "object") {
+    return "";
+  }
 
-${recommendation}
+  const directTextCandidates = [
+    payload.text,
+    payload.message,
+    payload.content,
+    payload.reply,
+    payload.response,
+    payload.answer,
+    payload.output,
+    payload.result,
+    payload.latestMessage,
+  ];
 
-💡 Top Recommendations:
-  1. Ensure keywords match the job description for better ATS compatibility.
-  2. Look for quantifiable achievements (e.g. "increased sales by 30%").
-  3. Check for employment gaps and prepare follow-up questions.`;
-}
+  for (const value of directTextCandidates) {
+    if (typeof value === "string" && value.trim()) {
+      return value;
+    }
+
+    const parsed = extractText(value);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  return "";
+};
+
+const extractConversationId = (payload) =>
+  payload?.conversationId || payload?.id || payload?.conversation?.id || null;
+
+const normalizeRole = (entry) => {
+  const role = `${entry?.role || entry?.sender || entry?.type || ""}`.toLowerCase();
+
+  if (role === "assistant" || role === "ai" || role === "bot") return "ai";
+  if (role === "user" || role === "human") return "user";
+
+  return "ai";
+};
+
+const normalizeMessageList = (conversation) => {
+  const rawMessages =
+    conversation?.messages ||
+    conversation?.history ||
+    conversation?.chatHistory ||
+    conversation?.conversationMessages ||
+    [];
+
+  if (Array.isArray(rawMessages) && rawMessages.length > 0) {
+    return rawMessages.map((item, index) => ({
+      id: item.id || `${conversation?.conversationId || "conv"}-${index}`,
+      type: normalizeRole(item),
+      text: extractText(item),
+    }));
+  }
+
+  if (conversation?.latestMessage) {
+    return [
+      {
+        id: `${conversation.conversationId || "conv"}-latest`,
+        type: normalizeRole({ role: conversation.latestMessageRole }),
+        text: extractText(conversation.latestMessage),
+      },
+    ];
+  }
+
+  const directReply = extractText(conversation);
+  if (directReply) {
+    return [
+      {
+        id: `${conversation?.conversationId || "conv"}-reply`,
+        type: "ai",
+        text: directReply,
+      },
+    ];
+  }
+
+  return [];
+};
+
+const normalizeConversation = (payload) => {
+  const conversation = payload?.conversation || payload?.data || payload;
+  const conversationId = extractConversationId(conversation);
+  const messages = normalizeMessageList(conversation);
+
+  return {
+    conversationId,
+    messages,
+  };
+};
+
+const getErrorMessage = (error) => {
+  const status = error?.response?.status;
+
+  if (status === 429) {
+    return "The AI service is busy right now. Please wait a moment and try again.";
+  }
+
+  if (status >= 500) {
+    return "The AI service is unavailable. Please try again later.";
+  }
+
+  return "Unable to send your message right now. Please try again.";
+};
 
 // ── Potato Avatar ───────────────────────────────────────────────────────────────
 function PotatoAvatar({ size = 50 }) {
@@ -163,77 +245,198 @@ export function CompanyAiChatPage() {
   const config =
     ROUTE_CONFIG[location.pathname] ?? ROUTE_CONFIG["/company/ai-chat"];
 
-  const navMessage = location.state?.message;
-
-  const [messages, setMessages] = useState(() => {
-    const seed = [{ id: 1, type: "ai", text: config.greeting }];
-    if (navMessage) {
-      seed.push({ id: 2, type: "user", text: navMessage });
-      seed.push({ id: 3, type: "ai", text: AI_REPLIES[0] });
-    }
-    return seed;
-  });
+  const [messages, setMessages] = useState(() => [
+    { id: 1, type: "ai", text: config.greeting },
+  ]);
 
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
+  const [apiError, setApiError] = useState("");
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
+  const [caption, setCaption] = useState("");
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
+  const hasUserInteractedRef = useRef(false);
+
+  const canSendMessage = !isSending && (input.trim() || Boolean(pendingFile));
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
-  // ── Send text message ─────────────────────────────────────────
-  const sendMessage = () => {
-    const text = input.trim();
-    if (!text) return;
-    const userMsg = { id: Date.now(), type: "user", text };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
+  useEffect(() => {
+    return () => {
+      if (pendingFile?.url) {
+        URL.revokeObjectURL(pendingFile.url);
+      }
+    };
+  }, [pendingFile?.url]);
 
-    setTyping(true);
-    setTimeout(() => {
-      const aiReply = AI_REPLIES[Math.floor(Math.random() * AI_REPLIES.length)];
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), type: "ai", text: aiReply },
-      ]);
-      setTyping(false);
-    }, 900 + Math.random() * 600);
-  };
+  // Load previous conversations on mount
+  useEffect(() => {
+    const loadConversations = async () => {
+      setLoadingConversations(true);
+      setApiError("");
+
+      try {
+        const response = await api.get("/chat", {
+          headers: getAuthHeaders(),
+        });
+
+        const payload = response?.data;
+        const list = Array.isArray(payload)
+          ? payload
+          : payload?.items ||
+          payload?.conversations ||
+          payload?.data ||
+          [];
+
+        if (!Array.isArray(list) || list.length === 0) {
+          setLoadingConversations(false);
+          return;
+        }
+
+        if (hasUserInteractedRef.current) {
+          setLoadingConversations(false);
+          return;
+        }
+
+        const latest = list[0];
+        const normalized = normalizeConversation(latest);
+
+        if (normalized.conversationId) {
+          setConversationId(normalized.conversationId);
+        }
+
+        if (normalized.messages.length > 0) {
+          setMessages(normalized.messages);
+        }
+      } catch (error) {
+        console.error("Failed to load conversations", error);
+        setApiError("Unable to load your saved conversations right now.");
+      } finally {
+        setLoadingConversations(false);
+      }
+    };
+
+    loadConversations();
+  }, []);
+
+
 
   // ── Handle CV file upload ──────────────────────────────────────
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
+
+    hasUserInteractedRef.current = true;
+    const previewUrl = URL.createObjectURL(file);
+
+    setPendingFile({
+      file,
+      name: file.name,
+      type: file.type,
+      url: previewUrl,
+    });
+    setCaption("");
+    setApiError("");
+    e.target.value = "";
+  };
+
+  const clearPendingFile = () => {
+    if (pendingFile?.url) {
+      URL.revokeObjectURL(pendingFile.url);
+    }
+
+    setPendingFile(null);
+    setCaption("");
+  };
+
+  // ── Send text or file message ──────────────────────────────────
+  const sendMessage = async () => {
+    const text = input.trim();
+    const captionText = caption.trim();
+    const isAttachmentSend = Boolean(pendingFile);
+    const finalMessageText = isAttachmentSend
+      ? captionText
+        ? `${captionText}\n\n📎 Attached file: ${pendingFile.name}`
+        : `📎 Attached file: ${pendingFile.name}`
+      : text;
+
+    if (!finalMessageText || isSending) {
+      return;
+    }
 
     const userMsg = {
-      id: Date.now(),
+      id: `local-${Date.now()}`,
       type: "user",
-      text: "Here is the CV for scoring:",
-      fileName: file.name,
+      text: isAttachmentSend ? "" : text,
+      caption: isAttachmentSend ? captionText : undefined,
+      fileName: isAttachmentSend ? pendingFile.name : undefined,
     };
+
+    hasUserInteractedRef.current = true;
     setMessages((prev) => [...prev, userMsg]);
-    e.target.value = "";
+    setInput("");
 
     setTyping(true);
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          type: "ai",
-          text: generateCvScore(file.name),
-        },
-      ]);
+    setIsSending(true);
+    setApiError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("ConversationId", conversationId ?? "");
+      formData.append("Message", finalMessageText);
+
+      if (pendingFile?.file) {
+        formData.append("File", pendingFile.file, pendingFile.file.name);
+      }
+
+      const sendResponse = await api.post("/chat", formData, {
+        headers: getAuthHeaders(),
+      });
+
+      const normalized = normalizeConversation(sendResponse.data);
+      if (normalized.conversationId) {
+        setConversationId(normalized.conversationId);
+      }
+
+      if (normalized.messages.length > 0) {
+        setMessages((prev) => [...prev, ...normalized.messages]);
+      } else {
+        const replyText = extractText(sendResponse.data);
+        if (replyText) {
+          setMessages((prev) => [
+            ...prev,
+            { id: `ai-${Date.now()}`, type: "ai", text: replyText },
+          ]);
+        }
+      }
+
+      if (isAttachmentSend) {
+        clearPendingFile();
+      }
+    } catch (error) {
+      console.error("Failed to send message", error);
+      console.error("Server response", error?.response?.data || error?.response);
+      setApiError(getErrorMessage(error));
+    } finally {
       setTyping(false);
-    }, 1400 + Math.random() * 800);
+      setIsSending(false);
+    }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      if (canSendMessage) {
+        sendMessage();
+      }
     }
   };
 
@@ -251,22 +454,8 @@ export function CompanyAiChatPage() {
         overflow: "hidden",
       }}
     >
-  
 
-      {/* ── Navbar ───────────────────────────────────────── */}
-      {/* <Box
-        sx={{
-          width: "100%",
-          pt: 4,
-          px: { xs: 2, md: 4 },
-          position: "relative",
-          zIndex: 20,
-        }}
-      >
-        <CompanyNavbar />
-      </Box> */}
-
-      {/* ── Back button + page title ─────────────────────── */}
+      {/* ── Back button ─────────────────────── */}
       <Box
         sx={{
           px: { xs: 3, md: 6 },
@@ -291,25 +480,15 @@ export function CompanyAiChatPage() {
         >
           <ArrowBackIosNewIcon fontSize="small" />
         </IconButton>
-        {/* <Typography
-          sx={{
-            color: NAVY,
-            fontFamily: "Inter, sans-serif",
-            fontWeight: 700,
-            fontSize: "18px",
-          }}
-        >
-          {config.pageTitle}
-        </Typography> */}
       </Box>
 
       {/* ── Chat area ────────────────────────────────────── */}
       <Box
-        sx={{
+         sx={{
           flex: 1,
+          mt: { xs: 1, sm: 1, md: -4 },
           mx: { xs: 2, md: "8.33%" },
-          mt: 1,
-          mb: "100px",
+          mb: pendingFile ? "165px" : "100px",
           background: "rgba(255,255,255,0.8)",
           backdropFilter: "blur(12px)",
           borderRadius: "16px",
@@ -319,12 +498,19 @@ export function CompanyAiChatPage() {
           zIndex: 10,
           boxShadow: "0 4px 28px rgba(144,186,239,0.22)",
           "&::-webkit-scrollbar": { width: 6 },
-          "&::-webkit-scrollbar-thumb": {
-            background: "rgba(144,186,239,0.5)",
-            borderRadius: 3,
-          },
+          "&::-webkit-scrollbar-thumb": { background: "rgba(144,186,239,0.5)", borderRadius: 3 },
         }}
       >
+        {apiError && (
+          <Alert
+            severity="error"
+            onClose={() => setApiError("")}
+            sx={{ mb: 2 }}
+          >
+            {apiError}
+          </Alert>
+        )}
+
         {messages.map((msg) => (
           <MessageBubble key={msg.id} msg={msg} />
         ))}
@@ -382,18 +568,21 @@ export function CompanyAiChatPage() {
           px: 2,
           py: 1.5,
           display: "flex",
-          alignItems: "center",
-          gap: 2,
+          flexDirection: "column",
+          gap: 1.5,
           zIndex: 30,
           boxShadow: "0 4px 24px rgba(144,186,239,0.35)",
           border: "1px solid rgba(255,255,255,0.7)",
         }}
       >
-        {/* + / Upload circle */}
-        <Tooltip
-          title={config.allowUpload ? "Upload a CV (PDF)" : "New conversation"}
-          placement="top"
-        >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+
           <Box
             onClick={() => fileInputRef.current?.click()}
             sx={{
@@ -412,61 +601,133 @@ export function CompanyAiChatPage() {
           >
             <UploadFileOutlinedIcon sx={{ color: "white", fontSize: 24 }} />
           </Box>
-        </Tooltip>
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx"
-          style={{ display: "none" }}
-          onChange={handleFileChange}
-        />
+          {pendingFile ? (
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                background: "rgba(144,186,239,0.12)",
+                borderRadius: "14px",
+                px: 1.5,
+                py: 1,
+              }}
+            >
+              {isImageFile(pendingFile.type) ? (
+                <Box
+                  component="img"
+                  src={pendingFile.url}
+                  alt={pendingFile.name}
+                  sx={{ width: 48, height: 48, borderRadius: "10px", objectFit: "cover" }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "10px",
+                    background: "rgba(19,32,109,0.12)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: NAVY,
+                    fontSize: "12px",
+                    fontWeight: 700,
+                  }}
+                >
+                  FILE
+                </Box>
+              )}
 
-        {/* Text input */}
-        <TextField
-          fullWidth
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask Potato 🌱🥔"
-          variant="standard"
-          autoComplete="off"
-          sx={{
-            "& .MuiInputBase-input": {
-              fontSize: "18px",
-              color: LIGHT_BLUE,
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 500,
-              "&::placeholder": { color: LIGHT_BLUE, opacity: 0.7 },
-            },
-            "& .MuiInput-underline:before": { borderBottom: "none" },
-            "& .MuiInput-underline:after": { borderBottom: "none" },
-            "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
-              borderBottom: "none",
-            },
-          }}
-        />
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ color: NAVY, fontWeight: 700, fontSize: "14px" }}>
+                  {pendingFile.name}
+                </Typography>
+                <Typography sx={{ color: NAVY, fontSize: "12px", opacity: 0.8 }}>
+                  Add a caption before sending
+                </Typography>
+              </Box>
 
-        {/* Send button */}
-        <IconButton
-          onClick={sendMessage}
-          disabled={!input.trim()}
-          sx={{
-            color: "white",
-            background: input.trim() ? NAVY : "rgba(19,32,109,0.25)",
-            borderRadius: "12px",
-            width: 44,
-            height: 44,
-            flexShrink: 0,
-            transition: "all 0.2s",
-            "&:hover": {
-              background: input.trim() ? `${NAVY}dd` : undefined,
-            },
-          }}
-        >
-          <SendIcon fontSize="small" />
-        </IconButton>
+              <IconButton
+                onClick={clearPendingFile}
+                sx={{ color: NAVY }}
+                aria-label="Remove attached file"
+              >
+                ✕
+              </IconButton>
+            </Box>
+          ) : (
+            <TextField
+              fullWidth
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask Potato 🌱🥔"
+              variant="standard"
+              autoComplete="off"
+              sx={{
+                "& .MuiInputBase-input": {
+                  fontSize: "18px",
+                  color: LIGHT_BLUE,
+                  fontFamily: "Inter, sans-serif",
+                  fontWeight: 500,
+                  "&::placeholder": { color: LIGHT_BLUE, opacity: 0.7 },
+                },
+                "& .MuiInput-underline:before": { borderBottom: "none" },
+                "& .MuiInput-underline:after": { borderBottom: "none" },
+                "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+                  borderBottom: "none",
+                },
+              }}
+            />
+          )}
+
+          <IconButton
+            onClick={sendMessage}
+            disabled={!canSendMessage}
+            sx={{
+              color: "white",
+              background: canSendMessage ? NAVY : "rgba(19,32,109,0.25)",
+              borderRadius: "12px",
+              width: 44,
+              height: 44,
+              flexShrink: 0,
+              transition: "all 0.2s",
+              "&:hover": {
+                background: canSendMessage ? `${NAVY}dd` : undefined,
+              },
+            }}
+          >
+            <SendIcon fontSize="small" />
+          </IconButton>
+        </Box>
+
+        {pendingFile && (
+          <TextField
+            fullWidth
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Add a caption for this file"
+            variant="standard"
+            autoComplete="off"
+            sx={{
+              "& .MuiInputBase-input": {
+                color: LIGHT_BLUE,
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 500,
+                "&::placeholder": { color: LIGHT_BLUE, opacity: 0.7 },
+              },
+              "& .MuiInput-underline:before": { borderBottom: "none" },
+              "& .MuiInput-underline:after": { borderBottom: "none" },
+              "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+                borderBottom: "none",
+              },
+            }}
+          />
+        )}
       </Box>
     </Box>
   );

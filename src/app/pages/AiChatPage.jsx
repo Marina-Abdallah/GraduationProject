@@ -86,7 +86,7 @@ function MessageBubble({ msg }) {
           fontFamily: "Inter, sans-serif",
           fontSize: "15px",
           fontWeight: isAi ? 600 : 500,
-          lineHeight: 1.55,
+          lineHeight: 1.6,
         }}
       >
         {msg.file && (

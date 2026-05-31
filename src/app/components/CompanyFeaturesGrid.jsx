@@ -9,7 +9,7 @@ const COMPANY_FEATURES = [
   {
     icon: <DescriptionOutlinedIcon />,
     title: "CV Scoring",
-    description: "Smart tools to improve and strengthen your resume.",
+    description: "Smart tools to Score Applicants' resumes.",
     route: "/company/cv-scoring",
     aiMessage: "I want to score a CV",
   },
@@ -17,7 +17,7 @@ const COMPANY_FEATURES = [
     icon: <SmartToyOutlinedIcon />,
     title: "Talk with Potato AI 🌱🥔",
     description:
-      "Chat with Potato AI to get instant help, guidance, and smart suggestions to support your career journey.",
+      "Chat with Potato AI to get instant help, guidance, and smart suggestions to support your journey.",
     route: "/company/ai-chat",
     aiMessage: "I need help with hiring decisions",
   },
