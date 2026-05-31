@@ -68,16 +68,26 @@ export function AppProvider({ children }) {
   const [skills, setSkills] = useState(DEFAULT_SKILLS);
   const [userSavedPostIds, setUserSavedPostIds] = useState(new Set());
   const [companySavedPostIds, setCompanySavedPostIds] = useState(new Set());
+  const [authToken, setAuthTokenState] = useState(() => localStorage.getItem("token"));
+
+  const setAuthToken = useCallback((token) => {
+    setAuthTokenState(token);
+
+    if (token) {
+      localStorage.setItem("token", token);
+    } else {
+      localStorage.removeItem("token");
+    }
+  }, []);
 
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+        if (!authToken) return;
 
         const response = await api.get("/Users/me/profile", {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${authToken}`
           }
         });
 
@@ -107,12 +117,11 @@ export function AppProvider({ children }) {
 
     const fetchCompanyData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+        if (!authToken) return;
 
         const response = await api.get("/Companies/me/overview", {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${authToken}`
           }
         });
 
@@ -141,8 +150,7 @@ export function AppProvider({ children }) {
 
     const fetchIndustriesData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : undefined;
 
         const requestIndustryList = async (url) => {
           const resp = await api.get(url, { headers });
@@ -174,20 +182,28 @@ export function AppProvider({ children }) {
 
     const fetchSkillsData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+        if (!authToken) return;
 
-        const response = await api.get("/Users/skills", {
+        const response = await api.get("/Users/me/skills", {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${authToken}`
           }
         });
 
-        if (Array.isArray(response.data)) {
-          const formattedSkills = response.data.map(skill => {
-            if (typeof skill === 'string') return { id: skill, name: skill };
-            return { id: skill.id || skill.skillId || skill.name, name: skill.name || skill.skillName || "Unknown Skill" };
+        const rawSkills = Array.isArray(response.data)
+          ? response.data
+          : response.data?.skills || response.data?.items || response.data?.data || [];
+
+        if (Array.isArray(rawSkills)) {
+          const formattedSkills = rawSkills.map((skill) => {
+            if (typeof skill === "string") return { id: skill, name: skill };
+
+            return {
+              id: skill.id || skill.skillId || skill.name,
+              name: skill.name || skill.skillName || "Unknown Skill",
+            };
           });
+
           setSkills(formattedSkills);
         }
       } catch (error) {
@@ -199,7 +215,7 @@ export function AppProvider({ children }) {
     fetchCompanyData();
     fetchIndustriesData();
     fetchSkillsData();
-  }, []);
+  }, [authToken]);
 
   const uploadPhoto = async (file) => {
     try {
@@ -425,6 +441,7 @@ export function AppProvider({ children }) {
         companySavedPosts,
         toggleUserSavedPost,
         toggleCompanySavedPost,
+        setAuthToken,
       }}
     >
       {children}
