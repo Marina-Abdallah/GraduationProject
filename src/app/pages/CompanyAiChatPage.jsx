@@ -231,6 +231,11 @@ function MessageBubble({ msg }) {
             {msg.fileName}
           </Box>
         )}
+        {msg.caption && (
+          <Box sx={{ mb: msg.text ? 1 : 0 }}>
+            {msg.caption}
+          </Box>
+        )}
         {msg.text}
       </Box>
     </Box>

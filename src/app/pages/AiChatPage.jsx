@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Box, Typography, TextField, IconButton } from "@mui/material";
+import { Box, Typography, TextField, IconButton, Alert } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import SendIcon from "@mui/icons-material/Send";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import api from "../../api/axios";
 import { useAppContext } from "../components/AppContext";
 import backgroundImg from "../../assets/Background.png";
@@ -89,49 +90,24 @@ function MessageBubble({ msg }) {
           lineHeight: 1.6,
         }}
       >
-        {msg.file && (
-          <Box sx={{ mb: 1.5 }}>
-            {isImageFile(msg.file.type) ? (
-              <Box
-                component="img"
-                src={msg.file.url}
-                alt={msg.file.name}
-                sx={{
-                  maxWidth: "100%",
-                  borderRadius: "12px",
-                  display: "block",
-                  mb: 1,
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  background: isAi ? "rgba(144,186,239,0.12)" : "rgba(255,255,255,0.08)",
-                  borderRadius: "12px",
-                  px: 1.5,
-                  py: 1.2,
-                }}
-              >
-                <Typography
-                  sx={{
-                    color: isAi ? NAVY : "white",
-                    fontSize: "14px",
-                    fontWeight: 700,
-                  }}
-                >
-                  {msg.file.name}
-                </Typography>
-                <Typography
-                  sx={{
-                    color: isAi ? NAVY : "white",
-                    fontSize: "12px",
-                    opacity: 0.8,
-                  }}
-                >
-                  {msg.file.type || "File"}
-                </Typography>
-              </Box>
-            )}
+        {/* File badge */}
+        {msg.fileName && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mb: 1,
+              px: 1.5,
+              py: 0.5,
+              borderRadius: "8px",
+              background: "rgba(144,186,239,0.18)",
+              fontSize: "13px",
+              color: NAVY,
+            }}
+          >
+            <UploadFileOutlinedIcon sx={{ fontSize: 16, color: LIGHT_BLUE }} />
+            {msg.fileName}
           </Box>
         )}
 
@@ -141,7 +117,7 @@ function MessageBubble({ msg }) {
               color: isAi ? NAVY : "white",
               fontSize: "14px",
               fontWeight: 600,
-              mb: msg.file ? 1 : 0,
+              mb: msg.text ? 1 : 0,
               whiteSpace: "pre-wrap",
             }}
           >
@@ -449,7 +425,7 @@ export function AiChatPage() {
       type: "user",
       text: isAttachmentSend ? "" : text,
       caption: isAttachmentSend ? captionText : undefined,
-      file: isAttachmentSend ? pendingFile : undefined,
+      fileName: isAttachmentSend ? pendingFile.name : undefined,
     };
 
     hasUserInteractedRef.current = true;
@@ -616,16 +592,13 @@ export function AiChatPage() {
         )}
 
         {apiError && (
-          <Typography
-            sx={{
-              color: "#b42318",
-              fontFamily: "Inter, sans-serif",
-              mb: 2,
-              fontWeight: 600,
-            }}
+          <Alert
+            severity="error"
+            onClose={() => setApiError("")}
+            sx={{ mb: 2 }}
           >
             {apiError}
-          </Typography>
+          </Alert>
         )}
 
         {messages.map((msg) => (
