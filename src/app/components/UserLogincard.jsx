@@ -10,6 +10,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "./AppContext";
 import api from "../../api/axios";
 
 
@@ -17,6 +18,7 @@ import api from "../../api/axios";
 
 
 function UserLoginCard() {
+  const { setAuthToken } = useAppContext();
   const [showPassword, setShowPassword] = useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -63,6 +65,7 @@ function UserLoginCard() {
       alert("Login successful!");
       // save token and user ID
       localStorage.setItem("token", res.data.token);
+      setAuthToken(res.data.token);
       if (res.data.id) localStorage.setItem("userId", res.data.id);
       else if (res.data.userId) localStorage.setItem("userId", res.data.userId);
 

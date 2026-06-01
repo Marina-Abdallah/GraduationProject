@@ -27,7 +27,7 @@ export function SkillsCard() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const response = await api.get(`/Users/skills/search?query=${encodeURIComponent(searchQuery)}`, {
+        const response = await api.get("/Users/skills", {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -39,15 +39,19 @@ export function SkillsCard() {
           }
 
           const fetchedOptions = Array.isArray(data)
-            ? data.filter(
+            ? data.filter((opt) => {
+              const name = typeof opt === "string"
+                ? opt
+                : (opt.name || opt.skillName || opt.title || "");
+
+              return name.toLowerCase().includes(searchQuery.toLowerCase());
+            }).filter(
               opt =>
                 !skills.some(
                   s =>
                     (typeof s === "object" ? s.id : s) ===
-                    (opt.id || opt.skillId)
-                )
-            )
-            : [];
+                    (opt.id || opt.skillId || opt)
+                )) : [];
 
           setOptions(fetchedOptions);
         }

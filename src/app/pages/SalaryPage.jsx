@@ -19,40 +19,40 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useNavigate } from "react-router-dom";
-import { MainNavbar } from "../components/MainNavbar";
 import { Footer } from "../components/Footer";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import backgroundImg from "../../assets/Background.png";
+import api from "../../api/axios";
 
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
-// ── Tax calculation (progressive US-style brackets for demo) ─────────────────
-function calculateTax(gross, period, empType) {
-  const annual = period === "month" ? gross * 12 : gross;
+// ── Tax calculation (progressive tax for demo) ─────────────────
+// function calculateTax(gross, period, empType) {
+//   const annual = period === "month" ? gross * 12 : gross;
 
-  let tax = 0;
-  if (annual <= 10000) tax = annual * 0.1;
-  else if (annual <= 40000) tax = 1000 + (annual - 10000) * 0.12;
-  else if (annual <= 85000) tax = 4600 + (annual - 40000) * 0.22;
-  else if (annual <= 160000) tax = 14500 + (annual - 85000) * 0.24;
-  else if (annual <= 200000) tax = 32500 + (annual - 160000) * 0.32;
-  else tax = 45300 + (annual - 200000) * 0.35;
+//   let tax = 0;
+//   if (annual <= 10000) tax = annual * 0.1;
+//   else if (annual <= 40000) tax = 1000 + (annual - 10000) * 0.12;
+//   else if (annual <= 85000) tax = 4600 + (annual - 40000) * 0.22;
+//   else if (annual <= 160000) tax = 14500 + (annual - 85000) * 0.24;
+//   else if (annual <= 200000) tax = 32500 + (annual - 160000) * 0.32;
+//   else tax = 45300 + (annual - 200000) * 0.35;
 
-  // Freelance/contract adds ~15.3% SE tax on top
-  if (empType === "contract") tax += annual * 0.153 * 0.5;
+//   // Freelance/contract adds ~15.3% SE tax on top
+//   if (empType === "contract") tax += annual * 0.153 * 0.5;
 
-  tax = Math.round(tax);
-  const net = Math.round(annual - tax);
-  const rate = annual > 0 ? ((tax / annual) * 100).toFixed(1) : "0.0";
+//   tax = Math.round(tax);
+//   const net = Math.round(annual - tax);
+//   const rate = annual > 0 ? ((tax / annual) * 100).toFixed(1) : "0.0";
 
-  return { annual: Math.round(annual), tax, rate, net };
-}
+//   return { annual: Math.round(annual), tax, rate, net };
+// }
 
 const fmt = (v) =>
   v != null
-    ? Number(v).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " EGP"
+    ? Number(v).toLocaleString("en-EG", { maximumFractionDigits: 0 }) + " EGP"
     : "-------";
 
 // ── Custom donut chart label ──────────────────────────────────────────────────
@@ -115,14 +115,41 @@ export function SalaryPage() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState("");
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     const val = parseFloat(grossIncome);
     if (!grossIncome || isNaN(val) || val <= 0) {
       setError("Please enter a valid gross income.");
       return;
     }
     setError("");
-    setResults(calculateTax(val, period, empType));
+    
+    try {
+      const response = await api.post("/finance/salary/calculate", {
+        amount: val,
+        salaryType: period === "month" ? "monthly" : "annual"
+      });
+      
+      setResults({
+        annual: response.data.grossIncome,
+        tax: response.data.totalTax,
+        rate: response.data.totalRatePercent,
+        net: response.data.netIncome
+      });
+    } catch (err) {
+      const errorData = err.response?.data;
+      console.error("Error calculating tax:", errorData || err.message);
+      
+      let errMsg = "Failed to calculate tax from server.";
+      if (errorData) {
+        if (typeof errorData === 'string') errMsg = errorData;
+        else if (errorData.message) errMsg = errorData.message;
+        else if (errorData.title) errMsg = errorData.title;
+        else if (errorData.errors) errMsg = JSON.stringify(errorData.errors);
+        else errMsg = JSON.stringify(errorData);
+      }
+      
+      setError(`Error 400: ${errMsg}`);
+    }
   };
 
   const chartData = results
@@ -147,11 +174,6 @@ export function SalaryPage() {
         overflow: "hidden",
       }}
     >
-      {/* ── Navbar ──────────────────────────────────────────────── */}
-      {/* <Box sx={{ width: "100%", pt: 4, px: { xs: 2, md: 4 }, position: "relative", zIndex: 20 }}>
-        <MainNavbar />
-      </Box> */}
-
       {/* ── Content ─────────────────────────────────────────────── */}
       <Box
         sx={{

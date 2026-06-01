@@ -10,6 +10,7 @@ import {
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import CheckIcon from "@mui/icons-material/Check";
 import { useAppContext } from "./AppContext";
+import api from "../../api/axios";
 
 const inputFieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -43,6 +44,7 @@ export function ProfileDescriptionCard() {
   const [draft, setDraft] = useState({});
   const [scoring, setScoring] = useState(false);
   const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleEdit = () => {
     setDraft({
@@ -69,25 +71,58 @@ export function ProfileDescriptionCard() {
   const handleResumeUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       updateProfile({ resumeFileName: file.name, resumeScore: 0 });
     }
     e.target.value = "";
   };
 
-  const handleScoreIt = () => {
-    if (!profile.resumeFileName) return;
+  const handleScoreIt = async () => {
+    if (!profile.resumeFileName || !selectedFile) return;
     setScoring(true);
-    // Simulate scoring
-    let current = 0;
-    const interval = setInterval(() => {
-      current += Math.floor(Math.random() * 15) + 5;
-      if (current >= 85) {
-        current = 85;
-        clearInterval(interval);
-        setScoring(false);
+    
+    try {
+      const token = localStorage.getItem("token");
+      let userId = "";
+      if (token) {
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          const decoded = JSON.parse(jsonPayload);
+          userId = decoded.sub || decoded.nameid || decoded.id || decoded.UserId || decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || "";
+        } catch(e) {
+          console.error("Failed to decode token", e);
+        }
       }
-      updateProfile({ resumeScore: current });
-    }, 180);
+
+      const formData = new FormData();
+      formData.append("File", selectedFile);
+      if (userId) formData.append("UserId", userId);
+      formData.append("jobDescription", profile.headline || profile.major || "General Profile");
+
+      const response = await api.post("/cv/upload-and-evaluate", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      console.log("CV Evaluate response:", response.data);
+      const returnedScore = response.data?.score ?? response.data?.percentage ?? response.data?.ResumeScore ?? response.data?.scorePercentage ?? 85;
+
+      // Prefer a server-provided CV URL/path if returned, otherwise fall back to the filename
+      const returnedCvUrl = response.data?.cvUrl ?? response.data?.fileUrl ?? response.data?.filePath ?? response.data?.path ?? response.data?.url ?? response.data?.cvPath ?? response.data?.FileUrl ?? response.data?.FilePath ?? selectedFile.name;
+
+      updateProfile({ resumeScore: returnedScore, resumeFileName: returnedCvUrl });
+    } catch (err) {
+      console.error("Error uploading CV:", err.response?.data || err.message);
+      alert("Failed to score CV. Please check console for details.");
+    } finally {
+      setScoring(false);
+    }
   };
 
   return (

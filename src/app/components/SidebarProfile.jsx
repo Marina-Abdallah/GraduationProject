@@ -127,7 +127,7 @@ export function SidebarProfile() {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            Alexandria, Egypt
+            {profile.address ||"[Location]" }
           </Typography>
         </Box>
       </Box>
@@ -144,7 +144,7 @@ export function SidebarProfile() {
             fontFamily: "'Inter', sans-serif",
           }}
         >
-          {profile.headline || "UI/UX Designer"}
+          {profile.headline || "[Your Headline Here]"}
         </Typography>
         <Typography
           sx={{
@@ -158,7 +158,7 @@ export function SidebarProfile() {
         >
           {profile.major
             ? `${profile.major}`
-            : "Software Industry & Multimedia\nFaculty of Science, Alex University"}
+            : "[Your Major or Role Here]"}
         </Typography>
       </Box>
 
@@ -198,12 +198,12 @@ export function SidebarProfile() {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            25% & Rising
+            {profile.resumeScore ? `${profile.resumeScore}%` : "0%"}
           </Typography>
         </Box>
         <LinearProgress
           variant="determinate"
-          value={25}
+          value={profile.resumeScore || 0}
           sx={{
             height: 10,
             borderRadius: 8,
