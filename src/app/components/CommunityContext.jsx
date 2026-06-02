@@ -36,26 +36,30 @@ export function CommunityProvider({
   const [newPostMediaUrl, setNewPostMediaUrl] = useState(null);
 
   const onLike = useCallback((postId) => {
-    setPosts((prev) => ({
-      ...prev,
-      [postId]: {
-        ...prev[postId],
-        liked: !prev[postId].liked,
-        likeCount: prev[postId].liked
-          ? prev[postId].likeCount - 1
-          : prev[postId].likeCount + 1,
-      },
-    }));
+    setPosts((prev) => {
+      const current = prev[postId] ?? defaultPostState();
+      return {
+        ...prev,
+        [postId]: {
+          ...current,
+          liked: !current.liked,
+          likeCount: current.liked ? current.likeCount - 1 : current.likeCount + 1,
+        },
+      };
+    });
   }, []);
 
   const onSave = useCallback((postId) => {
-    setPosts((prev) => ({
-      ...prev,
-      [postId]: {
-        ...prev[postId],
-        saved: !prev[postId].saved,
-      },
-    }));
+    setPosts((prev) => {
+      const current = prev[postId] ?? defaultPostState();
+      return {
+        ...prev,
+        [postId]: {
+          ...current,
+          saved: !current.saved,
+        },
+      };
+    });
     onSaveGlobal?.(postId);
   }, [onSaveGlobal]);
 

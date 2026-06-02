@@ -32,15 +32,25 @@ const GOLD = "#FBBC04";
 const RED = "#C32929";
 
 export function JobPostCard({
-  postId = "post3",
-  company , 
-  jobTitle , 
-  companyLocation , 
-  jobType ,
-  jobCategory ,
-  jobShortDescription ,
+  postId,
+  company,
+  companyPhoto,
+  companyName,
+  jobTitle,
+  companyLocation,
+  jobType,
+  jobCategory,
+  jobShortDescription,
+  jobDescription,
   Img,
 }) {
+  const companyLabel =
+    typeof company === "string"
+      ? company
+      : companyName ?? company?.name ?? "Unknown company";
+  const companyImage = company?.photo || companyPhoto;
+  const displayedJobDescription = jobShortDescription ?? jobDescription ?? "";
+
   const { posts, onLike, onSave, onApplyNow } = useCommunity();
   const { profile } = useAppContext();
   const postState = posts[postId] ?? { liked: false, saved: false, likeCount: 0 };
@@ -98,8 +108,8 @@ export function JobPostCard({
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {/* <MSLogo size={52} /> */}
           <Avatar
-            src={company.photo || defaultCompanyPhoto}
-            alt={company.name}
+            src={companyImage || defaultCompanyPhoto}
+            alt={companyLabel}
             sx={{
               width: 52,
               height: 52,
@@ -123,7 +133,7 @@ export function JobPostCard({
                 lineHeight: 1.3,
               }}
             >
-              {company}
+              {companyLabel}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <LocationOnOutlinedIcon sx={{ fontSize: 13, color: LIGHT_BLUE }} />
@@ -198,8 +208,8 @@ export function JobPostCard({
         >
 
             <Avatar
-            src={company.photo || defaultCompanyPhoto}
-            alt={company.name}
+            src={companyImage || defaultCompanyPhoto}
+            alt={companyLabel}
             sx={{
               width: 36,
               height: 36,
@@ -223,7 +233,7 @@ export function JobPostCard({
                 lineHeight: 1.2,
               }}
             >
-              {company}
+              {companyLabel}
             </Typography>
             <Typography
               sx={{
@@ -300,7 +310,7 @@ export function JobPostCard({
               maxWidth: 400,
             }}
           >
-            {jobShortDescription}
+            {displayedJobDescription}
           </Typography>
         </Box>
 

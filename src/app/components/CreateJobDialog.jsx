@@ -11,7 +11,7 @@ import {
   MenuItem,
   InputBase,
   InputAdornment,
-    Avatar,
+  Avatar,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 //import AttachMoneyIcon              from "@mui/icons-material/AttachMoney";
@@ -27,9 +27,9 @@ const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
-const CATEGORIES = ["Design", "Engineering", "Marketing", "Sales", "Operations", "Finance", "HR", "Product", "Data Science", "Customer Support"];
+const CATEGORIES = ["IT & Software", "Engineering", "Healthcare", "Business & Management", "Marketing & Sales", "Finance & Accounting", "Human Resources", "Design & Creative", "Education", "Customer Service", "Operations & Logistics", "Legal", "Hospitality & Tourism", "Research & Science"];
 const LOCATION_MODES = ["On-site", "Remote", "Hybrid"];
-const JOB_TYPES = ["Full-time", "Part-time", "Internship", "Apprenticeship", "Temporary", "Contract","Other"];
+const JOB_TYPES = ["Full-time", "Part-time", "Internship", "Apprenticeship", "Temporary", "Contract", "Other"];
 
 
 
@@ -142,7 +142,7 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
     if (!isFormValid) return;
     onSubmit?.({
       jobTitle: jobTitle.trim(),
-      category, 
+      category,
       shortDesc,
       locationMode,
       jobType,
@@ -255,7 +255,7 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
               ))}
             </Select>
           </div>
-           {/* ── Short Description ───────────────────────────────────────── */}
+          {/* ── Short Description ───────────────────────────────────────── */}
           <div style={{ marginBottom: 22 }}>
             <FieldLabel>Short Description of the role</FieldLabel>
             <TextField
@@ -267,7 +267,7 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
               placeholder="Describe the role in 100 characters or less…"
               value={shortDesc}
               onChange={(e) => setShortDesc(e.target.value)}
-              inputProps={{maxLength: 100 }}
+              inputProps={{ maxLength: 100 }}
               helperText={<span style={{ color: NAVY }}>{`${shortDesc.length}/100 characters`}</span>}
               sx={inputSx}
             />

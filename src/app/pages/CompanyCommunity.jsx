@@ -233,6 +233,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
               author={post.author}
               role={post.role}
               content={post.content}
+              authorPhoto={post.authorPhoto}
               avatarColor={post.avatarColor}
               rtl={post.rtl || false}
               highlighted={highlightedPostId === post.id}
@@ -247,7 +248,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export function CompanyCommunityPage() {
-  const { toggleCompanySavedPost } = useAppContext();
+  const { toggleCompanySavedPost, company } = useAppContext();
   const location = useLocation();
   
 
@@ -307,9 +308,10 @@ export function CompanyCommunityPage() {
     const newPost = {
       id: `dyn-post-${Date.now()}`,
       type: "post",
-      author: "Microsoft",
+      author: company?.name || "Microsoft",
       role: "Technology Company",
       content,
+      authorPhoto: company?.photo,
       avatarColor: LIGHT_BLUE,
       mediaUrl,
     };

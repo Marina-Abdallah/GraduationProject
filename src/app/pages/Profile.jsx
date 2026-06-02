@@ -17,8 +17,6 @@ export function ProfilePage() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const { updateProfile, setSkillsList } = useAppContext();
 
-
-
   return (
     <Box
       sx={{

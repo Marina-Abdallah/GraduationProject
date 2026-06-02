@@ -27,7 +27,7 @@ const LIGHT_BLUE = "#90baef";
 const GOLD = "#FBBC04";
 const RED = "#C32929";
 
-export function PostCard({ postId, author, role, content, avatarColor, rtl = false, highlighted = false, profileType }) {
+export function PostCard({ postId, author, role, content, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType }) {
   const { posts, onLike, onSave } = useCommunity();
   const { profile, company } = useAppContext();
   const postState = posts[postId] ?? { liked: false, saved: false, likeCount: 0 };
@@ -91,6 +91,7 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
     .toUpperCase();
 
   const bgColor = avatarColor || LIGHT_BLUE;
+  const userPhoto = authorPhoto || defaultPhoto;
 
   return (
     <Card
@@ -114,18 +115,19 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Avatar
+              src={userPhoto}
+              alt={author}
               sx={{
                 width: 52,
                 height: 52,
                 bgcolor: bgColor,
-                border: `2px solid ${bgColor}55`,
                 fontWeight: 700,
                 color: NAVY,
                 fontSize: 18,
                 fontFamily: "'Inter', sans-serif",
               }}
             >
-              {initials}
+              {!userPhoto && initials}
             </Avatar>
             <Box>
               <Typography

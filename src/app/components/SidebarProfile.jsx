@@ -105,7 +105,7 @@ export function SidebarProfile() {
         </Link>
       </Box>
 
-      {/* Name & Location */}
+      {/* Name */}
       <Box sx={{ textAlign: "center" }}>
         <Typography
           sx={{
@@ -118,18 +118,6 @@ export function SidebarProfile() {
         >
           {profile.name}
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5, mt: 0.5 }}>
-          <LocationOnOutlinedIcon sx={{ fontSize: 14, color: LIGHT_BLUE }} />
-          <Typography
-            sx={{
-              color: LIGHT_BLUE,
-              fontSize: 13,
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            {profile.address ||"[Location]" }
-          </Typography>
-        </Box>
       </Box>
 
       <Divider sx={{ width: "100%", borderColor: `${NAVY}18` }} />
@@ -214,41 +202,6 @@ export function SidebarProfile() {
             },
           }}
         />
-      </Box>
-
-      <Divider sx={{ width: "100%", borderColor: `${NAVY}18` }} />
-
-      {/* Achievements */}
-      <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <AchievRow
-          icon={<InsertDriveFileOutlinedIcon sx={{ fontSize: 16, color: GREEN }} />}
-          label="CV Score:"
-          value={`${profile.resumeScore || 85}%`}
-        />
-        <AchievRow
-          icon={<RocketLaunchOutlinedIcon sx={{ fontSize: 16, color: "#E3019F" }} />}
-          label="Completed Courses:"
-          value="5"
-        />
-        <AchievRow
-          icon={<MilitaryTechOutlinedIcon sx={{ fontSize: 16, color: "#F57B00" }} />}
-          label="Certifications:"
-          value="2"
-        />
-        <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: 15 }}>🔥</span>
-          <Typography
-            sx={{
-              color: NAVY,
-              fontSize: 13,
-              fontWeight: 600,
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            Goal:&nbsp;
-            <span style={{ fontWeight: 400, opacity: 0.8 }}>Finish Graduation Project </span>
-          </Typography>
-        </Box>
       </Box>
 
       {/* Skills chips */}

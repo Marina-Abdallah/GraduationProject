@@ -110,7 +110,10 @@ export function AppProvider({ children }) {
         }));
 
       } catch (error) {
-        console.error("Error fetching profile data:", error);
+        // Suppress 404 errors - user may not exist or API may be unavailable
+        if (error.response?.status !== 404 && error.code !== 'ERR_NETWORK') {
+          console.error("Error fetching profile data:", error);
+        }
       }
     };
 
@@ -143,7 +146,8 @@ export function AppProvider({ children }) {
           photo: photoUrl,
         }));
       } catch (error) {
-        if (error.response?.status !== 404) {
+        // Suppress 404 errors (user may not be a company) and network errors
+        if (error.response?.status !== 404 && error.code !== 'ERR_NETWORK') {
           console.error("Error fetching company data:", error);
         }
       }
@@ -177,7 +181,10 @@ export function AppProvider({ children }) {
           setIndustries(normalized.filter((item) => item.id !== undefined));
         }
       } catch (error) {
-        console.error("Error fetching industries:", error);
+        // Suppress network errors - API may be unavailable
+        if (error.code !== 'ERR_NETWORK') {
+          console.error("Error fetching industries:", error);
+        }
       }
     };
 
@@ -208,7 +215,10 @@ export function AppProvider({ children }) {
           setSkills(formattedSkills);
         }
       } catch (error) {
-        console.error("Error fetching skills:", error);
+        // Suppress network errors - API may be unavailable
+        if (error.code !== 'ERR_NETWORK') {
+          console.error("Error fetching skills:", error);
+        }
       }
     };
 
