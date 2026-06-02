@@ -109,6 +109,8 @@ function normalizeFeedItem(item, index = 0) {
 
       jobTitle: job.title,
       jobType: job.jobType,
+      jobCategoryId: job.jobCategoryId,
+      jobCategoryName: job.jobCategoryName,
 
       jobShortDescription: job.shortDescription,
       jobDescription: job.description,
@@ -149,121 +151,9 @@ function normalizeFeedItem(item, index = 0) {
 function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showApplyNow, onCloseApplyNow, highlightedPostId, loading = false }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [dynamicPosts, setDynamicPosts] = useState([]);
-  const [authorProfiles, setAuthorProfiles] = useState({});
   const { profile } = useAppContext();
 
-  const normalizeAuthorData = (data) => {
-    if (!data) return null;
-    const payload = data.data || data.result || data.profile || data.user || data;
-    const headline =
-      payload.headline ||
-      payload.role ||
-      payload.major ||
-      payload.profession ||
-      payload.jobTitle ||
-      payload.title ||
-      "";
-    const photo = normalizeImageUrl(
-      payload.pictureUrl ||
-      payload.PictureUrl ||
-      payload.photo ||
-      payload.avatarUrl ||
-      payload.profilePictureUrl ||
-      payload.imageUrl ||
-      payload.profilePic ||
-      null
-    );
-    return {
-      headline,
-      photo,
-    };
-  };
 
-  const fetchUserPhoto = useCallback(async (authorId, headers) => {
-    try {
-      const photoResponse = await api.get(`/Users/${authorId}/photo`, {
-        headers,
-        responseType: "blob",
-      });
-      if (photoResponse.data) {
-        return URL.createObjectURL(photoResponse.data);
-      }
-    } catch (error) {
-      console.warn(`Unable to resolve photo for user ${authorId}:`, error);
-    }
-    return null;
-  }, []);
-
-  const fetchAuthorProfile = useCallback(async (authorId, authorType) => {
-    if (!authorId || authorProfiles[authorId]) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      let response;
-
-      if (authorType?.toLowerCase().includes("company")) {
-        response = await api.get(`/Companies/${authorId}/overview`, { headers });
-      } else {
-        const userEndpoints = [
-          `/Users/${authorId}/profile`,
-          `/Users/${authorId}/overview`,
-          `/Users/${authorId}`,
-        ];
-
-        for (const endpoint of userEndpoints) {
-          try {
-            response = await api.get(endpoint, { headers });
-            break;
-          } catch (endpointError) {
-            if (endpointError.response?.status !== 404) {
-              throw endpointError;
-            }
-          }
-        }
-      }
-
-      if (!response?.data) {
-        const blobPhoto = await fetchUserPhoto(authorId, headers);
-        if (blobPhoto) {
-          setAuthorProfiles((prev) => ({
-            ...prev,
-            [authorId]: { headline: "", photo: blobPhoto },
-          }));
-        }
-        return;
-      }
-
-      const normalized = normalizeAuthorData(response.data);
-      const finalProfile = {
-        ...normalized,
-      };
-
-      if (!finalProfile.photo) {
-        const blobPhoto = await fetchUserPhoto(authorId, headers);
-        if (blobPhoto) {
-          finalProfile.photo = blobPhoto;
-        }
-      }
-
-      if (!finalProfile.headline && response.data?.firstName && response.data?.lastName) {
-        finalProfile.headline = `${response.data.firstName} ${response.data.lastName}`;
-      }
-
-      if (!finalProfile.headline && response.data?.name) {
-        finalProfile.headline = response.data.name;
-      }
-
-      if (normalized) {
-        setAuthorProfiles((prev) => ({
-          ...prev,
-          [authorId]: finalProfile,
-        }));
-      }
-    } catch (error) {
-      console.warn(`Unable to resolve author profile for ${authorId}:`, error);
-    }
-  }, [authorProfiles, fetchUserPhoto]);
 
   const handlePostSubmit = (content, mediaUrl) => {
     const newPost = {
@@ -284,35 +174,9 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
 
   const allPosts = [...dynamicPosts, ...feedItems];
 
-  useEffect(() => {
-    const pending = [];
-    const seen = new Set();
-
-    allPosts.forEach((post) => {
-      if (post.type === "post" && post.authorId && !authorProfiles[post.authorId] && !seen.has(post.authorId)) {
-        seen.add(post.authorId);
-        pending.push({ id: post.authorId, type: post.authorType });
-      }
-    });
-
-    pending.forEach(({ id, type }) => {
-      fetchAuthorProfile(id, type);
-    });
-  }, [allPosts, authorProfiles, fetchAuthorProfile]);
-
   const filteredPosts = allPosts.filter((p) =>
     matchesSearch(p, searchQuery)
   );
-
-  const resolvedPosts = filteredPosts.map((post) => {
-    if (post.type !== "post" || !post.authorId) return post;
-    const profileInfo = authorProfiles[post.authorId] || {};
-    return {
-      ...post,
-      role: profileInfo.headline || post.role || "",
-      authorPhoto: profileInfo.photo || post.authorPhoto || defaultPhoto,
-    };
-  });
 
   return (
     <>
@@ -377,7 +241,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
               </Typography>
             </Box>
           ) : (
-            resolvedPosts.map((post) =>
+            filteredPosts.map((post) =>
               post.type === "job" ? (
                 <JobPostCard
                   key={post.id}
@@ -388,7 +252,8 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   companyLocation={post.companyLocation}
                   jobTitle={post.jobTitle}
                   jobType={post.jobType}
-                  jobCategory={post.jobCategory}
+                  jobCategoryId={post.jobCategoryId}
+                  jobCategoryName={post.jobCategoryName}
                   jobShortDescription={post.jobShortDescription}
                   jobDescription={post.jobDescription}
                   Img={post.Img}

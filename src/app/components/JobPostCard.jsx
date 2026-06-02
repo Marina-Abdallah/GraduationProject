@@ -39,7 +39,7 @@ export function JobPostCard({
   jobTitle,
   companyLocation,
   jobType,
-  jobCategory,
+  jobCategoryName,
   jobShortDescription,
   jobDescription,
   Img,
@@ -287,7 +287,7 @@ export function JobPostCard({
               }}
             />
             <Chip
-              label={jobCategory}
+              label={jobCategoryName}
               size="small"
               sx={{
                 bgcolor: `rgba(132,251,162,0.18)`,
