@@ -1,11 +1,16 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { Box, Typography, Avatar } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
+import Pagination from '@mui/material/Pagination';
+import PaginationItem from '@mui/material/PaginationItem';
+import Stack from '@mui/material/Stack';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import api from "../../api/axios";
 
 // Layout
 import { CompanyNavbar } from "../components/CompanyNavbar";
-import { Footer } from "../components/Footer";
 
 // Community context + shared components
 import { CommunityProvider } from "../components/CommunityContext";
@@ -30,38 +35,44 @@ const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
-// ─── Initial feed data ────────────────────────────────────────────────────────
-const INITIAL_POSTS = [
-  {
-    id: "post1",
-    type: "post",
-    author: "Marina Abdallah",
-    role: "UI/UX Designer",
-    content: "Can anyone help me with the new feature in Figma?",
-    avatarColor: LIGHT_BLUE,
-  },
-  {
-    id: "post3",
-    type: "job",
-    company: "MicroSoft",
-    companyLocation: "Cairo, Egypt",
-    jobTitle: "Frontend Developer",
-    jobType: "Full time",
-    jobDescription:
-      "A Full time Frontend Developer at MicroSoft, creating user-friendly web experiences.",
-  },
-  {
-    id: "post2",
-    type: "post",
-    author: "Ahmed Mamdouh",
-    role: "Staff Software Engineer",
-    rtl: true,
-    avatarColor: "#c8b4e3",
-    content:
-      'شركه كانت مكلماني علشان اعمل Interviews لمتقدمين علشان كانت محتاجه "Senior" في ال Team بتاعها لان مفيش حد فاضي عندهم في الشركه، فوافقت.\n\nبعمل انترفيو لناس بقالها علي الاقل ٥ سنين في المجال وفيه ناس منهم عندهم خبره آكبر.\n\nالشركه كانت مسؤله عن مشروع ضخم وعليه ترافيك عالي والمشروع كان Distributed system وفيه مشاكل كثير في ال Production.\n\nبعض الآسئله كانت كالآتي:\n- ACID properties and Isolation levels\n- Consistency models\n- CAP theorem and when to use AP or CP\n- FIRST principles of unit testing\n- OOAD and how to design a given use case\n- How to evaluate third-party APIs\n\nبعد كام انترفيو الشركه قررت اني مكملش معاهم لاني بعقد ال Process.\n\nوالنتيجه سيئه.',
-  },
-];
+const normalizeImageUrl = (url) => {
+  if (!url || url === "URL") return null;
 
+  // Remove surrounding quotes if present
+  let cleanUrl = url.replace(/^["']|["']$/g, '');
+
+  if (cleanUrl.includes("wwwroot")) {
+    const match = cleanUrl.match(/wwwroot(.*)$/);
+    if (match) {
+      const relativePath = match[1].replace(/\\/g, "/");
+      return `https://localhost:7292${relativePath}`;
+    }
+  }
+
+  if (cleanUrl.includes("uploads")) {
+    const match = cleanUrl.match(/(uploads.*)$/);
+    if (match) {
+      const relativePath = match[1].replace(/\\/g, "/");
+      return `https://localhost:7292/${relativePath}`;
+    }
+  }
+
+  if (cleanUrl.startsWith("/")) {
+    return `https://localhost:7292${cleanUrl}`;
+  }
+
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+
+  if (cleanUrl.match(/^[a-zA-Z]:\\/)) {
+    return `file:///${cleanUrl.replace(/\\/g, '/')}`;
+  }
+
+  return cleanUrl;
+};
+
+// ─── Initial feed data ────────────────────────────────────────────────────────
 // ─── Search filter ────────────────────────────────────────────────────────────
 function matchesSearch(post, query) {
   if (!query.trim()) return true;
@@ -80,6 +91,79 @@ function matchesSearch(post, query) {
     (post.role || "").toLowerCase().includes(q) ||
     (post.content || "").toLowerCase().includes(q)
   );
+}
+
+function normalizeFeedItem(item, index = 0) {
+  if (!item) return null;
+
+  const type = item.type?.toLowerCase();
+
+  // JOB
+  if (type === "job" && item.job) {
+    const job = item.job;
+
+    return {
+      id: `job-${job.id}-${index}`,
+      sourceId: job.id,
+      type: "job",
+
+      company: job.companyName,
+      companyName: job.companyName,
+      companyPhoto: normalizeImageUrl(job.companyPictureUrl),
+      companyIndustry: job.companyIndustry || "",
+
+      companyLocation:
+        job.cityOffice ||
+        job.location,
+      locationMode: job.locationMode || job.jobLocationMode || "",
+
+      jobTitle: job.title,
+      jobType: job.jobType,
+      jobCategoryId: job.jobCategoryId,
+      jobCategoryName: job.jobCategoryName,
+
+      jobShortDescription: job.shortDescription,
+      jobDescription: job.description,
+
+      Img: normalizeImageUrl(job.bannerImageUrl),
+
+      likesCount: job.likesCount || 0,
+      isLikedByMe: job.isLikedByMe || false,
+      isSavedByMe: job.isSavedByMe || false,
+
+      createdAt: item.createdAt,
+    };
+  }
+
+  // POST
+  if (type === "post" && item.post) {
+    const post = item.post;
+
+    return {
+      id: `post-${post.id}-${index}`,
+      sourceId: post.id,
+      type: "post",
+
+      author: post.authorName,
+      authorId: post.authorId,
+      authorType: post.authorType,
+      role: post.authorSubtitle || post.authorHeadline || post.role || "",
+      subtitle: post.authorSubtitle || "",
+
+      content: post.content,
+
+      authorPhoto: normalizeImageUrl(post.authorPictureUrl) || null,
+      avatarColor: LIGHT_BLUE,
+
+      likesCount: post.likesCount || 0,
+      isLikedByMe: post.isLikedByMe || false,
+      isSavedByMe: post.isSavedByMe || false,
+
+      createdAt: item.createdAt,
+    };
+  }
+
+  return null;
 }
 
 // ─── Create bar: "Write a post" + "Post a new job" ────────────────────────────
@@ -194,7 +278,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-      
+
 
       {/* Feed */}
       {posts.length === 0 ? (
@@ -218,12 +302,19 @@ function CommunityFeed({ posts, highlightedPostId }) {
               key={post.id}
               postId={post.id}
               company={post.company}
+              companyName={post.companyName || post.company}
+              companyPhoto={post.companyPhoto}
+              companyIndustry={post.companyIndustry || post.jobIndustry || ""}
               jobTitle={post.jobTitle}
               jobCategory={post.jobCategory}
               jobShortDescription={post.jobShortDescription}
               companyLocation={post.companyLocation}
+              locationMode={post.locationMode || post.jobLocationMode || ""}
               jobType={post.jobType}
-              Img={post.Img}
+              Img={post.Img || post.jobbannerImg}
+              likesCount={post.likesCount}
+              isLikedByMe={post.isLikedByMe}
+              isSavedByMe={post.isSavedByMe}
               highlighted={highlightedPostId === post.id}
             />
           ) : (
@@ -236,6 +327,9 @@ function CommunityFeed({ posts, highlightedPostId }) {
               authorPhoto={post.authorPhoto}
               avatarColor={post.avatarColor}
               rtl={post.rtl || false}
+              likesCount={post.likesCount}
+              isLikedByMe={post.isLikedByMe}
+              isSavedByMe={post.isSavedByMe}
               highlighted={highlightedPostId === post.id}
               profileType="company"
             />
@@ -250,7 +344,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
 export function CompanyCommunityPage() {
   const { toggleCompanySavedPost, company } = useAppContext();
   const location = useLocation();
-  
+
 
   const [highlightedPostId, setHighlightedPostId] = useState(
     location.state?.highlightPostId || null
@@ -284,9 +378,67 @@ export function CompanyCommunityPage() {
   // Company account flag (true = company browsing, cannot apply)
   const isCompanyAccount = true;
 
+  // Pagination & Fetch States
+  const [feedItems, setFeedItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [pageCount, setPageCount] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handlePageChange = useCallback((event, value) => setPage(value), []);
+
+  useEffect(() => {
+    const loadFeed = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const token = localStorage.getItem("token");
+        const response = await api.get("/Community/feed", {
+          params: { page, pageSize },
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+
+        const data = response.data;
+        const items = Array.isArray(data)
+          ? data
+          : data?.items || data?.feed || data?.data || [];
+
+        const normalizedItems = Array.isArray(items)
+          ? items.map((item, index) => normalizeFeedItem(item, index)).filter(Boolean)
+          : [];
+
+        setFeedItems(normalizedItems);
+
+        if (typeof data?.totalPages === "number") {
+          setPageCount(data.totalPages);
+        } else if (typeof data?.totalCount === "number") {
+          setPageCount(Math.max(1, Math.ceil(data.totalCount / pageSize)));
+        } else if (Array.isArray(data)) {
+          setPageCount(Math.max(1, Math.ceil(data.length / pageSize)));
+        }
+      } catch (fetchError) {
+        console.error("Community feed request failed:", fetchError);
+        const responseData = fetchError.response?.data;
+        const errorMessage =
+          responseData?.message ||
+          responseData?.title ||
+          (typeof responseData === "string" ? responseData : JSON.stringify(responseData)) ||
+          fetchError.message ||
+          "Unable to load community feed.";
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFeed();
+  }, [page, pageSize]);
+
   const allPosts = useMemo(
-    () => [...dynamicPosts, ...INITIAL_POSTS],
-    [dynamicPosts]
+    () => [...dynamicPosts, ...feedItems],
+    [dynamicPosts, feedItems]
   );
 
   const filteredPosts = useMemo(
@@ -328,16 +480,16 @@ export function CompanyCommunityPage() {
       jobCategory: jobData.category,
       jobShortDescription: jobData.jobShortDescription || `${jobData.jobTitle} at ${company.name || "[COMPANY NAME]"}.`,
       jobType: jobData.jobType,
-      jobLocationMode:jobData.locationMode,
+      jobLocationMode: jobData.locationMode,
       companyLocation: jobData.city || company.location || "[LOCATION]",
-      jobsalaryType:jobData.salaryType,
-      jobsalaryMin:jobData.salaryMin,
-      jobsalaryMax:jobData.salaryMax,
-      jobSkills:jobData.skills,
-      jobbannerImg:jobData.bannerImage,
-      jobAboutRole:jobData.aboutRole,
-      jobResponsibilities:jobData.responsibilities,
-      jobRequirements:jobData.requirements,
+      jobsalaryType: jobData.salaryType,
+      jobsalaryMin: jobData.salaryMin,
+      jobsalaryMax: jobData.salaryMax,
+      jobSkills: jobData.skills,
+      jobbannerImg: jobData.bannerImage,
+      jobAboutRole: jobData.aboutRole,
+      jobResponsibilities: jobData.responsibilities,
+      jobRequirements: jobData.requirements,
     };
     setDynamicPosts((prev) => [newJob, ...prev]);
   };
@@ -415,14 +567,33 @@ export function CompanyCommunityPage() {
                 posts={filteredPosts}
                 highlightedPostId={highlightedPostId}
               />
+
+              {error && (
+                <Box sx={{ px: { xs: 2, md: 4 }, mt: 2 }}>
+                  <Typography sx={{ color: "#C32929", textAlign: "center" }}>
+                    {error}
+                  </Typography>
+                </Box>
+              )}
+
+              <Stack spacing={2} sx={{ width: "100%", py: 3, px: { xs: 2, md: 4 } }}>
+                <Pagination
+                  sx={{ color: "#84fba2", display: "flex", justifyContent: "center" }}
+                  count={pageCount}
+                  page={page}
+                  onChange={handlePageChange}
+                  renderItem={(item) => (
+                    <PaginationItem
+                      slots={{ previous: ArrowBackIcon, next: ArrowForwardIcon }}
+                      {...item}
+                    />
+                  )}
+                />
+              </Stack>
             </Box>
           </Box>
         </Box>
 
-        {/* Footer */}
-        {/* <Box sx={{ display: "flex", justifyContent: "center", width: "100%", pb: 0 }}>
-          <Footer />
-        </Box> */}
       </Box>
 
       {/* ── Dialogs ──────────────────────────────────────────────── */}

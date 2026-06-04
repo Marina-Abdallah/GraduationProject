@@ -13,6 +13,12 @@ import { CompanyCommunityPage } from "./pages/CompanyCommunity";
 import { CompanyFeaturesPage } from "./pages/CompanyFeatures";
 import { CompanyAiChatPage } from "./pages/CompanyAiChatPage";
 import { CompanyProfile } from "./pages/CompanyProfile";
+import  AdminDashboardPage  from "./pages/AdminDashboardPage";
+import  EditSettingsPage  from "./pages/EditSettingsPage";
+import  RequestsPage  from "./pages/RequestsPage";
+import  PotatoPage  from "./pages/PotatoPage";
+
+// Auth Pages
 import UserSignUp from "./pages/UserSignUp";
 import UserLogin from "./pages/UserLogin";
 import CompanyLogin from "./pages/CompanyLogin";
@@ -41,6 +47,10 @@ const router = createBrowserRouter([
   { path: "/company/cv-scoring", Component: CompanyAiChatPage },
   { path: "/company/ai-chat", Component: CompanyAiChatPage },
   { path: "/CompanyProfile", Component: CompanyProfile },
+  { path: "/AdminDashboardPage", Component: AdminDashboardPage },
+  {path: "/EditSettingsPage", Component: EditSettingsPage}, 
+  {path: "/RequestsPage", Component: RequestsPage},
+  {path: "/PotatoPage", Component: PotatoPage},
   { path: "*", Component: UserLogin },
 ]);
 

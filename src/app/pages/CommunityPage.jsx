@@ -23,7 +23,6 @@ import { JobPostCard } from "../components/JobPostCard";
 import { WritePostDialog } from "../components/WritePostDialog";
 import { ApplyNowOverlay } from "../components/ApplyNowOverlay";
 import backgroundImg from "../../assets/Background.png";
-import defaultPhoto from "../../assets/defaultImg.png";
 
 
 // Global context
@@ -33,34 +32,38 @@ const LIGHT_BLUE = "#90baef";
 const normalizeImageUrl = (url) => {
   if (!url || url === "URL") return null;
 
-  if (url.startsWith("file://")) {
-    return null;
-  }
+  // Remove surrounding quotes if present
+  let cleanUrl = url.replace(/^["']|["']$/g, '');
 
-  if (url.includes("wwwroot")) {
-    const match = url.match(/wwwroot(.*)$/);
+  if (cleanUrl.includes("wwwroot")) {
+    const match = cleanUrl.match(/wwwroot(.*)$/);
     if (match) {
       const relativePath = match[1].replace(/\\/g, "/");
       return `https://localhost:7292${relativePath}`;
     }
-    return null;
   }
 
-  // Handle local upload paths that may not include a leading slash
-  if (url.includes("uploads")) {
-    const normalized = url.replace(/\\/g, "/");
-    return normalized.startsWith("/") ? `https://localhost:7292${normalized}` : `https://localhost:7292/${normalized}`;
+  if (cleanUrl.includes("uploads")) {
+    const match = cleanUrl.match(/(uploads.*)$/);
+    if (match) {
+      const relativePath = match[1].replace(/\\/g, "/");
+      return `https://localhost:7292/${relativePath}`;
+    }
   }
 
-  if (url.startsWith("/")) {
-    return `https://localhost:7292${url}`;
+  if (cleanUrl.startsWith("/")) {
+    return `https://localhost:7292${cleanUrl}`;
   }
 
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
   }
 
-  return null;
+  if (cleanUrl.match(/^[a-zA-Z]:\\/)) {
+     return `file:///${cleanUrl.replace(/\\/g, '/')}`;
+  }
+
+  return cleanUrl;
 };
 // ─── Search matching logic ────────────────────────────────────────────────────
 function matchesSearch(post, query) {
@@ -101,11 +104,12 @@ function normalizeFeedItem(item, index = 0) {
       company: job.companyName,
       companyName: job.companyName,
       companyPhoto: normalizeImageUrl(job.companyPictureUrl),
+      companyIndustry: job.companyIndustry || "",
 
       companyLocation:
-        job.locationMode ||
         job.cityOffice ||
         job.location,
+      locationMode: job.locationMode || job.jobLocationMode || "",
 
       jobTitle: job.title,
       jobType: job.jobType,
@@ -116,6 +120,10 @@ function normalizeFeedItem(item, index = 0) {
       jobDescription: job.description,
 
       Img: normalizeImageUrl(job.bannerImageUrl),
+
+      likesCount: job.likesCount || 0,
+      isLikedByMe: job.isLikedByMe || false,
+      isSavedByMe: job.isSavedByMe || false,
 
       createdAt: item.createdAt,
     };
@@ -133,12 +141,17 @@ function normalizeFeedItem(item, index = 0) {
       author: post.authorName,
       authorId: post.authorId,
       authorType: post.authorType,
-      role: post.authorHeadline || post.role || "",
+      role: post.authorSubtitle || post.authorHeadline || post.role || "",
+      subtitle: post.authorSubtitle || "",
 
       content: post.content,
 
-      authorPhoto: post.authorPhoto || null,
+      authorPhoto: normalizeImageUrl(post.authorPictureUrl) || null,
       avatarColor: LIGHT_BLUE,
+
+      likesCount: post.likesCount || 0,
+      isLikedByMe: post.isLikedByMe || false,
+      isSavedByMe: post.isSavedByMe || false,
 
       createdAt: item.createdAt,
     };
@@ -195,7 +208,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
         }}
       >
         {/* Left: Sidebar (position: "sticky", top: 5, alignSelf: "flex-start" )*/}
-        <Box sx={{ display: { xs: "none", lg: "block" }, position: "sticky", top: 5, alignSelf: "flex-start" }}>
+        <Box sx={{ display: { xs: "none", lg: "block" }, position: "sticky", top: 10, alignSelf: "flex-start" }}>
           <SidebarProfile />
         </Box>
 
@@ -250,6 +263,8 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   companyName={post.companyName}
                   companyPhoto={post.companyPhoto}
                   companyLocation={post.companyLocation}
+                  locationMode={post.locationMode}
+                  companyIndustry={post.companyIndustry}
                   jobTitle={post.jobTitle}
                   jobType={post.jobType}
                   jobCategoryId={post.jobCategoryId}
@@ -257,6 +272,9 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   jobShortDescription={post.jobShortDescription}
                   jobDescription={post.jobDescription}
                   Img={post.Img}
+                  likesCount={post.likesCount}
+                  isLikedByMe={post.isLikedByMe}
+                  isSavedByMe={post.isSavedByMe}
                   highlighted={highlightedPostId === post.id}
                 />
               ) : (
@@ -265,10 +283,14 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   postId={post.id}
                   author={post.author}
                   role={post.role}
+                  subtitle={post.subtitle}
                   content={post.content}
                   authorPhoto={post.authorPhoto}
                   avatarColor={post.avatarColor}
                   rtl={post.rtl || false}
+                  likesCount={post.likesCount}
+                  isLikedByMe={post.isLikedByMe}
+                  isSavedByMe={post.isSavedByMe}
                   highlighted={highlightedPostId === post.id}
                   profileType="user"
                 />

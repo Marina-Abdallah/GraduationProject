@@ -36,6 +36,8 @@ export function JobPostCard({
   company,
   companyPhoto,
   companyName,
+  companyIndustry,
+  locationMode,
   jobTitle,
   companyLocation,
   jobType,
@@ -43,6 +45,9 @@ export function JobPostCard({
   jobShortDescription,
   jobDescription,
   Img,
+  likesCount = 0,
+  isLikedByMe = false,
+  isSavedByMe = false,
 }) {
   const companyLabel =
     typeof company === "string"
@@ -53,7 +58,8 @@ export function JobPostCard({
 
   const { posts, onLike, onSave, onApplyNow } = useCommunity();
   const { profile } = useAppContext();
-  const postState = posts[postId] ?? { liked: false, saved: false, likeCount: 0 };
+  const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount };
+  const postState = posts[postId] ?? initialState;
   const { liked, saved, likeCount } = postState;
 
   const [showComments, setShowComments] = useState(false);
@@ -130,21 +136,23 @@ export function JobPostCard({
                 fontWeight: 700,
                 fontSize: 17,
                 fontFamily: "'Inter', sans-serif",
-                lineHeight: 1.3,
+                lineHeight: 1,
               }}
             >
               {companyLabel}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <LocationOnOutlinedIcon sx={{ fontSize: 13, color: LIGHT_BLUE }} />
+              {/* <LocationOnOutlinedIcon sx={{ fontSize: 13, color: LIGHT_BLUE }} /> */}
               <Typography
                 sx={{
-                  color: LIGHT_BLUE,
-                  fontSize: 13,
+                  color: NAVY,
+                  fontSize: 12,
+                  opacity: 0.7,
                   fontFamily: "'Inter', sans-serif",
                 }}
               >
-                {companyLocation}
+                {companyIndustry}
+                {/* {companyIndustry ? `${companyIndustry} • ${companyLocation}` : companyLocation} */}
               </Typography>
             </Box>
           </Box>
@@ -207,7 +215,7 @@ export function JobPostCard({
           }}
         >
 
-            <Avatar
+          <Avatar
             src={companyImage || defaultCompanyPhoto}
             alt={companyLabel}
             sx={{
@@ -235,15 +243,20 @@ export function JobPostCard({
             >
               {companyLabel}
             </Typography>
-            <Typography
-              sx={{
-                color: "rgba(255,255,255,0.8)",
-                fontSize: 12,
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              {companyLocation}
-            </Typography>
+            {locationMode && (
+              <>
+                <Typography
+                  sx={{
+                    color: "rgba(255,255,255,0.8)",
+                    fontSize: 12,
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
+                  {companyLocation ? `${companyLocation} • ${locationMode}` : locationMode}
+
+                </Typography>
+              </>
+            )}
           </Box>
         </Box>
       </Box>
@@ -286,7 +299,26 @@ export function JobPostCard({
                 height: 22,
               }}
             />
-            <Chip
+           
+            {locationMode && (
+              <>
+                <Chip
+                  label={locationMode}
+                  size="small"
+                  sx={{
+                    bgcolor: `rgba(132,251,162,0.18)`,
+                    color: NAVY,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    border: `1px solid rgba(132,251,162,0.4)`,
+                    borderRadius: "8px",
+                    height: 22,
+                  }}
+                />
+                
+              </>
+            )}
+             <Chip
               label={jobCategoryName}
               size="small"
               sx={{
@@ -300,6 +332,7 @@ export function JobPostCard({
               }}
             />
           </Box>
+          
           <Typography
             sx={{
               color: NAVY,

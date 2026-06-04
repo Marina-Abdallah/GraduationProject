@@ -69,8 +69,12 @@ function UserLoginCard() {
       if (res.data.id) localStorage.setItem("userId", res.data.id);
       else if (res.data.userId) localStorage.setItem("userId", res.data.userId);
 
-      // go to home
-      navigate("/MyJobApplication");
+      // Check user role and navigate accordingly
+      if (res.data.roles && res.data.roles.includes("Admin")) {
+        navigate("/AdminDashboardPage");
+      } else {
+        navigate("/MyJobApplication");
+      }
 
     } catch (err) {
       console.log(err.response?.data);

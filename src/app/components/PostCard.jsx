@@ -27,7 +27,7 @@ const LIGHT_BLUE = "#90baef";
 const GOLD = "#FBBC04";
 const RED = "#C32929";
 
-export function PostCard({ postId, author, role, content, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType }) {
+export function PostCard({ postId, author, role, subtitle, content, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType }) {
   const { posts, onLike, onSave } = useCommunity();
   const { profile, company } = useAppContext();
   const postState = posts[postId] ?? { liked: false, saved: false, likeCount: 0 };
@@ -136,7 +136,7 @@ export function PostCard({ postId, author, role, content, authorPhoto, avatarCol
                   fontWeight: 700,
                   fontSize: 17,
                   fontFamily: "'Inter', sans-serif",
-                  lineHeight: 1.3,
+                  lineHeight: 1,
                 }}
               >
                 {author}
@@ -144,12 +144,12 @@ export function PostCard({ postId, author, role, content, authorPhoto, avatarCol
               <Typography
                 sx={{
                   color: NAVY,
-                  fontSize: 14,
+                  fontSize: 12,
                   opacity: 0.7,
                   fontFamily: "'Inter', sans-serif",
                 }}
               >
-                {role}
+                {subtitle || role}
               </Typography>
             </Box>
           </Box>
