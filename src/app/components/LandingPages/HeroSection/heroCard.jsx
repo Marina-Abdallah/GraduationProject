@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./heroCard.css";
 
 function HeroCard({
@@ -24,22 +25,22 @@ function HeroCard({
   buttonWidth,
   buttonHeight,
   buttonFontSize,
+  goTo,
 
   /* layout */
   align = "center", // center | left | right
-  padding = "20px",
-  margin,
   iconMargin,
   textAlign,
 
 
 
   titleFontSize = "24px",
-textFontSize = "16px",
+  textFontSize = "16px",
 
-titleFontWeight = "600",
-textFontWeight = "400", 
+  titleFontWeight = "600",
+  textFontWeight = "400",
 }) {
+  const navigate = useNavigate();
   return (
     <div
       className={`hero-card ${variant}`}
@@ -48,8 +49,6 @@ textFontWeight = "400",
         width: width,
         height: height,
         boxShadow: shadow,
-        padding: padding,
-        margin: margin,
       }}
     >
       <div
@@ -67,8 +66,8 @@ textFontWeight = "400",
             alt=""
             className="hero-icon"
             style={{
-             width: iconWidth,
-             height: iconHeight,
+              width: iconWidth,
+              height: iconHeight,
               objectFit: "contain",
               margin: iconMargin,
               display: "block",
@@ -99,6 +98,9 @@ textFontWeight = "400",
         </p>
         {showButton && (
           <button
+            onClick={() => {
+              goTo ? navigate(goTo) : {}
+            }}
             className="hero-btn"
             style={{
               backgroundColor: buttonBg,
@@ -106,8 +108,8 @@ textFontWeight = "400",
               width: buttonWidth,
               height: buttonHeight,
               fontSize: buttonFontSize,
-               display: "block",
-                marginTop: "20px",
+              display: "block",
+              marginTop: "20px",
             }}
           >
             {buttonText}

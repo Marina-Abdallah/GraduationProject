@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { Footer } from "../../../components/Footer";
 import "./LandingPage.css";
 import graphImg from "../../../../assets/graph.png";
-import backgroundImg from "../../../../assets/Background.png";
+import backgroundImg from "../../../../assets/homebackground.png";
 
 // Components
 import SplashNavbar from "../../../components/SplashNavbar";
@@ -21,7 +21,7 @@ function LandingPage() {
         backgroundSize: "100% auto",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center",
-        
+
       }}
     >
       <Box

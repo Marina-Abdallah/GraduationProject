@@ -16,11 +16,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 60px;
-
- /*padding: 80px 100px;
-  position: relative;
-   padding-top: 120px;*/
-    padding: 120px 100px 80px;
+  padding: 120px 100px 80px;
 }
 
 /* LEFT SIDE */
@@ -88,13 +84,13 @@
 
 .hero-right img {
   width: 100%;
-   max-width: 450px;
-  height: 550px;
+   max-width: auto;
+  height: auto;
  
 }
 
 /* RESPONSIVE */
-@media (max-width: 900px) {
+@media (max-width: 100px) {
   .hero-section {
     flex-direction: column;
     text-align: center;
