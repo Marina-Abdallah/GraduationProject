@@ -85,7 +85,7 @@ export function CompanyJobDetailsPage() {
           alignItems: "center",
           justifyContent: "center",
           background: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "100% auto",
           backgroundPosition: "top center",
           gap: 3,
         }}
@@ -126,7 +126,7 @@ export function CompanyJobDetailsPage() {
         flexDirection: "column",
         alignItems: "center",
         background: `url(${backgroundImg})`,
-        backgroundSize: "cover",
+        backgroundSize: "100% auto",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center",
       }}

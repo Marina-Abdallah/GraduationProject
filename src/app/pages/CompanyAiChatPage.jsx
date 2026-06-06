@@ -449,7 +449,7 @@ export function CompanyAiChatPage() {
       sx={{
         height: "100vh",
         background: `url(${backgroundImg})`,
-        backgroundSize: "cover",
+        backgroundSize: "100% auto",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center",        
         display: "flex",

@@ -510,7 +510,7 @@ export function CompanyCommunityPage() {
           flexDirection: "column",
           alignItems: "center",
           background: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "100% auto",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "top center",
         }}

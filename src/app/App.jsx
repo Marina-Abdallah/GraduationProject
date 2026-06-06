@@ -13,6 +13,8 @@ import { CompanyCommunityPage } from "./pages/CompanyCommunity";
 import { CompanyFeaturesPage } from "./pages/CompanyFeatures";
 import { CompanyAiChatPage } from "./pages/CompanyAiChatPage";
 import { CompanyProfile } from "./pages/CompanyProfile";
+import  SplashScreen  from "./pages/LandingPages/SplashScreen/SplashScreen";
+import  LandingPage  from "./pages/LandingPages/LandingPage/LandingPage";
 import  AdminDashboardPage  from "./pages/AdminDashboardPage";
 import  EditSettingsPage  from "./pages/EditSettingsPage";
 import  RequestsPage  from "./pages/RequestsPage";
@@ -28,7 +30,9 @@ import CompanySignUp from "./pages/CompanySignUp";
 import { AppProvider } from "./components/AppContext";
 
 const router = createBrowserRouter([
-  { path: "/", Component: UserLogin },
+  {path: "/", Component: SplashScreen},
+  { path: "/LandingPage", Component: LandingPage },
+  {path: "/UserLogin", Component: UserLogin},
   { path: "/UserSignUp", Component: UserSignUp },
   { path: "/CompanyLogin", Component: CompanyLogin },
   { path: "/CompanySignUp", Component: CompanySignUp },
@@ -51,7 +55,7 @@ const router = createBrowserRouter([
   {path: "/EditSettingsPage", Component: EditSettingsPage}, 
   {path: "/RequestsPage", Component: RequestsPage},
   {path: "/PotatoPage", Component: PotatoPage},
-  { path: "*", Component: UserLogin },
+  { path: "*", Component: SplashScreen },
 ]);
 
 export default function App() {

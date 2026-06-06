@@ -1,0 +1,87 @@
+/* الخلفية العامة */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.homepage {
+  min-height: 150vh;
+  background:  url("../../assets/images/homebackground.png") no-repeat top center;
+      background-color: white; /* الخلفية تحت الصورة */
+    background-size: 100% 1000px;
+  font-family: "Poppins", sans-serif;
+   padding-top: 48px; /* 👈 ده اللي يعمل مسافة قبل النافبار */
+}
+
+/* نتحكم في المسافات بين السكاشن */
+
+/* تحسين الـ navbar */
+/* .navbar {
+   margin: 0 auto;
+  width: 90%;
+  max-width: 1200px;
+
+} */
+
+/* تحسين الـ hero */
+.hero-section {
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* wave */
+.wave {
+  margin-top: -40px;
+}
+
+/* info section */
+.info {
+  max-width: 1200px;
+  margin: auto;
+  padding: 40px 20px;
+}
+
+.info .title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+/* layout */
+.info .content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+/* النص */
+.info .left {
+  width: 50%;
+  font-size: 15px;
+  color: #555;
+}
+
+/* الصورة */
+.info .right {
+  width: 50%;
+}
+
+.info .right img {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .info .content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .info .left,
+  .info .right {
+    width: 100%;
+  }
+}

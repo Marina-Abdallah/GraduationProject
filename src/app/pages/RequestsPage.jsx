@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { WaveBackground } from '../components/AdminEdition/background/WaveBackground';
+import { Box } from '@mui/material';
 import { AdminNavbar } from '../components/AdminEdition/navbar/AdminNavbar';
 import { RequestsGrid } from '../components/AdminEdition/requests/RequestsGrid';
 import { DeclineModal } from '../components/AdminEdition/requests/DeclineModal';
+import backgroundImg from "../../assets/Background.png";
 
 const INITIAL_REQUESTS = [
   {
@@ -49,7 +50,7 @@ const INITIAL_REQUESTS = [
   },
 ];
 
-export default function RequestsPage({ onNavigate }) {
+export default function RequestsPage() {
   const [requests, setRequests] = useState(INITIAL_REQUESTS);
   const [declineTarget, setDeclineTarget] = useState(null);
 
@@ -74,38 +75,41 @@ export default function RequestsPage({ onNavigate }) {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        position: 'relative',
-        fontFamily: 'Inter, sans-serif',
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        background: `url(${backgroundImg})`,
+        backgroundSize: "100% auto",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "top center",
       }}
     >
-      <WaveBackground />
-
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          display: 'flex',
-          flexDirection: 'column',
+      <Box
+        sx={{
+          width: "100%",
+          pt: 3,
+          px: { xs: 2, md: 4 },
+          position: "relative",
+          zIndex: 20,
         }}
       >
-        {/* Navbar */}
-        <AdminNavbar activePage="requests" onNavigate={onNavigate} />
+        <AdminNavbar />
+      </Box>
 
-        {/* Content Area */}
-        <div
-          style={{
-            padding: '40px 8.33%',
-          }}
-        >
-          <RequestsGrid
-            requests={requests}
-            onApprove={handleApprove}
-            onDecline={handleDeclineClick}
-          />
-        </div>
+      {/* Content Area */}
+      <div
+        style={{
+          padding: '40px 8.33%',
+        }}
+      >
+        <RequestsGrid
+          requests={requests}
+          onApprove={handleApprove}
+          onDecline={handleDeclineClick}
+        />
       </div>
 
       {/* Decline Confirmation Modal */}
@@ -115,6 +119,6 @@ export default function RequestsPage({ onNavigate }) {
         onConfirm={handleDeclineConfirm}
         onCancel={handleDeclineCancel}
       />
-    </div>
+    </Box >
   );
 }

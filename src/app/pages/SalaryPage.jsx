@@ -28,27 +28,6 @@ const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
-// ── Tax calculation (progressive tax for demo) ─────────────────
-// function calculateTax(gross, period, empType) {
-//   const annual = period === "month" ? gross * 12 : gross;
-
-//   let tax = 0;
-//   if (annual <= 10000) tax = annual * 0.1;
-//   else if (annual <= 40000) tax = 1000 + (annual - 10000) * 0.12;
-//   else if (annual <= 85000) tax = 4600 + (annual - 40000) * 0.22;
-//   else if (annual <= 160000) tax = 14500 + (annual - 85000) * 0.24;
-//   else if (annual <= 200000) tax = 32500 + (annual - 160000) * 0.32;
-//   else tax = 45300 + (annual - 200000) * 0.35;
-
-//   // Freelance/contract adds ~15.3% SE tax on top
-//   if (empType === "contract") tax += annual * 0.153 * 0.5;
-
-//   tax = Math.round(tax);
-//   const net = Math.round(annual - tax);
-//   const rate = annual > 0 ? ((tax / annual) * 100).toFixed(1) : "0.0";
-
-//   return { annual: Math.round(annual), tax, rate, net };
-// }
 
 const fmt = (v) =>
   v != null
@@ -164,7 +143,7 @@ export function SalaryPage() {
       sx={{
         minHeight: "100vh",
         background: `url(${backgroundImg})`,
-        backgroundSize: "cover",
+        backgroundSize: "100% auto",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center", 
         display: "flex",

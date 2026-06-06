@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Box } from '@mui/material';
 import { AdminNavbar } from '../components/AdminEdition/navbar/AdminNavbar';
+import backgroundImg from "../../assets/Background.png";
 
 const AI_REPLIES = [
   'There are currently 248 active companies on the platform.',
@@ -22,59 +24,6 @@ function nextReply() {
   return reply;
 }
 
-function ChatBackground() {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 0,
-        overflow: 'hidden',
-        background: 'white',
-        pointerEvents: 'none',
-      }}
-    >
-      <svg
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-        viewBox="0 0 1455 2339.5"
-        preserveAspectRatio="xMidYMin slice"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-      >
-        <defs>
-          <filter
-            colorInterpolationFilters="sRGB"
-            filterUnits="userSpaceOnUse"
-            height="2339.5"
-            id="chatWaveFilter"
-            width="1455"
-            x="0"
-            y="0"
-          >
-            <feFlood floodOpacity="0" result="BackgroundImageFix" />
-            <feColorMatrix in="SourceAlpha" result="hardAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" />
-            <feOffset dy="-8" />
-            <feGaussianBlur stdDeviation="4" />
-            <feComposite in2="hardAlpha" operator="out" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.517647 0 0 0 0 0.984314 0 0 0 0 0.635294 0 0 0 0.5 0" />
-            <feBlend in2="BackgroundImageFix" mode="normal" result="effect1_dropShadow" />
-            <feBlend in="SourceGraphic" in2="effect1_dropShadow" mode="normal" result="shape" />
-          </filter>
-          <linearGradient gradientUnits="userSpaceOnUse" id="chatWaveGradient" x1="727.5" x2="727.5" y1="16" y2="2339.5">
-            <stop offset="0.399038" stopColor="#90BAEF" />
-            <stop offset="1" stopColor="white" />
-          </linearGradient>
-        </defs>
-        <g filter="url(#chatWaveFilter)">
-          <path
-            d="M245.5 595C96.1805 513.699 22.1963 634.471 8 696V2339.5H1447V16C1124.5 33 1213.5 431 860.5 355C721.987 325.178 716.131 554.434 601.5 648.5C451 772 431 696 245.5 595Z"
-            fill="url(#chatWaveGradient)"
-          />
-        </g>
-      </svg>
-    </div>
-  );
-}
 
 function PotatoAvatar({ size = 59 }) {
   return (
@@ -216,7 +165,7 @@ function TypingIndicator() {
   );
 }
 
-export default function PotatoPage({ onNavigate }) {
+export default function PotatoPage() {
   const [messages, setMessages] = useState([
     { id: 1, sender: 'ai', text: 'Hi Mina, How can I help you ??' },
   ]);
@@ -252,158 +201,159 @@ export default function PotatoPage({ onNavigate }) {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        position: 'relative',
-        fontFamily: 'Inter, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        background: `url(${backgroundImg})`,
+        backgroundSize: "100% auto",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "top center",
       }}
     >
-      <ChatBackground />
+      <Box
+        sx={{
+          width: "100%",
+          pt: 3,
+          px: { xs: 2, md: 4 },
+          position: "relative",
+          zIndex: 20,
+        }}
+      >
+        <AdminNavbar />
+      </Box>
 
+      {/* Chat layout */}
       <div
         style={{
-          position: 'relative',
-          zIndex: 1,
+          padding: '40px 8.33% 32px',
           display: 'flex',
           flexDirection: 'column',
+          gap: 16,
           flex: 1,
         }}
       >
-        {/* Navbar */}
-        <AdminNavbar activePage="potato" onNavigate={onNavigate} />
-
-        {/* Chat layout */}
+        {/* Chat container */}
         <div
           style={{
-            padding: '24px 8.33% 32px',
+            background: 'rgba(255,255,255,0.8)',
+            borderRadius: 16,
+            padding: 14,
             display: 'flex',
             flexDirection: 'column',
             gap: 16,
+            minHeight: 520,
             flex: 1,
+            overflowY: 'auto',
+            backdropFilter: 'blur(8px)',
           }}
         >
-          {/* Chat container */}
-          <div
-            style={{
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 16,
-              padding: 14,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-              minHeight: 520,
-              flex: 1,
-              overflowY: 'auto',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            {messages.map((msg) =>
-              msg.sender === 'ai' ? (
-                <AiMessage key={msg.id} text={msg.text} />
-              ) : (
-                <UserMessage key={msg.id} text={msg.text} />
-              )
-            )}
-            {isTyping && <TypingIndicator />}
-            <div ref={chatEndRef} />
-          </div>
+          {messages.map((msg) =>
+            msg.sender === 'ai' ? (
+              <AiMessage key={msg.id} text={msg.text} />
+            ) : (
+              <UserMessage key={msg.id} text={msg.text} />
+            )
+          )}
+          {isTyping && <TypingIndicator />}
+          <div ref={chatEndRef} />
+        </div>
 
-          {/* Input bar */}
-          <div
+        {/* Input bar */}
+        <div
+          style={{
+            background: 'rgba(255,255,255,0.8)',
+            borderRadius: 16,
+            height: 82,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0,
+            padding: '0 20px 0 0',
+            backdropFilter: 'blur(8px)',
+            flexShrink: 0,
+          }}
+        >
+          {/* Plus button */}
+          <button
             style={{
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 16,
+              width: 82,
               height: 82,
               display: 'flex',
               alignItems: 'center',
-              gap: 0,
-              padding: '0 20px 0 0',
-              backdropFilter: 'blur(8px)',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
               flexShrink: 0,
             }}
+            aria-label="Attach"
           >
-            {/* Plus button */}
-            <button
+            <div
               style={{
-                width: 82,
-                height: 82,
+                width: 50,
+                height: 50,
+                borderRadius: '50%',
+                background: '#90BAEF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                flexShrink: 0,
               }}
-              aria-label="Attach"
             >
-              <div
-                style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: '50%',
-                  background: '#90BAEF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M11 2V20M2 11H20" stroke="white" strokeWidth="3" strokeLinecap="round" />
-                </svg>
-              </div>
-            </button>
-
-            {/* Text input */}
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask Potato 🌱🥔"
-              style={{
-                flex: 1,
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                fontSize: 20,
-                fontFamily: 'Inter, sans-serif',
-                fontWeight: 400,
-                color: '#13206d',
-                padding: '0 16px',
-              }}
-            />
-
-            {/* Send button */}
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim()}
-              style={{
-                background: input.trim() ? '#13206d' : 'rgba(19,32,109,0.15)',
-                border: 'none',
-                borderRadius: 12,
-                width: 44,
-                height: 44,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: input.trim() ? 'pointer' : 'default',
-                transition: 'background 0.15s',
-                flexShrink: 0,
-              }}
-              aria-label="Send"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 10L18 2L10 18L9 11L2 10Z" fill="white" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 2V20M2 11H20" stroke="white" strokeWidth="3" strokeLinecap="round" />
               </svg>
-            </button>
-          </div>
-        </div>
+            </div>
+          </button>
 
+          {/* Text input */}
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask Potato 🌱🥔"
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              fontSize: 20,
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 400,
+              color: '#13206d',
+              padding: '0 16px',
+            }}
+          />
+
+          {/* Send button */}
+          <button
+            onClick={sendMessage}
+            disabled={!input.trim()}
+            style={{
+              background: input.trim() ? '#13206d' : 'rgba(19,32,109,0.15)',
+              border: 'none',
+              borderRadius: 12,
+              width: 44,
+              height: 44,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: input.trim() ? 'pointer' : 'default',
+              transition: 'background 0.15s',
+              flexShrink: 0,
+            }}
+            aria-label="Send"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 10L18 2L10 18L9 11L2 10Z" fill="white" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
       </div>
-    </div>
+
+    </Box>
+  
   );
 }

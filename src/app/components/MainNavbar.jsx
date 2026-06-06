@@ -32,7 +32,6 @@ export function MainNavbar() {
         {/* Navigation and Profile on the right */}
         <div className="flex items-center gap-2 sm:gap-4 md:gap-8 shrink-0 ml-auto">
           {/* Navigation */}
-          {/* <div className="hidden md:flex items-center gap-12"> */}
           <div className="flex items-center gap-2 sm:gap-6 md:gap-12">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path || (item.label === 'Home' && location.pathname === '/');
