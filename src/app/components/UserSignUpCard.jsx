@@ -251,7 +251,7 @@ function UserSignUpCard() {
             <OtpModal
                 open={openOtp}
                 handleClose={() => setOpenOtp(false)}
-                redirectPath="/MyJobApplication"
+                redirectPath="/UserLogin"
                 email={form.email}
                 verifyPath = "/Users/verify-email"
             />

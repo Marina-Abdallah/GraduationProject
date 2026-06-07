@@ -134,7 +134,6 @@ export function ProfileDescriptionCard() {
       setScoring(false);
     }
   };
-
   return (
     <Box
       sx={{
