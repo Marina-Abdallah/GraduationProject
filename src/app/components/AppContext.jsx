@@ -105,9 +105,39 @@ export function AppProvider({ children }) {
           headline: data.headline,
           major: data.major,
           photo: photoUrl || defaultPhoto,
-          resumeFileName: data.cvUrl,
-          resumeScore: data.resumeScore,
+          resumeFileName: data.fileName ?? prev.resumeFileName,
+          // Try every casing the backend might use
+          resumeScore: data.resumeScore ?? data.ResumeScore ?? data.cvScore ?? data.score ?? prev.resumeScore,
         }));
+
+        // GET /cv to load the persisted score AND filename on reload.
+        // (resumeScore is not in UpdateProfileDto so PATCH never saves it;
+        //  the scoring endpoint persists it and GET /cv returns it.)
+        try {
+          const cvRes = await api.get("/cv", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+          const cvData = cvRes.data;
+
+          const score =
+            cvData?.score ?? cvData?.resumeScore ?? cvData?.ResumeScore ??
+            cvData?.percentage ?? cvData?.scorePercentage ?? null;
+
+          const cvFileName =
+            cvData?.fileName ?? cvData?.cvUrl ?? cvData?.filePath ??
+            cvData?.path ?? cvData?.url ?? null;
+
+          setProfile((prev) => ({
+            ...prev,
+            ...(score !== null && score !== undefined ? { resumeScore: score } : {}),
+            ...(cvFileName ? { resumeFileName: cvFileName } : {}),
+          }));
+        } catch (cvErr) {
+          // 404 just means no CV yet — not an error
+          if (cvErr.response?.status !== 404) {
+            console.error("Error fetching CV score:", cvErr);
+          }
+        }
 
       } catch (error) {
         // Suppress 404 errors - user may not exist or API may be unavailable
@@ -279,7 +309,8 @@ export function AppProvider({ children }) {
       if (updates.major !== undefined) dto.major = updates.major;
       if (updates.university !== undefined) dto.university = updates.university;
       if (updates.resumeFileName !== undefined) dto.cvUrl = updates.resumeFileName;
-      if (updates.resumeScore !== undefined) dto.resumeScore = updates.resumeScore;
+      // NOTE: resumeScore is NOT in UpdateProfileDto — it is persisted by POST /cv/score/{userId}.
+      // We do NOT send it in the PATCH to avoid backend rejection.
       if (updates.phone !== undefined) dto.phone = updates.phone;
       if (updates.birthdate !== undefined) dto.birthdate = updates.birthdate;
       if (updates.address !== undefined) dto.address = updates.address;
@@ -313,7 +344,9 @@ export function AppProvider({ children }) {
           photo: data.pictureUrl
             ? `https://localhost:7292${data.pictureUrl}`
             : prev.photo,
-          resumeFileName: data.cvUrl ?? prev.resumeFileName,          resumeScore: data.resumeScore ?? prev.resumeScore,        }));
+          resumeFileName: data.cvUrl ?? prev.resumeFileName,          
+          resumeScore: data.resumeScore ?? prev.resumeScore,        
+        }));
       }
     } catch (err) {
       console.error("Failed to update profile on backend", err);

@@ -161,7 +161,7 @@ export function JobPostCard({
         <Tooltip title={saved ? "Unsave post" : "Save post"}>
           <IconButton
             size="small"
-            onClick={(e) => { e.stopPropagation(); onSave(postId); }}
+            onClick={(e) => { e.stopPropagation(); onSave(postId, initialState); }}
             sx={{ color: GOLD }}
           >
             {saved ? (
@@ -409,7 +409,7 @@ export function JobPostCard({
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
           <IconButton
             size="small"
-            onClick={(e) => { e.stopPropagation(); onLike(postId); }}
+            onClick={(e) => { e.stopPropagation(); onLike(postId, initialState); }}
             sx={{ transition: "transform 0.15s", "&:hover": { transform: "scale(1.15)" } }}
           >
             {liked ? (

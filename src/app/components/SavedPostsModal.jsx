@@ -1,247 +1,220 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   Box,
   Typography,
   Button,
-  IconButton,
   Divider,
-  LinearProgress,
-  Tooltip,
+  CircularProgress,
+  Chip,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useNavigate } from "react-router-dom";
-import { useAppContext } from "./AppContext";
-import defaultPhoto from "../../assets/defaultImg.png";
+import api from "../../api/axios";
 
-// function MiniProfileSidebar({ profile, skills }) {
-//   return (
-//     <Box
-//       sx={{
-//         width: { xs: "100%", sm: 260 },
-//         flexShrink: 0,
-//         bgcolor: "#fafafa",
-//         borderRadius: "16px",
-//         p: "24px 20px",
-//         display: "flex",
-//         flexDirection: "column",
-//         alignItems: "center",
-//         gap: 2,
-//         boxShadow: "0px 4px 16px rgba(132,251,162,0.3)",
-//       }}
-//     >
-//       {/* Avatar */}
-//       <Box
-//         sx={{
-//           width: 110,
-//           height: 110,
-//           borderRadius: "50%",
-//           overflow: "hidden",
-//           border: "3px solid #84fba2",
-//           boxShadow: "0px 4px 8px rgba(132,251,162,0.4)",
-//         }}
-//       >
-//         <img
-//           src={profile.photo || defaultPhoto}
-//           alt="Profile"
-//           style={{ width: "100%", height: "100%", objectFit: "cover" }}
-//         />
-//       </Box>
+const NAVY = "#13206d";
+const GREEN = "#84fba2";
+const GOLD = "#FBBC04";
+const RED = "#C32929";
+const LIGHT_BLUE = "#90baef";
 
-//       {/* Name + details */}
-//       <Box sx={{ textAlign: "center" }}>
-//         <Typography sx={{ color: "#13206d", fontSize: "18px", fontWeight: 700 }}>
-//           {profile.name}
-//         </Typography>
-//         <Typography sx={{ color: "#13206d", fontSize: "13px", opacity: 0.6 }}>
-//           Alexandria, Egypt
-//         </Typography>
-//         <Typography sx={{ color: "#13206d", fontSize: "14px", fontWeight: 500, mt: 0.5 }}>
-//           {profile.headline}
-//         </Typography>
-//         <Typography sx={{ color: "#13206d", fontSize: "12px", opacity: 0.6, mt: 0.5, lineHeight: 1.4 }}>
-//           Student in software industry and multimedia,
-//           <br />
-//           faculty of science, Alexandria University
-//         </Typography>
-//       </Box>
+// ─── Normalize a saved item from the API response ────────────────────────────
+function normalizeSavedItem(item) {
+  if (!item) return null;
+  const type = (item.type ?? "").toLowerCase();
 
-//       {/* Stats */}
-//       <Box sx={{ display: "flex", gap: 2, width: "100%", justifyContent: "center" }}>
-//         {[
-//           { label: "Posts", value: 20 },
-//           { label: "Followers", value: 100 },
-//           { label: "Following", value: 250 },
-//         ].map((s) => (
-//           <Box key={s.label} sx={{ textAlign: "center" }}>
-//             <Typography sx={{ color: "#13206d", fontSize: "16px", fontWeight: 700 }}>
-//               {s.value}
-//             </Typography>
-//             <Typography sx={{ color: "#13206d", fontSize: "12px", opacity: 0.6 }}>
-//               {s.label}
-//             </Typography>
-//           </Box>
-//         ))}
-//       </Box>
+  if (type === "job" && item.job) {
+    const j = item.job;
+    return {
+      id: `job-${j.id}`,
+      type: "job",
+      sourceId: j.id,
+      title: j.title ?? "Job",
+      author: j.companyName ?? "Company",
+      role: j.jobType ?? "",
+      content: j.shortDescription ?? j.description ?? "",
+      likesCount: j.likesCount ?? 0,
+    };
+  }
 
-//       <Divider sx={{ width: "100%", borderColor: "rgba(19,32,109,0.1)" }} />
+  if (type === "post" && item.post) {
+    const p = item.post;
+    return {
+      id: `post-${p.id}`,
+      type: "post",
+      sourceId: p.id,
+      title: null,
+      author: p.authorName ?? "User",
+      role: p.authorHeadline ?? p.authorSubtitle ?? "",
+      content: p.content ?? "",
+      likesCount: p.likesCount ?? 0,
+    };
+  }
 
-//       {/* Career Meter */}
-//       <Box sx={{ width: "100%" }}>
-//         <Typography sx={{ color: "#13206d", fontSize: "13px", fontWeight: 600, mb: 0.5 }}>
-//           Career Meter
-//         </Typography>
-//         <Typography sx={{ color: "#84fba2", fontSize: "12px", fontWeight: 700, mb: 0.5 }}>
-//           25% and Rising
-//         </Typography>
-//         <LinearProgress
-//           variant="determinate"
-//           value={25}
-//           sx={{
-//             height: 6,
-//             borderRadius: 3,
-//             bgcolor: "rgba(19,32,109,0.1)",
-//             "& .MuiLinearProgress-bar": { bgcolor: "#84fba2", borderRadius: 3 },
-//           }}
-//         />
-//       </Box>
+  // Flat shape fallback (API might return items directly)
+  if (item.content !== undefined || item.title !== undefined) {
+    const isJob = !!item.title;
+    return {
+      id: `item-${item.id ?? Math.random()}`,
+      type: isJob ? "job" : "post",
+      sourceId: item.id,
+      title: item.title ?? null,
+      author: item.authorName ?? item.companyName ?? "Unknown",
+      role: item.jobType ?? item.authorHeadline ?? "",
+      content: item.content ?? item.shortDescription ?? item.description ?? "",
+      likesCount: item.likesCount ?? 0,
+    };
+  }
 
-//       {/* Career Stats */}
-//       <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 0.5 }}>
-//         {[
-//           { icon: "📋", label: "CV Score:", value: `${profile.resumeScore || 85}%`, extra: "Updated 1 month ago" },
-//           { icon: "🎓", label: "Completed Courses:", value: "5" },
-//           { icon: "🚀", label: "Projects:", value: "2" },
-//           { icon: "🏆", label: "Certifications:", value: "2" },
-//           { icon: "🎯", label: "Current Goal:", value: "" },
-//         ].map((item) => (
-//           <Box key={item.label} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-//             <Typography sx={{ fontSize: "13px" }}>{item.icon}</Typography>
-//             <Typography sx={{ color: "#13206d", fontSize: "12px", fontWeight: 600, flexShrink: 0 }}>
-//               {item.label}
-//             </Typography>
-//             <Typography sx={{ color: "#13206d", fontSize: "12px", opacity: 0.75 }}>
-//               {item.value}
-//             </Typography>
-//             {item.extra && (
-//               <Typography sx={{ color: "#13206d", fontSize: "10px", opacity: 0.5, ml: "auto" }}>
-//                 {item.extra}
-//               </Typography>
-//             )}
-//           </Box>
-//         ))}
-//         <Typography sx={{ color: "#13206d", fontSize: "12px", opacity: 0.6, pl: "22px" }}>
-//           Finish ITI .NET Course
-//         </Typography>
-//       </Box>
-//     </Box>
-//   );
-// }
+  return null;
+}
 
-function SavedPostCard({ post, onNavigateToPost }) {
+// ─── Single saved-item card ───────────────────────────────────────────────────
+function SavedItemCard({ item, onNavigate }) {
   return (
-    <Tooltip title="Click to view this post in Community" placement="top" arrow>
-      <Box
-        onClick={() => onNavigateToPost(post.id)}
-        sx={{
-          bgcolor: "white",
-          borderRadius: "16px",
-          p: "16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-          boxShadow: "0px 2px 12px rgba(19,32,109,0.07)",
-          border: "1px solid rgba(132,251,162,0.3)",
-          cursor: "pointer",
-          transition: "all 0.2s",
-          "&:hover": {
-            boxShadow: "0 0 0 2px #84fba2, 0px 4px 20px rgba(132,251,162,0.35)",
-            transform: "translateY(-2px)",
-          },
-        }}
-      >
-        {/* Author row */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                background: "linear-gradient(to bottom, #84fba2, #90baef)",
-                flexShrink: 0,
-              }}
-            />
-            <Box>
-              <Typography sx={{ color: "#13206d", fontSize: "16px", fontWeight: 600 }}>
-                {post.author}
-              </Typography>
-              <Typography sx={{ color: "#13206d", fontSize: "13px", opacity: 0.7 }}>
-                {post.role}
+    <Box
+      onClick={() => onNavigate(item.id, item.type)}
+      sx={{
+        bgcolor: "white",
+        borderRadius: "16px",
+        p: "16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+        boxShadow: "0px 2px 12px rgba(19,32,109,0.07)",
+        border: "1px solid rgba(132,251,162,0.3)",
+        cursor: "pointer",
+        transition: "all 0.2s",
+        "&:hover": {
+          boxShadow: `0 0 0 2px ${GREEN}, 0px 4px 20px rgba(132,251,162,0.35)`,
+          transform: "translateY(-2px)",
+        },
+      }}
+    >
+      {/* Header */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <Box
+            sx={{
+              width: 48, height: 48, borderRadius: "50%",
+              background: "linear-gradient(to bottom, #84fba2, #90baef)",
+              flexShrink: 0,
+            }}
+          />
+          <Box>
+            <Typography sx={{ color: NAVY, fontSize: "16px", fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
+              {item.author}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {item.type === "job" && <WorkOutlineIcon sx={{ fontSize: 13, color: LIGHT_BLUE }} />}
+              <Typography sx={{ color: NAVY, fontSize: "13px", opacity: 0.7, fontFamily: "'Inter', sans-serif" }}>
+                {item.role || (item.type === "job" ? "Job Post" : "Post")}
               </Typography>
             </Box>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <BookmarkIcon sx={{ color: "#FBBC04", fontSize: "24px" }} />
-            <OpenInNewIcon sx={{ color: "#13206d", fontSize: "16px", opacity: 0.35 }} />
-          </Box>
         </Box>
-
-        {/* Content */}
-        <Typography
-          sx={{
-            color: "#13206d",
-            fontSize: "15px",
-            lineHeight: 1.6,
-            display: "-webkit-box",
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-          dir="auto"
-        >
-          {post.content}
-        </Typography>
-
-        <Divider sx={{ borderColor: "rgba(19,32,109,0.1)" }} />
-
-        {/* Footer */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Typography sx={{ color: "#90baef", fontSize: "13px", fontWeight: 500 }}>
-            Tap to jump to this post →
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <FavoriteIcon sx={{ color: "#C32929", fontSize: "18px" }} />
-            <Typography sx={{ color: "#13206d", fontSize: "14px" }}>{post.likes}</Typography>
-          </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          {item.type === "job" && (
+            <Chip
+              label="Job"
+              size="small"
+              sx={{ bgcolor: "rgba(132,251,162,0.18)", color: NAVY, fontWeight: 700, fontSize: 11, borderRadius: "6px", height: 20 }}
+            />
+          )}
+          <BookmarkIcon sx={{ color: GOLD, fontSize: "22px" }} />
+          <OpenInNewIcon sx={{ color: NAVY, fontSize: "15px", opacity: 0.35 }} />
         </Box>
       </Box>
-    </Tooltip>
+
+      {/* Title (jobs only) */}
+      {item.title && (
+        <Typography sx={{ color: NAVY, fontSize: "15px", fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
+          {item.title}
+        </Typography>
+      )}
+
+      {/* Content snippet */}
+      <Typography
+        sx={{
+          color: NAVY, fontSize: "15px", lineHeight: 1.6, fontFamily: "'Inter', sans-serif",
+          display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
+        }}
+        dir="auto"
+      >
+        {item.content}
+      </Typography>
+
+      <Divider sx={{ borderColor: "rgba(19,32,109,0.1)" }} />
+
+      {/* Footer */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Typography sx={{ color: LIGHT_BLUE, fontSize: "13px", fontWeight: 500, fontFamily: "'Inter', sans-serif" }}>
+          Tap to jump →
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <FavoriteIcon sx={{ color: RED, fontSize: "18px" }} />
+          <Typography sx={{ color: NAVY, fontSize: "14px", fontFamily: "'Inter', sans-serif" }}>
+            {item.likesCount}
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
-export function SavedPostsModal({ open, onClose, profileType = "user", }) {
-  const { profile, skills, userSavedPosts, companySavedPosts, } = useAppContext();
+// ─── Main modal ───────────────────────────────────────────────────────────────
+export function SavedPostsModal({ open, onClose, profileType = "user" }) {
   const navigate = useNavigate();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const savedPosts = profileType === "company" ? companySavedPosts : userSavedPosts;
+  // Fetch from backend every time the modal opens
+  useEffect(() => {
+    if (!open) return;
 
-  // Navigate to community and highlight the chosen post
-  const handleNavigateToPost = (postId) => {
+    const fetchSaved = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem("token");
+        const endpoint =
+          profileType === "company" ? "/Companies/SavedPosts" : "/Users/SavedPosts";
+
+        const res = await api.get(endpoint, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+
+        const raw = Array.isArray(res.data)
+          ? res.data
+          : res.data?.items ?? res.data?.data ?? res.data?.savedPosts ?? [];
+
+        setItems(raw.map(normalizeSavedItem).filter(Boolean));
+      } catch (err) {
+        console.error("Failed to fetch saved posts:", err);
+        setError(
+          err.response?.data?.message ??
+          (typeof err.response?.data === "string" ? err.response.data : null) ??
+          "Failed to load saved posts."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSaved();
+  }, [open, profileType]);
+
+  const handleNavigate = (postId) => {
     onClose();
-
     const targetRoute =
-      profileType === "company"
-        ? "/CompanyCommunity"
-        : "/Community";
-
-    navigate(targetRoute, {
-      state: { highlightPostId: postId },
-    });
+      profileType === "company" ? "/CompanyCommunity" : "/Community";
+    navigate(targetRoute, { state: { highlightPostId: postId } });
   };
 
   return (
@@ -251,11 +224,7 @@ export function SavedPostsModal({ open, onClose, profileType = "user", }) {
       fullWidth
       maxWidth="lg"
       PaperProps={{
-        sx: {
-          borderRadius: "16px",
-          overflow: "hidden",
-          maxHeight: "90vh",
-        },
+        sx: { borderRadius: "16px", overflow: "hidden", maxHeight: "90vh" },
       }}
     >
       <DialogContent sx={{ p: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -275,7 +244,7 @@ export function SavedPostsModal({ open, onClose, profileType = "user", }) {
             onClick={onClose}
             startIcon={<ArrowBackIcon />}
             sx={{
-              color: "#13206d",
+              color: NAVY,
               textTransform: "none",
               fontWeight: 500,
               fontFamily: "'Inter', sans-serif",
@@ -283,22 +252,25 @@ export function SavedPostsModal({ open, onClose, profileType = "user", }) {
               border: "1px solid rgba(132,251,162,0.5)",
               borderRadius: "8px",
               px: 2,
-              "&:hover": { bgcolor: "#84fba2", color: "#13206d" },
+              "&:hover": { bgcolor: GREEN, color: NAVY },
             }}
           >
             Back to Profile
           </Button>
+
           <Typography
-            sx={{
-              color: "#13206d",
-              fontSize: "20px",
-              fontWeight: 700,
-              ml: 3,
-              fontFamily: "'Inter', sans-serif",
-            }}
+            sx={{ color: NAVY, fontSize: "20px", fontWeight: 700, ml: 3, fontFamily: "'Inter', sans-serif" }}
           >
-            Saved Posts
+            Saved Posts &amp; Jobs
           </Typography>
+
+          {!loading && items.length > 0 && (
+            <Chip
+              label={items.length}
+              size="small"
+              sx={{ ml: 1.5, bgcolor: GREEN, color: NAVY, fontWeight: 700 }}
+            />
+          )}
         </Box>
 
         {/* Body */}
@@ -312,53 +284,36 @@ export function SavedPostsModal({ open, onClose, profileType = "user", }) {
             bgcolor: "rgba(144,186,239,0.08)",
           }}
         >
-          {/* Left Sidebar */}
-          {/* <MiniProfileSidebar profile={profile} skills={skills} /> */}
-
-          {/* Posts Area */}
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-            {savedPosts.length === 0 ? (
-              <Box
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 2,
-                  py: 8,
-                }}
+            {loading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+                <CircularProgress sx={{ color: GREEN }} />
+              </Box>
+            ) : error ? (
+              <Typography
+                sx={{ color: RED, textAlign: "center", py: 8, fontFamily: "'Inter', sans-serif" }}
               >
-                <BookmarkIcon sx={{ color: "#FBBC04", fontSize: "64px", opacity: 0.4 }} />
+                {error}
+              </Typography>
+            ) : items.length === 0 ? (
+              <Box
+                sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 8, gap: 2 }}
+              >
+                <BookmarkIcon sx={{ color: GOLD, fontSize: "64px", opacity: 0.4 }} />
                 <Typography
-                  sx={{
-                    color: "#13206d",
-                    fontSize: "20px",
-                    fontWeight: 600,
-                    opacity: 0.5,
-                    textAlign: "center",
-                  }}
+                  sx={{ color: NAVY, fontSize: "20px", fontWeight: 600, opacity: 0.5, textAlign: "center", fontFamily: "'Inter', sans-serif" }}
                 >
                   No saved posts yet
                 </Typography>
                 <Typography
-                  sx={{
-                    color: "#13206d",
-                    fontSize: "14px",
-                    opacity: 0.4,
-                    textAlign: "center",
-                  }}
+                  sx={{ color: NAVY, fontSize: "14px", opacity: 0.4, textAlign: "center", fontFamily: "'Inter', sans-serif" }}
                 >
-                  Save posts from the Community page and they'll appear here
+                  Save posts or jobs from the Community page and they&apos;ll appear here
                 </Typography>
               </Box>
             ) : (
-              savedPosts.map((post) => (
-                <SavedPostCard
-                  key={post.id}
-                  post={post}
-                  onNavigateToPost={handleNavigateToPost}
-                />
+              items.map((item) => (
+                <SavedItemCard key={item.id} item={item} onNavigate={handleNavigate} />
               ))
             )}
           </Box>
@@ -367,196 +322,3 @@ export function SavedPostsModal({ open, onClose, profileType = "user", }) {
     </Dialog>
   );
 }
-
-// function SavedPostCard({ post }) {
-//   return (
-//     <Box
-//       sx={{
-//         bgcolor: "white",
-//         borderRadius: "16px",
-//         p: "16px",
-//         display: "flex",
-//         flexDirection: "column",
-//         gap: "12px",
-//         boxShadow: "0px 2px 12px rgba(19,32,109,0.07)",
-//         border: "1px solid rgba(132,251,162,0.3)",
-//       }}
-//     >
-//       {/* Author row */}
-//       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-//         <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-//           <Box
-//             sx={{
-//               width: 48,
-//               height: 48,
-//               borderRadius: "50%",
-//               background: "linear-gradient(to bottom, #84fba2, #90baef)",
-//               flexShrink: 0,
-//             }}
-//           />
-//           <Box>
-//             <Typography sx={{ color: "#13206d", fontSize: "16px", fontWeight: 600 }}>
-//               {post.author}
-//             </Typography>
-//             <Typography sx={{ color: "#13206d", fontSize: "13px", opacity: 0.7 }}>
-//               {post.role}
-//             </Typography>
-//           </Box>
-//         </Box>
-//         <BookmarkIcon sx={{ color: "#FBBC04", fontSize: "28px" }} />
-//       </Box>
-
-//       {/* Content */}
-//       <Typography
-//         sx={{
-//           color: "#13206d",
-//           fontSize: "15px",
-//           lineHeight: 1.6,
-//           display: "-webkit-box",
-//           WebkitLineClamp: 3,
-//           WebkitBoxOrient: "vertical",
-//           overflow: "hidden",
-//         }}
-//         dir="auto"
-//       >
-//         {post.content}
-//       </Typography>
-
-//       <Divider sx={{ borderColor: "rgba(19,32,109,0.1)" }} />
-
-//       {/* Footer */}
-//       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-//         <Typography sx={{ color: "#90baef", fontSize: "14px", fontWeight: 500 }}>
-//           Write a comment on this post
-//         </Typography>
-//         <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
-//           <FavoriteIcon sx={{ color: "#C32929", fontSize: "20px" }} />
-//           <Typography sx={{ color: "#13206d", fontSize: "14px" }}>{post.likes}</Typography>
-//         </Box>
-//       </Box>
-//     </Box>
-//   );
-// }
-
-// export function SavedPostsModal({ open, onClose }) {
-//   const { profile, skills, savedPosts } = useAppContext();
-
-//   return (
-//     <Dialog
-//       open={open}
-//       onClose={onClose}
-//       fullWidth
-//       maxWidth="lg"
-//       PaperProps={{
-//         sx: {
-//           borderRadius: "16px",
-//           overflow: "hidden",
-//           maxHeight: "90vh",
-//         },
-//       }}
-//     >
-//       <DialogContent sx={{ p: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-//         {/* Top bar */}
-//         <Box
-//           sx={{
-//             display: "flex",
-//             alignItems: "center",
-//             px: 3,
-//             py: 2,
-//             borderBottom: "1px solid rgba(19,32,109,0.1)",
-//             bgcolor: "#fafafa",
-//             flexShrink: 0,
-//           }}
-//         >
-//           <Button
-//             onClick={onClose}
-//             startIcon={<ArrowBackIcon />}
-//             sx={{
-//               color: "#13206d",
-//               textTransform: "none",
-//               fontWeight: 500,
-//               fontFamily: "'Inter', sans-serif",
-//               bgcolor: "rgba(255,255,255,0.8)",
-//               border: "1px solid rgba(132,251,162,0.5)",
-//               borderRadius: "8px",
-//               px: 2,
-//               "&:hover": { bgcolor: "#84fba2", color: "#13206d" },
-//             }}
-//           >
-//             Back to Profile
-//           </Button>
-//           <Typography
-//             sx={{
-//               color: "#13206d",
-//               fontSize: "20px",
-//               fontWeight: 700,
-//               ml: 3,
-//               fontFamily: "'Inter', sans-serif",
-//             }}
-//           >
-//             Saved Posts
-//           </Typography>
-//         </Box>
-
-//         {/* Body */}
-//         <Box
-//           sx={{
-//             display: "flex",
-//             gap: 3,
-//             p: 3,
-//             overflow: "auto",
-//             flex: 1,
-//             bgcolor: "rgba(144,186,239,0.08)",
-//           }}
-//         >
-//           {/* Left Sidebar */}
-//          {/* <MiniProfileSidebar profile={profile} skills={skills} /> */}
-
-//           {/* Posts Area */}
-//           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-//             {savedPosts.length === 0 ? (
-//               <Box
-//                 sx={{
-//                   flex: 1,
-//                   display: "flex",
-//                   flexDirection: "column",
-//                   alignItems: "center",
-//                   justifyContent: "center",
-//                   gap: 2,
-//                   py: 8,
-//                 }}
-//               >
-//                 <BookmarkIcon sx={{ color: "#FBBC04", fontSize: "64px", opacity: 0.4 }} />
-//                 <Typography
-//                   sx={{
-//                     color: "#13206d",
-//                     fontSize: "20px",
-//                     fontWeight: 600,
-//                     opacity: 0.5,
-//                     textAlign: "center",
-//                   }}
-//                 >
-//                   No saved posts yet
-//                 </Typography>
-//                 <Typography
-//                   sx={{
-//                     color: "#13206d",
-//                     fontSize: "14px",
-//                     opacity: 0.4,
-//                     textAlign: "center",
-//                   }}
-//                 >
-//                   Save posts from the Community page and they'll appear here
-//                 </Typography>
-//               </Box>
-//             ) : (
-//               savedPosts.map((post) => (
-//                 <SavedPostCard key={post.id} post={post} />
-//               ))
-//             )}
-//           </Box>
-//         </Box>
-//       </DialogContent>
-//     </Dialog>
-//   );
-// }

@@ -18,7 +18,7 @@ export function CompanyProfile() {
             sx={{
                 minHeight: "100vh",
                 background: `url(${backgroundImg})`,
-                backgroundSize: "100% auto",
+                backgroundSize: "cover",
                 backgroundRepeat: "no-repeat",
                 backgroundPosition: "top center",
                 display: "flex",

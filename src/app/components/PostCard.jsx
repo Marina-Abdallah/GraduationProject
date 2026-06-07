@@ -27,10 +27,11 @@ const LIGHT_BLUE = "#90baef";
 const GOLD = "#FBBC04";
 const RED = "#C32929";
 
-export function PostCard({ postId, author, role, subtitle, content, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType }) {
+export function PostCard({ postId, author, role, subtitle, content, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType, likesCount = 0, isLikedByMe = false, isSavedByMe = false }) {
   const { posts, onLike, onSave } = useCommunity();
   const { profile, company } = useAppContext();
-  const postState = posts[postId] ?? { liked: false, saved: false, likeCount: 0 };
+  const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount };
+  const postState = posts[postId] ?? initialState;
   const { liked, saved, likeCount } = postState;
 
   const [showComments, setShowComments] = useState(false);
@@ -203,7 +204,7 @@ export function PostCard({ postId, author, role, subtitle, content, authorPhoto,
             <Tooltip title={saved ? "Unsave post" : "Save post"}>
               <IconButton
                 size="small"
-                onClick={(e) => { e.stopPropagation(); onSave(postId); }}
+                onClick={(e) => { e.stopPropagation(); onSave(postId, initialState); }}
                 sx={{ color: GOLD }}
               >
                 {saved ? (
@@ -271,7 +272,7 @@ export function PostCard({ postId, author, role, subtitle, content, authorPhoto,
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
             <IconButton
               size="small"
-              onClick={(e) => { e.stopPropagation(); onLike(postId); }}
+              onClick={(e) => { e.stopPropagation(); onLike(postId, initialState); }}
               sx={{ transition: "transform 0.15s", "&:hover": { transform: "scale(1.15)" } }}
             >
               {liked ? (
