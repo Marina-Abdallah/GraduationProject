@@ -6,8 +6,8 @@ import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ChatBubbleOutlineOutlinedIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
 
-import logo from "../../../../assets/logo.png";
-import ProGrow from "../../../../assets/ProGrow.png";
+import logo from "../../assets/logo.png";
+import ProGrow from "../../assets/ProGrow.png";
 
 export function AdminNavbar({ activePage, onNavigate }) {
   const location = useLocation();

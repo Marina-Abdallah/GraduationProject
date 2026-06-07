@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { AdminNavbar } from '../components/AdminEdition/navbar/AdminNavbar';
+import { AdminNavbar } from '../components/AdminNavbar';
 import { Footer } from '../components/Footer';
 import { StatsCard } from '../components/AdminEdition/dashboard/StatsCard';
 import { AnalyticsChart } from '../components/AdminEdition/dashboard/AnalyticsChart';

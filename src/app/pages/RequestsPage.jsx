@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import { AdminNavbar } from '../components/AdminEdition/navbar/AdminNavbar';
+import { AdminNavbar } from '../components/AdminNavbar';
 import { RequestsGrid } from '../components/AdminEdition/requests/RequestsGrid';
 import { DeclineModal } from '../components/AdminEdition/requests/DeclineModal';
 import backgroundImg from "../../assets/Background.png";

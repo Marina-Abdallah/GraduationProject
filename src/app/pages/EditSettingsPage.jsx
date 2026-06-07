@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import { AdminNavbar } from '../components/AdminEdition/navbar/AdminNavbar';
+import { AdminNavbar } from '../components/AdminNavbar';
 import { AddSkillCard } from '../components/AdminEdition/settings/AddSkillCard';
 import { AllSkillsCard } from '../components/AdminEdition/settings/AllSkillsCard';
 import { LogoutModal } from '../components/AdminEdition/settings/LogoutModal';
