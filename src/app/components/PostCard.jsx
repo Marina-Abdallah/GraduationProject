@@ -27,7 +27,7 @@ const LIGHT_BLUE = "#90baef";
 const GOLD = "#FBBC04";
 const RED = "#C32929";
 
-export function PostCard({ postId, author, role, subtitle, content, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType, likesCount = 0, isLikedByMe = false, isSavedByMe = false }) {
+export function PostCard({ postId, author, role, subtitle, content, mediaUrl, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType, likesCount = 0, isLikedByMe = false, isSavedByMe = false }) {
   const { posts, onLike, onSave } = useCommunity();
   const { profile, company } = useAppContext();
   const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount };
@@ -159,7 +159,7 @@ export function PostCard({ postId, author, role, subtitle, content, authorPhoto,
             {/* Follow button */}
             <Tooltip title={followed ? "Unfollow" : `Follow ${author}`}>
               <Box
-                onClick={() => setFollowed((v) => !v)}
+                onClick={(e) => { e.stopPropagation(); setFollowed((v) => !v); }}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -233,13 +233,38 @@ export function PostCard({ postId, author, role, subtitle, content, authorPhoto,
           {content}
         </Typography>
 
+        {/* Media image */}
+        {mediaUrl && (
+          <Box
+            sx={{
+              borderRadius: "12px",
+              overflow: "hidden",
+              maxHeight: 400,
+              mt: -0.5,
+            }}
+          >
+            <img
+              src={mediaUrl}
+              alt="post media"
+              style={{
+                width: "100%",
+                maxHeight: 400,
+                objectFit: "cover",
+                display: "block",
+                borderRadius: 12,
+              }}
+              onError={(e) => { e.target.style.display = "none"; }}
+            />
+          </Box>
+        )}
+
         <Divider sx={{ borderColor: `${NAVY}18` }} />
 
         {/* Action bar */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {/* Comment trigger */}
           <Box
-            onClick={() => setShowComments((v) => !v)}
+            onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -295,7 +320,7 @@ export function PostCard({ postId, author, role, subtitle, content, authorPhoto,
         </Box>
 
         {/* Collapsible comments section */}
-        <Collapse in={showComments}>
+        <Collapse in={showComments} onClick={(e) => e.stopPropagation()}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
             {/* Submitted comments list */}
             {localComments.map((c) => (

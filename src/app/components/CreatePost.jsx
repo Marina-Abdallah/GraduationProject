@@ -6,6 +6,7 @@ import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import { useCommunity } from "./CommunityContext";
 import { useAppContext } from "../components/AppContext";
 import defaultPhoto from "../../assets/defaultImg.png";
+import api from "../../api/axios";
 
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
@@ -14,6 +15,25 @@ const LIGHT_BLUE = "#90baef";
 export function CreatePost() {
   const { onWritePost } = useCommunity();
   const { profile } = useAppContext();
+
+  const createPost = async () => {
+      try {
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : undefined;
+
+        const createdPost = async (content) => {
+          const resp = await api.post("/Posts", { content }, { headers });
+          return resp.data;
+        };
+
+        let data = null;
+       
+      } catch (error) {
+        // Suppress network errors - API may be unavailable
+        if (error.code !== 'ERR_NETWORK') {
+          console.error("Error fetching industries:", error);
+        }
+      }
+    };
 
   return (
     <Box
@@ -90,6 +110,7 @@ export function CreatePost() {
       </Box>
     </Box>
   );
+
 }
 
 

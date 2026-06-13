@@ -63,7 +63,7 @@ export function WritePostDialog({ open, onClose, onSubmit, profileType }) {
 
   const handleSubmit = () => {
     if (!content.trim() && !mediaFile) return;
-    onSubmit?.(content.trim(), mediaUrl);
+    onSubmit?.(content.trim(), mediaFile);
     setContent("");
     setMediaFile(null);
     setMediaUrl(null);

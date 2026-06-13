@@ -315,7 +315,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
               likesCount={post.likesCount}
               isLikedByMe={post.isLikedByMe}
               isSavedByMe={post.isSavedByMe}
-              highlighted={highlightedPostId === post.id}
+              highlighted={highlightedPostId === post.id || highlightedPostId === `job-${post.sourceId}`}
             />
           ) : (
             <PostCard
@@ -324,13 +324,14 @@ function CommunityFeed({ posts, highlightedPostId }) {
               author={post.author}
               role={post.role}
               content={post.content}
+              mediaUrl={post.mediaUrl}
               authorPhoto={post.authorPhoto}
               avatarColor={post.avatarColor}
               rtl={post.rtl || false}
               likesCount={post.likesCount}
               isLikedByMe={post.isLikedByMe}
               isSavedByMe={post.isSavedByMe}
-              highlighted={highlightedPostId === post.id}
+              highlighted={highlightedPostId === post.id || highlightedPostId === `post-${post.sourceId}`}
               profileType="company"
             />
           )
@@ -388,53 +389,61 @@ export function CompanyCommunityPage() {
 
   const handlePageChange = useCallback((event, value) => setPage(value), []);
 
-  useEffect(() => {
-    const loadFeed = async () => {
-      setLoading(true);
-      setError(null);
+  const loadFeed = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const token = localStorage.getItem("token");
-        const response = await api.get("/Community/feed", {
-          params: { page, pageSize },
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
+    try {
+      const token = localStorage.getItem("token");
+      const response = await api.get("/Community/feed", {
+        params: { page, pageSize },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
 
-        const data = response.data;
-        const items = Array.isArray(data)
-          ? data
-          : data?.items || data?.feed || data?.data || [];
+      const data = response.data;
+      const items = Array.isArray(data)
+        ? data
+        : data?.items || data?.feed || data?.data || [];
 
-        const normalizedItems = Array.isArray(items)
-          ? items.map((item, index) => normalizeFeedItem(item, index)).filter(Boolean)
-          : [];
+      const normalizedItems = Array.isArray(items)
+        ? items.map((item, index) => normalizeFeedItem(item, index)).filter(Boolean)
+        : [];
 
-        setFeedItems(normalizedItems);
+      setFeedItems(normalizedItems);
 
-        if (typeof data?.totalPages === "number") {
-          setPageCount(data.totalPages);
-        } else if (typeof data?.totalCount === "number") {
-          setPageCount(Math.max(1, Math.ceil(data.totalCount / pageSize)));
-        } else if (Array.isArray(data)) {
-          setPageCount(Math.max(1, Math.ceil(data.length / pageSize)));
-        }
-      } catch (fetchError) {
-        console.error("Community feed request failed:", fetchError);
-        const responseData = fetchError.response?.data;
-        const errorMessage =
-          responseData?.message ||
-          responseData?.title ||
-          (typeof responseData === "string" ? responseData : JSON.stringify(responseData)) ||
-          fetchError.message ||
-          "Unable to load community feed.";
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
+      if (typeof data?.totalPages === "number") {
+        setPageCount(data.totalPages);
+      } else if (typeof data?.totalCount === "number") {
+        setPageCount(Math.max(1, Math.ceil(data.totalCount / pageSize)));
+      } else if (Array.isArray(data)) {
+        setPageCount(Math.max(1, Math.ceil(data.length / pageSize)));
       }
-    };
-
-    loadFeed();
+    } catch (fetchError) {
+      console.error("Community feed request failed:", fetchError);
+      const responseData = fetchError.response?.data;
+      const errorMessage =
+        responseData?.message ||
+        responseData?.title ||
+        (typeof responseData === "string" ? responseData : JSON.stringify(responseData)) ||
+        fetchError.message ||
+        "Unable to load community feed.";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }, [page, pageSize]);
+
+  useEffect(() => {
+    loadFeed();
+  }, [loadFeed]);
+
+  const refreshFeed = useCallback(() => {
+    if (page === 1) {
+      loadFeed();
+    } else {
+      setPage(1);
+    }
+  }, [page, loadFeed]);
 
   const allPosts = useMemo(
     () => [...dynamicPosts, ...feedItems],
@@ -456,18 +465,20 @@ export function CompanyCommunityPage() {
   };
 
   // New post submitted from WritePostDialog
-  const handlePostSubmit = (content, mediaUrl) => {
-    const newPost = {
-      id: `dyn-post-${Date.now()}`,
-      type: "post",
-      author: company?.name || "Microsoft",
-      role: "Technology Company",
-      content,
-      authorPhoto: company?.photo,
-      avatarColor: LIGHT_BLUE,
-      mediaUrl,
-    };
-    setDynamicPosts((prev) => [newPost, ...prev]);
+  const handlePostSubmit = async (content, mediaFile) => {
+    try {
+      const token = localStorage.getItem("token");
+      await api.post("/Posts", { content }, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      });
+
+      refreshFeed();
+    } catch (error) {
+      console.error("Error creating post:", error);
+      alert(error.response?.data?.message || "Failed to create post. Please try again.");
+    }
   };
 
   // New job submitted from CreateJobDialog

@@ -161,28 +161,48 @@ function normalizeFeedItem(item, index = 0) {
 }
 // ─── Inner layout (uses CommunityProvider context) ────────────────────────────
 
-function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showApplyNow, onCloseApplyNow, highlightedPostId, loading = false }) {
+function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showApplyNow, onCloseApplyNow, highlightedPostId, loading = false, onPostCreated }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [dynamicPosts, setDynamicPosts] = useState([]);
   const { profile } = useAppContext();
 
+  const handlePostSubmit = async (content, mediaFile) => {
+    // Create a local blob URL for instant preview
+    const localMediaUrl = mediaFile ? URL.createObjectURL(mediaFile) : null;
 
+    try {
+      const token = localStorage.getItem("token");
+      await api.post("/Posts", { content }, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      });
 
-  const handlePostSubmit = (content, mediaUrl) => {
-    const newPost = {
-      id:
-        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-          ? crypto.randomUUID()
-          : `dyn-post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      type: "post",
-      author: profile.name,
-      role: profile.headline,
-      content,
-      authorPhoto: profile.photo,
-      avatarColor: LIGHT_BLUE,
-      mediaUrl,
-    };
-    setDynamicPosts((prev) => [newPost, ...prev]);
+      // Optimistically prepend the post with image so it appears instantly
+      const tempPost = {
+        id: `dyn-post-${Date.now()}`,
+        type: "post",
+        author: profile?.name || "You",
+        role: profile?.headline || "",
+        subtitle: "",
+        content,
+        mediaUrl: localMediaUrl,
+        authorPhoto: profile?.photo,
+        avatarColor: LIGHT_BLUE,
+        likesCount: 0,
+        isLikedByMe: false,
+        isSavedByMe: false,
+      };
+      setDynamicPosts((prev) => [tempPost, ...prev]);
+
+      // Also trigger a background feed refresh (new post will arrive from server)
+      onPostCreated?.();
+    } catch (error) {
+      // Revoke the blob URL on failure
+      if (localMediaUrl) URL.revokeObjectURL(localMediaUrl);
+      console.error("Error creating post:", error);
+      alert(error.response?.data?.message || "Failed to create post. Please try again.");
+    }
   };
 
   const allPosts = [...dynamicPosts, ...feedItems];
@@ -275,7 +295,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   likesCount={post.likesCount}
                   isLikedByMe={post.isLikedByMe}
                   isSavedByMe={post.isSavedByMe}
-                  highlighted={highlightedPostId === post.id}
+                  highlighted={highlightedPostId === post.id || highlightedPostId === `job-${post.sourceId}`}
                 />
               ) : (
                 <PostCard
@@ -285,13 +305,14 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   role={post.role}
                   subtitle={post.subtitle}
                   content={post.content}
+                  mediaUrl={post.mediaUrl}
                   authorPhoto={post.authorPhoto}
                   avatarColor={post.avatarColor}
                   rtl={post.rtl || false}
                   likesCount={post.likesCount}
                   isLikedByMe={post.isLikedByMe}
                   isSavedByMe={post.isSavedByMe}
-                  highlighted={highlightedPostId === post.id}
+                  highlighted={highlightedPostId === post.id || highlightedPostId === `post-${post.sourceId}`}
                   profileType="user"
                 />
               )
@@ -348,53 +369,61 @@ export function CommunityPage() {
   const handleCloseApplyNow = useCallback(() => setShowApplyNow(false), []);
   const handlePageChange = useCallback((event, value) => setPage(value), []);
 
-  useEffect(() => {
-    const loadFeed = async () => {
-      setLoading(true);
-      setError(null);
+  const loadFeed = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const token = localStorage.getItem("token");
-        const response = await api.get("/Community/feed", {
-          params: { page, pageSize },
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
+    try {
+      const token = localStorage.getItem("token");
+      const response = await api.get("/Community/feed", {
+        params: { page, pageSize },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
 
-        const data = response.data;
-        const items = Array.isArray(data)
-          ? data
-          : data?.items || data?.feed || data?.data || [];
+      const data = response.data;
+      const items = Array.isArray(data)
+        ? data
+        : data?.items || data?.feed || data?.data || [];
 
-        const normalizedItems = Array.isArray(items)
-          ? items.map((item, index) => normalizeFeedItem(item, index)).filter(Boolean)
-          : [];
+      const normalizedItems = Array.isArray(items)
+        ? items.map((item, index) => normalizeFeedItem(item, index)).filter(Boolean)
+        : [];
 
-        setFeedItems(normalizedItems);
+      setFeedItems(normalizedItems);
 
-        if (typeof data?.totalPages === "number") {
-          setPageCount(data.totalPages);
-        } else if (typeof data?.totalCount === "number") {
-          setPageCount(Math.max(1, Math.ceil(data.totalCount / pageSize)));
-        } else if (Array.isArray(data)) {
-          setPageCount(Math.max(1, Math.ceil(data.length / pageSize)));
-        }
-      } catch (fetchError) {
-        console.error("Community feed request failed:", fetchError);
-        const responseData = fetchError.response?.data;
-        const errorMessage =
-          responseData?.message ||
-          responseData?.title ||
-          (typeof responseData === "string" ? responseData : JSON.stringify(responseData)) ||
-          fetchError.message ||
-          "Unable to load community feed.";
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
+      if (typeof data?.totalPages === "number") {
+        setPageCount(data.totalPages);
+      } else if (typeof data?.totalCount === "number") {
+        setPageCount(Math.max(1, Math.ceil(data.totalCount / pageSize)));
+      } else if (Array.isArray(data)) {
+        setPageCount(Math.max(1, Math.ceil(data.length / pageSize)));
       }
-    };
-
-    loadFeed();
+    } catch (fetchError) {
+      console.error("Community feed request failed:", fetchError);
+      const responseData = fetchError.response?.data;
+      const errorMessage =
+        responseData?.message ||
+        responseData?.title ||
+        (typeof responseData === "string" ? responseData : JSON.stringify(responseData)) ||
+        fetchError.message ||
+        "Unable to load community feed.";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }, [page, pageSize]);
+
+  useEffect(() => {
+    loadFeed();
+  }, [loadFeed]);
+
+  const refreshFeed = useCallback(() => {
+    if (page === 1) {
+      loadFeed();
+    } else {
+      setPage(1);
+    }
+  }, [page, loadFeed]);
 
   return (
     <CommunityProvider
@@ -440,6 +469,7 @@ export function CommunityPage() {
             showApplyNow={showApplyNow}
             onCloseApplyNow={handleCloseApplyNow}
             highlightedPostId={highlightedPostId}
+            onPostCreated={refreshFeed}
           />
 
           {error ? (

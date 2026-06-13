@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Box,
   Card,
@@ -48,6 +48,7 @@ export function JobPostCard({
   likesCount = 0,
   isLikedByMe = false,
   isSavedByMe = false,
+  highlighted = false,
 }) {
   const companyLabel =
     typeof company === "string"
@@ -66,6 +67,17 @@ export function JobPostCard({
   const [commentInput, setCommentInput] = useState("");
   const [localComments, setLocalComments] = useState([]);
   //const { company } = useAppContext();
+
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (highlighted && cardRef.current) {
+      const timer = setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [highlighted]);
 
 
   const handleSubmitComment = () => {
@@ -93,13 +105,19 @@ export function JobPostCard({
 
   return (
     <Card
+      ref={cardRef}
       elevation={0}
       sx={{
         bgcolor: "white",
         borderRadius: "16px",
-        boxShadow: "0 4px 20px rgba(19,32,109,0.07)",
-        border: "1px solid rgba(19,32,109,0.05)",
+        boxShadow: highlighted
+          ? `0 0 0 3px ${GREEN}, 0 8px 32px rgba(132,251,162,0.45)`
+          : "0 4px 20px rgba(19,32,109,0.07)",
+        border: highlighted
+          ? `2px solid ${GREEN}`
+          : "1px solid rgba(19,32,109,0.05)",
         overflow: "hidden",
+        transition: "box-shadow 0.5s ease, border-color 0.5s ease",
       }}
     >
       {/* Header */}
@@ -377,7 +395,7 @@ export function JobPostCard({
       {/* Action bar */}
       <Box sx={{ px: "20px", py: "12px", display: "flex", alignItems: "center", gap: 1 }}>
         <Box
-          onClick={() => setShowComments((v) => !v)}
+          onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -432,7 +450,7 @@ export function JobPostCard({
       </Box>
 
       {/* Collapsible comments */}
-      <Collapse in={showComments}>
+      <Collapse in={showComments} onClick={(e) => e.stopPropagation()}>
         <Box sx={{ px: "20px", pb: "16px", display: "flex", flexDirection: "column", gap: 2 }}>
           {localComments.map((c) => (
             <Box key={c.id} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>

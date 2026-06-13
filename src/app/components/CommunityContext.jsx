@@ -109,6 +109,7 @@ export function CommunityProvider({
   }, []);
 
   const onSave = useCallback(async (postId, initialState) => {
+    debugger;
     // Optimistic toggle
     // setPosts((prev) => {
     //   const current = prev[postId] ?? initialState ;//?? defaultPostState();
@@ -165,6 +166,7 @@ export function CommunityProvider({
   }, [onSaveGlobal]);
 
   const onSubmitComment = useCallback(() => {
+    debugger;
     const trimmed = commentText.trim();
     if (!trimmed) return;
     setSubmittedComments((prev) => [
@@ -172,7 +174,7 @@ export function CommunityProvider({
       {
         id: Date.now().toString(),
         text: trimmed,
-        author: "Mina Morcos",
+        author: "Marina Abdallah",
         time: "Just now",
       },
     ]);
@@ -190,6 +192,7 @@ export function CommunityProvider({
   }, []);
 
   const onSubmitPost = useCallback(() => {
+    debugger;
     setNewPostContent("");
     setNewPostMedia(null);
     setNewPostMediaUrl(null);

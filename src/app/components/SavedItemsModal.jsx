@@ -13,8 +13,9 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
-import { JobPostCard} from "./JobPostCard";
-import {PostCard } from "./PostCard";
+import { JobPostCard } from "./JobPostCard";
+import { PostCard } from "./PostCard";
+import { CommunityProvider } from "./CommunityContext";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
@@ -25,153 +26,240 @@ const GOLD = "#FBBC04";
 const RED = "#C32929";
 const LIGHT_BLUE = "#90baef";
 
+// Helper to normalize image URLs
+const normalizeImageUrl = (url) => {
+  if (!url || url === "URL") return null;
+
+  // Remove surrounding quotes if present
+  let cleanUrl = url.replace(/^["']|["']$/g, '');
+
+  if (cleanUrl.includes("wwwroot")) {
+    const match = cleanUrl.match(/wwwroot(.*)$/);
+    if (match) {
+      const relativePath = match[1].replace(/\\/g, "/");
+      return `https://localhost:7292${relativePath}`;
+    }
+  }
+
+  if (cleanUrl.includes("uploads")) {
+    const match = cleanUrl.match(/(uploads.*)$/);
+    if (match) {
+      const relativePath = match[1].replace(/\\/g, "/");
+      return `https://localhost:7292/${relativePath}`;
+    }
+  }
+
+  if (cleanUrl.startsWith("/")) {
+    return `https://localhost:7292${cleanUrl}`;
+  }
+
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+
+  if (cleanUrl.match(/^[a-zA-Z]:\\/)) {
+    return `file:///${cleanUrl.replace(/\\/g, '/')}`;
+  }
+
+  return cleanUrl;
+};
+
 // ─── Normalize a saved item from the API response ────────────────────────────
-function normalizeSavedItem(item) {
+function normalizeSavedItem(item, index = 0) {
   if (!item) return null;
   const type = (item.type ?? "").toLowerCase();
 
-
+  // Nested Shape
   if (type === "job" && item.job) {
-    <JobPostCard key={item.job.id} job={item.job} />;
-    //const j = item.job;
-     //return {
-    //   id: `job-${j.id}`,
-    //   type: "job",
-    //   sourceId: j.id,
-    //   title: j.title ?? "Job",
-    //   author: j.companyName ?? "Company",
-    //   role: j.jobType ?? "",
-    //   content: j.shortDescription ?? j.description ?? "",
-    //   likesCount: j.likesCount ?? 0,
-     //};
+    const job = item.job;
+    return {
+      id: `job-${job.id}-${index}`,
+      sourceId: job.id,
+      type: "job",
+      company: job.companyName,
+      companyName: job.companyName,
+      companyPhoto: normalizeImageUrl(job.companyPictureUrl),
+      companyIndustry: job.companyIndustry || "",
+      companyLocation: job.cityOffice || job.location,
+      locationMode: job.locationMode || job.jobLocationMode || "",
+      jobTitle: job.title,
+      jobType: job.jobType,
+      jobCategoryId: job.jobCategoryId,
+      jobCategoryName: job.jobCategoryName,
+      jobShortDescription: job.shortDescription,
+      jobDescription: job.description,
+      Img: normalizeImageUrl(job.bannerImageUrl),
+      likesCount: job.likesCount || 0,
+      isLikedByMe: job.isLikedByMe || false,
+      isSavedByMe: true,
+      createdAt: item.createdAt,
+    };
   }
 
   if (type === "post" && item.post) {
-    <PostCard key={item.post.id} post={item.post} />;
-    // const p = item.post;
-    // return {
-    //   id: `post-${p.id}`,
-    //   type: "post",
-    //   sourceId: p.id,
-    //   title: null,
-    //   author: p.authorName ?? "User",
-    //   pictureUrl: p.authorPictureUrl,
-    //   role: p.authorHeadline ?? p.authorSubtitle ?? "",
-    //   content: p.content ?? "",
-    //   likesCount: p.likesCount ?? 0,
-    // };
+    const post = item.post;
+    return {
+      id: `post-${post.id}-${index}`,
+      sourceId: post.id,
+      type: "post",
+      author: post.authorName,
+      authorId: post.authorId,
+      authorType: post.authorType,
+      role: post.authorSubtitle || post.authorHeadline || post.role || "",
+      subtitle: post.authorSubtitle || "",
+      content: post.content,
+      authorPhoto: normalizeImageUrl(post.authorPictureUrl) || null,
+      avatarColor: LIGHT_BLUE,
+      likesCount: post.likesCount || 0,
+      isLikedByMe: post.isLikedByMe || false,
+      isSavedByMe: true,
+      createdAt: item.createdAt,
+    };
   }
 
   // Flat shape fallback (API might return items directly)
   if (item.content !== undefined || item.title !== undefined) {
-    const isJob = !!item.title;
-    return {
-      id: `item-${item.id ?? Math.random()}`,
-      type: isJob ? "job" : "post",
-      sourceId: item.id,
-      title: item.title ?? null,
-      author: item.authorName ?? item.companyName ?? "Unknown",
-      role: item.jobType ?? item.authorHeadline ?? "",
-      content: item.content ?? item.shortDescription ?? item.description ?? "",
-      likesCount: item.likesCount ?? 0,
-    };
+    const isJob = !!item.title || type === "job";
+    const sourceId = item.id || item.sourceId || Math.random();
+    if (isJob) {
+      return {
+        id: `job-${sourceId}-${index}`,
+        sourceId: sourceId,
+        type: "job",
+        company: item.companyName ?? item.author ?? "Company",
+        companyName: item.companyName ?? item.author ?? "Company",
+        companyPhoto: normalizeImageUrl(item.companyPictureUrl ?? item.companyPhoto),
+        companyIndustry: item.companyIndustry || "",
+        companyLocation: item.cityOffice ?? item.location ?? item.companyLocation ?? "",
+        locationMode: item.locationMode ?? item.jobLocationMode ?? "",
+        jobTitle: item.title ?? "Job Title",
+        jobType: item.jobType ?? "",
+        jobCategoryId: item.jobCategoryId,
+        jobCategoryName: item.jobCategoryName,
+        jobShortDescription: item.shortDescription ?? item.content ?? "",
+        jobDescription: item.description ?? item.content ?? "",
+        Img: normalizeImageUrl(item.bannerImageUrl ?? item.Img),
+        likesCount: item.likesCount ?? 0,
+        isLikedByMe: item.isLikedByMe ?? false,
+        isSavedByMe: true,
+        createdAt: item.createdAt,
+      };
+    } else {
+      return {
+        id: `post-${sourceId}-${index}`,
+        sourceId: sourceId,
+        type: "post",
+        author: item.authorName ?? item.author ?? "User",
+        authorId: item.authorId,
+        authorType: item.authorType,
+        role: item.authorHeadline ?? item.authorSubtitle ?? item.role ?? "",
+        subtitle: item.authorSubtitle ?? "",
+        content: item.content ?? "",
+        authorPhoto: normalizeImageUrl(item.authorPictureUrl ?? item.authorPhoto) || null,
+        avatarColor: LIGHT_BLUE,
+        likesCount: item.likesCount ?? 0,
+        isLikedByMe: item.isLikedByMe ?? false,
+        isSavedByMe: true,
+        createdAt: item.createdAt,
+      };
+    }
   }
 
   return null;
 }
 
 // ─── Single saved-item card ───────────────────────────────────────────────────
-function SavedItemCard({ item, onNavigate }) {
-  return (
-    <Box
-      onClick={() => onNavigate(item.sourceId, item.type)}
-      sx={{
-        bgcolor: "white",
-        borderRadius: "16px",
-        p: "16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-        boxShadow: "0px 2px 12px rgba(19,32,109,0.07)",
-        border: "1px solid rgba(132,251,162,0.3)",
-        cursor: "pointer",
-        transition: "all 0.2s",
-        "&:hover": {
-          boxShadow: `0 0 0 2px ${GREEN}, 0px 4px 20px rgba(132,251,162,0.35)`,
-          transform: "translateY(-2px)",
-        },
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Box
-            sx={{
-              width: 48, height: 48, borderRadius: "50%",
-              background: "linear-gradient(to bottom, #84fba2, #90baef)",
-              flexShrink: 0,
-            }}
-          />
-          <Box>
-            <Typography sx={{ color: NAVY, fontSize: "16px", fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
-              {item.author}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              {item.type === "job" && <WorkOutlineIcon sx={{ fontSize: 13, color: LIGHT_BLUE }} />}
-              <Typography sx={{ color: NAVY, fontSize: "13px", opacity: 0.7, fontFamily: "'Inter', sans-serif" }}>
-                {item.role || (item.type === "job" ? "Job Post" : "Post")}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          {item.type === "job" && (
-            <Chip
-              label="Job"
-              size="small"
-              sx={{ bgcolor: "rgba(132,251,162,0.18)", color: NAVY, fontWeight: 700, fontSize: 11, borderRadius: "6px", height: 20 }}
-            />
-          )}
-          <BookmarkIcon sx={{ color: GOLD, fontSize: "22px" }} />
-          <OpenInNewIcon sx={{ color: NAVY, fontSize: "15px", opacity: 0.35 }} />
-        </Box>
-      </Box>
+// function SavedItemCard({ item, onNavigate }) {
+//   return (
+//     <Box
+//       onClick={() => onNavigate(item.sourceId, item.type)}
+//       sx={{
+//         bgcolor: "white",
+//         borderRadius: "16px",
+//         p: "16px",
+//         display: "flex",
+//         flexDirection: "column",
+//         gap: "12px",
+//         boxShadow: "0px 2px 12px rgba(19,32,109,0.07)",
+//         border: "1px solid rgba(132,251,162,0.3)",
+//         cursor: "pointer",
+//         transition: "all 0.2s",
+//         "&:hover": {
+//           boxShadow: `0 0 0 2px ${GREEN}, 0px 4px 20px rgba(132,251,162,0.35)`,
+//           transform: "translateY(-2px)",
+//         },
+//       }}
+//     >
+//       {/* Header */}
+//       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+//         <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+//           <Box
+//             sx={{
+//               width: 48, height: 48, borderRadius: "50%",
+//               background: "linear-gradient(to bottom, #84fba2, #90baef)",
+//               flexShrink: 0,
+//             }}
+//           />
+//           <Box>
+//             <Typography sx={{ color: NAVY, fontSize: "16px", fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
+//               {item.author}
+//             </Typography>
+//             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+//               {item.type === "job" && <WorkOutlineIcon sx={{ fontSize: 13, color: LIGHT_BLUE }} />}
+//               <Typography sx={{ color: NAVY, fontSize: "13px", opacity: 0.7, fontFamily: "'Inter', sans-serif" }}>
+//                 {item.role || (item.type === "job" ? "Job Post" : "Post")}
+//               </Typography>
+//             </Box>
+//           </Box>
+//         </Box>
+//         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+//           {item.type === "job" && (
+//             <Chip
+//               label="Job"
+//               size="small"
+//               sx={{ bgcolor: "rgba(132,251,162,0.18)", color: NAVY, fontWeight: 700, fontSize: 11, borderRadius: "6px", height: 20 }}
+//             />
+//           )}
+//           <BookmarkIcon sx={{ color: GOLD, fontSize: "22px" }} />
+//           <OpenInNewIcon sx={{ color: NAVY, fontSize: "15px", opacity: 0.35 }} />
+//         </Box>
+//       </Box>
 
-      {/* Title (jobs only) */}
-      {item.title && (
-        <Typography sx={{ color: NAVY, fontSize: "15px", fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
-          {item.title}
-        </Typography>
-      )}
+//       {/* Title (jobs only) */}
+//       {item.title && (
+//         <Typography sx={{ color: NAVY, fontSize: "15px", fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
+//           {item.title}
+//         </Typography>
+//       )}
 
-      {/* Content snippet */}
-      <Typography
-        sx={{
-          color: NAVY, fontSize: "15px", lineHeight: 1.6, fontFamily: "'Inter', sans-serif",
-          display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
-        }}
-        dir="auto"
-      >
-        {item.content}
-      </Typography>
+//       {/* Content snippet */}
+//       <Typography
+//         sx={{
+//           color: NAVY, fontSize: "15px", lineHeight: 1.6, fontFamily: "'Inter', sans-serif",
+//           display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
+//         }}
+//         dir="auto"
+//       >
+//         {item.content}
+//       </Typography>
 
-      <Divider sx={{ borderColor: "rgba(19,32,109,0.1)" }} />
+//       <Divider sx={{ borderColor: "rgba(19,32,109,0.1)" }} />
 
-      {/* Footer */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography sx={{ color: LIGHT_BLUE, fontSize: "13px", fontWeight: 500, fontFamily: "'Inter', sans-serif" }}>
-          Tap to jump →
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <FavoriteIcon sx={{ color: RED, fontSize: "18px" }} />
-          <Typography sx={{ color: NAVY, fontSize: "14px", fontFamily: "'Inter', sans-serif" }}>
-            {item.likesCount}
-          </Typography>
-        </Box>
-      </Box>
-    </Box>
-  );
-}
+//       {/* Footer */}
+//       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+//         <Typography sx={{ color: LIGHT_BLUE, fontSize: "13px", fontWeight: 500, fontFamily: "'Inter', sans-serif" }}>
+//           Tap to jump →
+//         </Typography>
+//         <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
+//           <FavoriteIcon sx={{ color: RED, fontSize: "18px" }} />
+//           <Typography sx={{ color: NAVY, fontSize: "14px", fontFamily: "'Inter', sans-serif" }}>
+//             {item.likesCount}
+//           </Typography>
+//         </Box>
+//       </Box>
+//     </Box>
+//   );
+// }
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
 export function SavedItemsModal({ open, onClose, profileType = "user" }) {
@@ -296,12 +384,27 @@ export function SavedItemsModal({ open, onClose, profileType = "user" }) {
             display: "flex",
             gap: 3,
             p: 3,
-            overflow: "auto",
+            overflowY: "auto",
             flex: 1,
+            alignItems: "flex-start", 
             bgcolor: "rgba(144,186,239,0.08)",
+            "&::-webkit-scrollbar": {
+              width: "8px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "rgba(144,186,239,0.1)",
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: LIGHT_BLUE,
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: "#7ca7dc",
+            },
           }}
         >
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0}}>
             {loading ? (
               <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
                 <CircularProgress sx={{ color: GREEN }} />
@@ -314,7 +417,7 @@ export function SavedItemsModal({ open, onClose, profileType = "user" }) {
               </Typography>
             ) : items.length === 0 ? (
               <Box
-                sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 8, gap: 2 }}
+                sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 8, gap: 2, pb: 6 }}
               >
                 <BookmarkIcon sx={{ color: GOLD, fontSize: "64px", opacity: 0.4 }} />
                 <Typography
@@ -329,48 +432,64 @@ export function SavedItemsModal({ open, onClose, profileType = "user" }) {
                 </Typography>
               </Box>
             ) : (
-              items.map((item) => (
-                //<SavedItemCard key={item.id} item={item} onNavigate={handleNavigate} />
-                items.map((item) =>
-                  item.type === "job" ? (
-                    <JobPostCard
-                      key={item.id}
-                      postId={item.id}
-                      company={item.company}
-                      companyName={item.companyName}
-                      companyPhoto={item.companyPhoto}
-                      companyLocation={item.companyLocation}
-                      locationMode={item.locationMode}
-                      companyIndustry={item.companyIndustry}
-                      jobTitle={item.jobTitle}
-                      jobType={item.jobType}
-                      jobCategoryId={item.jobCategoryId}
-                      jobCategoryName={item.jobCategoryName}
-                      jobShortDescription={item.jobShortDescription}
-                      jobDescription={item.jobDescription}
-                      Img={item.Img}
-                      likesCount={item.likesCount}
-                      isLikedByMe={item.isLikedByMe}
-                      isSavedByMe={item.isSavedByMe}
-                    />
-                  ) : (
-                    <PostCard
-                      key={item.id}
-                      postId={item.id}
-                      author={item.author}
-                      role={item.role}
-                      subtitle={item.subtitle}
-                      content={item.content}
-                      authorPhoto={item.authorPhoto}
-                      avatarColor={item.avatarColor}
-                      likesCount={item.likesCount}
-                      isLikedByMe={item.isLikedByMe}
-                      isSavedByMe={item.isSavedByMe}
-                      profileType="user"
-                    />
-                  )
-                )
-              ))
+              <CommunityProvider
+                onWritePostOpen={() => { }}
+                onCloseWritePost={() => { }}
+                onOpenComments={() => { }}
+                onApplyNow={() => { }}
+                onCloseApplyNow={() => { }}
+              >
+                {items.map((item) => (
+                  <Box
+                    key={item.id}
+                    onClick={() => handleNavigate(item.sourceId, item.type)}
+                    sx={{
+                      cursor: "pointer",
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                      },
+                    }}
+                  >
+                    {item.type === "job" ? (
+                      <JobPostCard
+                        postId={item.id}
+                        company={item.company}
+                        companyName={item.companyName}
+                        companyPhoto={item.companyPhoto}
+                        companyLocation={item.companyLocation}
+                        locationMode={item.locationMode}
+                        companyIndustry={item.companyIndustry}
+                        jobTitle={item.jobTitle}
+                        jobType={item.jobType}
+                        jobCategoryId={item.jobCategoryId}
+                        jobCategoryName={item.jobCategoryName}
+                        jobShortDescription={item.jobShortDescription}
+                        jobDescription={item.jobDescription}
+                        Img={item.Img}
+                        likesCount={item.likesCount}
+                        isLikedByMe={item.isLikedByMe}
+                        isSavedByMe={item.isSavedByMe}
+                      />
+                    ) : (
+                      <PostCard
+                        postId={item.id}
+                        author={item.author}
+                        role={item.role}
+                        subtitle={item.subtitle}
+                        content={item.content}
+                        mediaUrl={item.mediaUrl}
+                        authorPhoto={item.authorPhoto}
+                        avatarColor={item.avatarColor}
+                        likesCount={item.likesCount}
+                        isLikedByMe={item.isLikedByMe}
+                        isSavedByMe={item.isSavedByMe}
+                        profileType="user"
+                      />
+                    )}
+                  </Box>
+                ))}
+              </CommunityProvider>
             )}
           </Box>
         </Box>

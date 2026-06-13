@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Box } from '@mui/material';
+import { Box,Button } from '@mui/material';
 import { AdminNavbar } from '../components/AdminNavbar';
 import { AddSkillCard } from '../components/AdminEdition/settings/AddSkillCard';
 import { AllSkillsCard } from '../components/AdminEdition/settings/AllSkillsCard';
-import { LogoutModal } from '../components/AdminEdition/settings/LogoutModal';
+import { LogoutDialog } from "../components/LogoutDialog";
 import { Footer } from '../components/Footer';
 import backgroundImg from "../../assets/Background.png";
 
@@ -15,7 +15,9 @@ const INITIAL_SKILLS = [
 
 export default function EditSettingsPage() {
   const [skills, setSkills] = useState(INITIAL_SKILLS);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  //nst [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+
 
   const handleAddSkill = (skill) => {
     if (!skills.includes(skill)) {
@@ -104,27 +106,24 @@ export default function EditSettingsPage() {
         <AllSkillsCard skills={skills} onRemove={handleRemoveSkill} />
 
         {/* Log out button — right aligned */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            style={{
-              background: '#ff383c',
-              color: 'white',
-              border: 'none',
-              borderRadius: 16,
-              width: 180,
-              height: 48,
-              fontSize: 18,
-              fontWeight: 600,
-              fontFamily: 'Inter, sans-serif',
-              cursor: 'pointer',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#e02a2e'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#ff383c'; }}
-          >
-            Log out
-          </button>
+        <div style={{ display: 'flex', justifyContent:'flex-start' }}>
+          <Button
+                onClick={() => setLogoutOpen(true)}
+                sx={{
+                  width: "250px",
+                  py: 1.5,
+                  borderRadius: "20px",
+                  bgcolor: "#ff383c",
+                  color: "white",
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 600,
+                  fontSize: "16px",
+                  textTransform: "none",
+                  "&:hover": { bgcolor: "#e02020", boxShadow: "0px 6px 16px rgba(255,56,60,0.45)" },
+                }}
+              >
+                Log out
+              </Button>
         </div>
       </div>
 
@@ -133,11 +132,7 @@ export default function EditSettingsPage() {
 
 
       {/* Logout Modal */}
-      <LogoutModal
-        open={showLogoutModal}
-        onConfirm={handleLogoutConfirm}
-        onCancel={() => setShowLogoutModal(false)}
-      />
+      <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} type="user" />
     </Box>
   );
 }
