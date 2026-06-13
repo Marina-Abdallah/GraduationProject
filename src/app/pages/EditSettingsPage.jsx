@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography,Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { AdminNavbar } from '../components/AdminEdition/navbar/AdminNavbar';
-import React, { useState } from 'react';
-import { Box,Button } from '@mui/material';
 import { AdminNavbar } from '../components/AdminNavbar';
 import { AddSkillCard } from '../components/AdminEdition/settings/AddSkillCard';
 import { AllSkillsCard } from '../components/AdminEdition/settings/AllSkillsCard';
