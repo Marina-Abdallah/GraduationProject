@@ -6,14 +6,14 @@ import { ProfileImageCard } from "../components/ProfileImageCard";
 import { PersonalInfoCard } from "../components/PersonalInfoCard";
 import { ProfileDescriptionCard } from "../components/ProfileDescriptionCard";
 import { SkillsCard } from "../components/SkillsCard";
-import { SavedPostsModal } from "../components/SavedPostsModal";
+import { SavedItemsModal } from "../components/SavedItemsModal";
 import { LogoutDialog } from "../components/LogoutDialog";
 import backgroundImg from "../../assets/Background.png";
 import api from "../../api/axios";
 import { useAppContext } from "../components/AppContext";
 
 export function ProfilePage() {
-  const [savedPostsOpen, setSavedPostsOpen] = useState(false);
+  const [savedItemsOpen, setSavedItemsOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const { updateProfile, setSkillsList } = useAppContext();
 
@@ -78,7 +78,7 @@ export function ProfilePage() {
             {/* Action Buttons */}
             <Box sx={{ display: "flex", gap: 2, flexWrap: { xs: "wrap", sm: "nowrap" } }}>
               <Button
-                onClick={() => setSavedPostsOpen(true)}
+                onClick={() => setSavedItemsOpen(true)}
                 sx={{
                   flex: 1,
                   py: 1.5,
@@ -93,7 +93,7 @@ export function ProfilePage() {
                   "&:hover": { bgcolor: "#6ef094", boxShadow: "0px 6px 16px rgba(132,251,162,0.6)" },
                 }}
               >
-                Saved Posts
+                Saved Posts & Jobs
               </Button>
               <Button
                 onClick={() => setLogoutOpen(true)}
@@ -124,9 +124,9 @@ export function ProfilePage() {
       </Box>
 
       {/* Modals */}
-      <SavedPostsModal
-        open={savedPostsOpen}
-        onClose={() => setSavedPostsOpen(false)}
+      <SavedItemsModal
+        open={savedItemsOpen}
+        onClose={() => setSavedItemsOpen(false)}
         profileType="user"
       />
       <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} type="user" />

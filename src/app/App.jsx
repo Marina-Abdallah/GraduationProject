@@ -18,7 +18,7 @@ import  LandingPage  from "./pages/LandingPages/LandingPage/LandingPage";
 import  AdminDashboardPage  from "./pages/AdminDashboardPage";
 import  EditSettingsPage  from "./pages/EditSettingsPage";
 import  RequestsPage  from "./pages/RequestsPage";
-import  PotatoPage  from "./pages/PotatoPage";
+import  {PotatoPage}  from "./pages/PotatoPage";
 
 // Auth Pages
 import UserSignUp from "./pages/UserSignUp";

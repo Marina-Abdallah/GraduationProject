@@ -13,6 +13,8 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
+import { JobPostCard} from "./JobPostCard";
+import {PostCard } from "./PostCard";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
@@ -28,32 +30,36 @@ function normalizeSavedItem(item) {
   if (!item) return null;
   const type = (item.type ?? "").toLowerCase();
 
+
   if (type === "job" && item.job) {
-    const j = item.job;
-    return {
-      id: `job-${j.id}`,
-      type: "job",
-      sourceId: j.id,
-      title: j.title ?? "Job",
-      author: j.companyName ?? "Company",
-      role: j.jobType ?? "",
-      content: j.shortDescription ?? j.description ?? "",
-      likesCount: j.likesCount ?? 0,
-    };
+    <JobPostCard key={item.job.id} job={item.job} />;
+    //const j = item.job;
+     //return {
+    //   id: `job-${j.id}`,
+    //   type: "job",
+    //   sourceId: j.id,
+    //   title: j.title ?? "Job",
+    //   author: j.companyName ?? "Company",
+    //   role: j.jobType ?? "",
+    //   content: j.shortDescription ?? j.description ?? "",
+    //   likesCount: j.likesCount ?? 0,
+     //};
   }
 
   if (type === "post" && item.post) {
-    const p = item.post;
-    return {
-      id: `post-${p.id}`,
-      type: "post",
-      sourceId: p.id,
-      title: null,
-      author: p.authorName ?? "User",
-      role: p.authorHeadline ?? p.authorSubtitle ?? "",
-      content: p.content ?? "",
-      likesCount: p.likesCount ?? 0,
-    };
+    <PostCard key={item.post.id} post={item.post} />;
+    // const p = item.post;
+    // return {
+    //   id: `post-${p.id}`,
+    //   type: "post",
+    //   sourceId: p.id,
+    //   title: null,
+    //   author: p.authorName ?? "User",
+    //   pictureUrl: p.authorPictureUrl,
+    //   role: p.authorHeadline ?? p.authorSubtitle ?? "",
+    //   content: p.content ?? "",
+    //   likesCount: p.likesCount ?? 0,
+    // };
   }
 
   // Flat shape fallback (API might return items directly)
@@ -78,7 +84,7 @@ function normalizeSavedItem(item) {
 function SavedItemCard({ item, onNavigate }) {
   return (
     <Box
-      onClick={() => onNavigate(item.id, item.type)}
+      onClick={() => onNavigate(item.sourceId, item.type)}
       sx={{
         bgcolor: "white",
         borderRadius: "16px",
@@ -168,7 +174,7 @@ function SavedItemCard({ item, onNavigate }) {
 }
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
-export function SavedPostsModal({ open, onClose, profileType = "user" }) {
+export function SavedItemsModal({ open, onClose, profileType = "user" }) {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -184,7 +190,7 @@ export function SavedPostsModal({ open, onClose, profileType = "user" }) {
       try {
         const token = localStorage.getItem("token");
         const endpoint =
-          profileType === "company" ? "/Companies/SavedPosts" : "/Users/SavedPosts";
+          profileType === "company" ? "/Companies/SavedItems" : "/Users/SavedItems";
 
         const res = await api.get(endpoint, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -194,7 +200,11 @@ export function SavedPostsModal({ open, onClose, profileType = "user" }) {
           ? res.data
           : res.data?.items ?? res.data?.data ?? res.data?.savedPosts ?? [];
 
-        setItems(raw.map(normalizeSavedItem).filter(Boolean));
+        setItems(
+          raw
+            .map((item, index) => normalizeSavedItem(item, index))
+            .filter(Boolean)
+        );
       } catch (err) {
         console.error("Failed to fetch saved posts:", err);
         setError(
@@ -210,11 +220,18 @@ export function SavedPostsModal({ open, onClose, profileType = "user" }) {
     fetchSaved();
   }, [open, profileType]);
 
-  const handleNavigate = (postId) => {
+  const handleNavigate = (sourceId, type) => {
     onClose();
     const targetRoute =
       profileType === "company" ? "/CompanyCommunity" : "/Community";
-    navigate(targetRoute, { state: { highlightPostId: postId } });
+    navigate(targetRoute, {
+      state: {
+        highlightPostId:
+          type === "job"
+            ? `job-${sourceId}`
+            : `post-${sourceId}`,
+      },
+    });
   };
 
   return (
@@ -313,7 +330,46 @@ export function SavedPostsModal({ open, onClose, profileType = "user" }) {
               </Box>
             ) : (
               items.map((item) => (
-                <SavedItemCard key={item.id} item={item} onNavigate={handleNavigate} />
+                //<SavedItemCard key={item.id} item={item} onNavigate={handleNavigate} />
+                items.map((item) =>
+                  item.type === "job" ? (
+                    <JobPostCard
+                      key={item.id}
+                      postId={item.id}
+                      company={item.company}
+                      companyName={item.companyName}
+                      companyPhoto={item.companyPhoto}
+                      companyLocation={item.companyLocation}
+                      locationMode={item.locationMode}
+                      companyIndustry={item.companyIndustry}
+                      jobTitle={item.jobTitle}
+                      jobType={item.jobType}
+                      jobCategoryId={item.jobCategoryId}
+                      jobCategoryName={item.jobCategoryName}
+                      jobShortDescription={item.jobShortDescription}
+                      jobDescription={item.jobDescription}
+                      Img={item.Img}
+                      likesCount={item.likesCount}
+                      isLikedByMe={item.isLikedByMe}
+                      isSavedByMe={item.isSavedByMe}
+                    />
+                  ) : (
+                    <PostCard
+                      key={item.id}
+                      postId={item.id}
+                      author={item.author}
+                      role={item.role}
+                      subtitle={item.subtitle}
+                      content={item.content}
+                      authorPhoto={item.authorPhoto}
+                      avatarColor={item.avatarColor}
+                      likesCount={item.likesCount}
+                      isLikedByMe={item.isLikedByMe}
+                      isSavedByMe={item.isSavedByMe}
+                      profileType="user"
+                    />
+                  )
+                )
               ))
             )}
           </Box>

@@ -4,13 +4,13 @@ import { CompanyNavbar } from "../components/CompanyNavbar";
 import { Footer } from "../components/Footer";
 //import { CompanySidebar } from "../components/CompanySidebar";
 import { CompanyDescriptionCard } from "../components/CompanyDescriptionCard";
-import { SavedPostsModal } from "../components/SavedPostsModal";
+import { SavedItemsModal } from "../components/SavedItemsModal";
 import { LogoutDialog } from "../components/LogoutDialog";
 import backgroundImg from "../../assets/Background.png";
 import { CompanyImageCard } from "../components/CompanyImageCard";
 
 export function CompanyProfile() {
-    const [savedPostsOpen, setSavedPostsOpen] = useState(false);
+    const [savedItemsOpen, setSavedItemsOpen] = useState(false);
     const [logoutOpen, setLogoutOpen] = useState(false);
 
     return (
@@ -76,7 +76,7 @@ export function CompanyProfile() {
                             }}
                         >
                             <Button
-                                onClick={() => setSavedPostsOpen(true)}
+                                onClick={() => setSavedItemsOpen(true)}
                                 sx={{
                                     textAlign: "center",
                                     width: "250px",
@@ -126,9 +126,9 @@ export function CompanyProfile() {
             </Box>
 
             {/* Modals */}
-            <SavedPostsModal
-                open={savedPostsOpen}
-                onClose={() => setSavedPostsOpen(false)}
+            <SavedItemsModal
+                open={savedItemsOpen}
+                onClose={() => setSavedItemsOpen(false)}
                 profileType="company"
             />
 
