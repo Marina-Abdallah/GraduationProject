@@ -40,7 +40,7 @@ function PersonAvatar({ initials, bg }) {
   );
 }
 
-function CompanyLogoCircle({ logoType, logoColors, initials, avatarBg }) {
+function CompanyLogoCircle({ logoType, logoColors, initials, avatarBg, imageUrl }) {
   return (
     <div
       style={{
@@ -56,6 +56,18 @@ function CompanyLogoCircle({ logoType, logoColors, initials, avatarBg }) {
         overflow: 'hidden',
       }}
     >
+      {logoType === 'image' && imageUrl && (
+        <img
+          src={imageUrl}
+          alt="Company logo"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            borderRadius: 114,
+          }}
+        />
+      )}
       {logoType === 'microsoft' && <MicrosoftLogo />}
       {logoType === 'avatar' && <PersonAvatar initials={initials} bg={avatarBg} />}
       {logoType === 'custom' && (
@@ -145,6 +157,7 @@ export function RequestCard({ request, onApprove, onDecline }) {
           logoColors={request.logoColors}
           initials={request.initials}
           avatarBg={request.avatarBg}
+          imageUrl={request.imageUrl}
         />
         <div>
           <div
