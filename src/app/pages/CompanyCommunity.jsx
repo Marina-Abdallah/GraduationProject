@@ -151,6 +151,7 @@ function normalizeFeedItem(item, index = 0) {
       subtitle: post.authorSubtitle || "",
 
       content: post.content,
+      mediaUrl: normalizeImageUrl(post.postMediaUrl) || null,
 
       authorPhoto: normalizeImageUrl(post.authorPictureUrl) || null,
       avatarColor: LIGHT_BLUE,
@@ -465,21 +466,29 @@ export function CompanyCommunityPage() {
   };
 
   // New post submitted from WritePostDialog
-  const handlePostSubmit = async (content, mediaFile) => {
-    try {
-      const token = localStorage.getItem("token");
-      await api.post("/Posts", { content }, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-        },
-      });
 
-      refreshFeed();
-    } catch (error) {
-      console.error("Error creating post:", error);
-      alert(error.response?.data?.message || "Failed to create post. Please try again.");
+  const handlePostSubmit = async (content, mediaFile) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const formData = new FormData();
+    formData.append("content", content);
+
+    if (mediaFile) {
+      formData.append("mediaFile", mediaFile);
     }
-  };
+
+    await api.post("/Posts", formData, {
+      headers: token
+        ? { Authorization: `Bearer ${token}` }
+        : {},
+    });
+
+    onPostCreated?.();
+  } catch (error) {
+    console.error("Error creating post:", error);
+  }
+};
 
   // New job submitted from CreateJobDialog
   const handleJobSubmit = (jobData) => {

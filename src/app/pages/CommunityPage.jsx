@@ -60,7 +60,7 @@ const normalizeImageUrl = (url) => {
   }
 
   if (cleanUrl.match(/^[a-zA-Z]:\\/)) {
-     return `file:///${cleanUrl.replace(/\\/g, '/')}`;
+    return `file:///${cleanUrl.replace(/\\/g, '/')}`;
   }
 
   return cleanUrl;
@@ -145,6 +145,7 @@ function normalizeFeedItem(item, index = 0) {
       subtitle: post.authorSubtitle || "",
 
       content: post.content,
+      mediaUrl: normalizeImageUrl(post.postMediaUrl) || null,
 
       authorPhoto: normalizeImageUrl(post.authorPictureUrl) || null,
       avatarColor: LIGHT_BLUE,
@@ -167,41 +168,25 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
   const { profile } = useAppContext();
 
   const handlePostSubmit = async (content, mediaFile) => {
-    // Create a local blob URL for instant preview
-    const localMediaUrl = mediaFile ? URL.createObjectURL(mediaFile) : null;
-
     try {
       const token = localStorage.getItem("token");
-      await api.post("/Posts", { content }, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-        },
+
+      const formData = new FormData();
+      formData.append("content", content);
+
+      if (mediaFile) {
+        formData.append("mediaFile", mediaFile);
+      }
+
+      await api.post("/Posts", formData, {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : {},
       });
 
-      // Optimistically prepend the post with image so it appears instantly
-      const tempPost = {
-        id: `dyn-post-${Date.now()}`,
-        type: "post",
-        author: profile?.name || "You",
-        role: profile?.headline || "",
-        subtitle: "",
-        content,
-        mediaUrl: localMediaUrl,
-        authorPhoto: profile?.photo,
-        avatarColor: LIGHT_BLUE,
-        likesCount: 0,
-        isLikedByMe: false,
-        isSavedByMe: false,
-      };
-      setDynamicPosts((prev) => [tempPost, ...prev]);
-
-      // Also trigger a background feed refresh (new post will arrive from server)
       onPostCreated?.();
     } catch (error) {
-      // Revoke the blob URL on failure
-      if (localMediaUrl) URL.revokeObjectURL(localMediaUrl);
       console.error("Error creating post:", error);
-      alert(error.response?.data?.message || "Failed to create post. Please try again.");
     }
   };
 
