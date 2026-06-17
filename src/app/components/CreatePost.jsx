@@ -16,24 +16,6 @@ export function CreatePost() {
   const { onWritePost } = useCommunity();
   const { profile } = useAppContext();
 
-  const createPost = async () => {
-      try {
-        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : undefined;
-
-        const createdPost = async (content) => {
-          const resp = await api.post("/Posts", { content }, { headers });
-          return resp.data;
-        };
-
-        let data = null;
-       
-      } catch (error) {
-        // Suppress network errors - API may be unavailable
-        if (error.code !== 'ERR_NETWORK') {
-          console.error("Error fetching industries:", error);
-        }
-      }
-    };
 
   return (
     <Box

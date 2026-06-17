@@ -22,7 +22,7 @@ import { useCommunity } from "./CommunityContext";
 import { useAppContext } from "../components/AppContext";
 import bannerImg from "../../assets/ApplyJobBackground.jpg";
 import defaultPhoto from "../../assets/defaultImg.png";
-import defaultCompanyPhoto from "../../assets/defaultCompanyImg.jpg";
+import defaultCompanyPhoto from "../../assets/defaultCompanyImg.png";
 
 
 const NAVY = "#13206d";

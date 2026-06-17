@@ -1,7 +1,7 @@
 import React from "react";
 import HeroCard from "./heroCard";
 import "./heroSection.css";
-import companyIcon from "../../../../assets/company.png";
+import companyIcon from "../../../../assets/defaultCompanyImg.png";
 import userIcon from "../../../../assets/user.png";
 
 function HeroSection() {

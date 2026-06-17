@@ -28,7 +28,7 @@ import { CreateJobDialog } from "../components/CreateJobDialog";
 import { ErrorDialog } from "../components/ErrorDialog";
 
 import backgroundImg from "../../assets/Background.png";
-import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
+import defaultPhoto from "../../assets/defaultCompanyImg.png";
 
 
 const NAVY = "#13206d";
@@ -184,7 +184,7 @@ function CreateBar({ onWritePost, onCreateJob }) {
         gap: 2,
       }}
     >
-      {/* MS Logo */}
+      {/* Campany Logo */}
       <Avatar
         src={company.photo || defaultPhoto}
         alt={company.name}

@@ -15,7 +15,8 @@ import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SendIcon from "@mui/icons-material/Send";
 import { useAppContext } from "../components/AppContext";
-import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
+import ProfiledefaultPhoto from "../../assets/defaultImg.png";
+import defaultPhoto from "../../assets/defaultCompanyImg.png";
 
 
 const NAVY = "#13206d";
@@ -33,16 +34,16 @@ export function WritePostDialog({ open, onClose, onSubmit, profileType }) {
   const isCompany = profileType === "company";
 
   const displayName = isCompany
-    ? company?.name || "company"
-    : profile?.name || "Marina Abdallah";
+    ? company?.name || "[Company Name]"
+    : profile?.name || "[User Name]";
 
   const displayRole = isCompany
-    ? company?.industry || "company"
-    : profile?.headline || "UI/UX Designer";
+    ? company?.industry || "[Industry]"
+    : profile?.headline || "[Headline]";
 
   const displayPhoto = isCompany
     ? company?.photo || defaultPhoto
-    : profile?.photo || defaultPhoto;
+    : profile?.photo || ProfiledefaultPhoto;
 
   const placeholderText = isCompany
     ? `What's on your mind, ${displayName}?`
