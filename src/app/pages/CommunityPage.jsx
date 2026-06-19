@@ -2,6 +2,13 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
+import Pagination from '@mui/material/Pagination';
+import PaginationItem from '@mui/material/PaginationItem';
+import Stack from '@mui/material/Stack';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+
+import api from "../../api/axios";
 
 // Layout components
 import { MainNavbar } from "../components/MainNavbar";
@@ -17,42 +24,47 @@ import { WritePostDialog } from "../components/WritePostDialog";
 import { ApplyNowOverlay } from "../components/ApplyNowOverlay";
 import backgroundImg from "../../assets/Background.png";
 
+
 // Global context
 import { useAppContext } from "../components/AppContext";
 
-// ─── Posts data ────────────────────────────────────────────────────────────────
-const POSTS = [
-  {
-    id: "post1",
-    type: "post",
-    author: "Marina Abdallah",
-    role: "UI/UX Designer",
-    content: "Can anyone help me with the new feature in Figma?",
-    avatarColor: "#90baef",
-  },
-  {
-    id: "post3",
-    type: "job",
-    company: "MicroSoft",
-    companyLocation: "Cairo, Egypt",
-    jobTitle: "Frontend Developer",
-    jobType: "Full time",
-    jobDescription:
-      "A Full time Frontend Developer at MicroSoft, creating user-friendly web experiences.",
-  },
-  {
-    id: "post2",
-    type: "post",
-    author: "Ahmed Mamdouh",
-    role: "Staff Software Engineer",
-    rtl: true,
-    avatarColor: "#c8b4e3",
-    content:
-      'شركه كانت مكلماني علشان اعمل Interviews لمتقدمين علشان كانت محتاجه "Senior" في ال Team بتاعها لان مفيش حد فاضي عندهم في الشركه، فوافقت.\n\nبعمل انترفيو لناس بقالها علي الاقل ٥ سنين في المجال وفيه ناس منهم عندهم خبره آكبر.\n\nالشركه كانت مسؤله عن مشروع ضخم وعليه ترافيك عالي والمشروع كان Distributed system وفيه مشاكل كثير في ال Production.\n\nبعض الآسئله كانت كالآتي:\n- ACID properties and Isolation levels\n- Consistency models\n- CAP theorem and when to use AP or CP\n- FIRST principles of unit testing\n- OOAD and how to design a given use case\n\nبعد كام انترفيو الشركه قررت اني مكملش معاهم لاني بعقد ال Process.\n\nوالنتيجه سيئه.',
-  },
-];
 const LIGHT_BLUE = "#90baef";
+const normalizeImageUrl = (url) => {
+  if (!url || url === "URL") return null;
 
+  // Remove surrounding quotes if present
+  let cleanUrl = url.replace(/^["']|["']$/g, '');
+
+  if (cleanUrl.includes("wwwroot")) {
+    const match = cleanUrl.match(/wwwroot(.*)$/);
+    if (match) {
+      const relativePath = match[1].replace(/\\/g, "/");
+      return `https://localhost:7292${relativePath}`;
+    }
+  }
+
+  if (cleanUrl.includes("uploads")) {
+    const match = cleanUrl.match(/(uploads.*)$/);
+    if (match) {
+      const relativePath = match[1].replace(/\\/g, "/");
+      return `https://localhost:7292/${relativePath}`;
+    }
+  }
+
+  if (cleanUrl.startsWith("/")) {
+    return `https://localhost:7292${cleanUrl}`;
+  }
+
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+
+  if (cleanUrl.match(/^[a-zA-Z]:\\/)) {
+    return `file:///${cleanUrl.replace(/\\/g, '/')}`;
+  }
+
+  return cleanUrl;
+};
 // ─── Search matching logic ────────────────────────────────────────────────────
 function matchesSearch(post, query) {
   if (!query.trim()) return true;
@@ -75,25 +87,111 @@ function matchesSearch(post, query) {
   );
 }
 
+function normalizeFeedItem(item, index = 0) {
+  if (!item) return null;
+
+  const type = item.type?.toLowerCase();
+
+  // JOB
+  if (type === "job" && item.job) {
+    const job = item.job;
+
+    return {
+      id: `job-${job.id}-${index}`,
+      sourceId: job.id,
+      type: "job",
+
+      company: job.companyName,
+      companyName: job.companyName,
+      companyPhoto: normalizeImageUrl(job.companyPictureUrl),
+      companyIndustry: job.companyIndustry || "",
+
+      companyLocation:
+        job.cityOffice ||
+        job.location,
+      locationMode: job.locationMode || job.jobLocationMode || "",
+
+      jobTitle: job.title,
+      jobType: job.jobType,
+      jobCategoryId: job.jobCategoryId,
+      jobCategoryName: job.jobCategoryName,
+
+      jobShortDescription: job.shortDescription,
+      jobDescription: job.description,
+
+      Img: normalizeImageUrl(job.bannerImageUrl),
+
+      likesCount: job.likesCount || 0,
+      isLikedByMe: job.isLikedByMe || false,
+      isSavedByMe: job.isSavedByMe || false,
+
+      createdAt: item.createdAt,
+    };
+  }
+
+  // POST
+  if (type === "post" && item.post) {
+    const post = item.post;
+
+    return {
+      id: `post-${post.id}-${index}`,
+      sourceId: post.id,
+      type: "post",
+
+      author: post.authorName,
+      authorId: post.authorId,
+      authorType: post.authorType,
+      role: post.authorSubtitle || post.authorHeadline || post.role || "",
+      subtitle: post.authorSubtitle || "",
+
+      content: post.content,
+      mediaUrl: normalizeImageUrl(post.postMediaUrl) || null,
+
+      authorPhoto: normalizeImageUrl(post.authorPictureUrl) || null,
+      avatarColor: LIGHT_BLUE,
+
+      likesCount: post.likesCount || 0,
+      isLikedByMe: post.isLikedByMe || false,
+      isSavedByMe: post.isSavedByMe || false,
+
+      createdAt: item.createdAt,
+    };
+  }
+
+  return null;
+}
 // ─── Inner layout (uses CommunityProvider context) ────────────────────────────
-function CommunityFeed({ showWritePost, onCloseWritePost, showApplyNow, onCloseApplyNow, highlightedPostId }) {
+
+function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showApplyNow, onCloseApplyNow, highlightedPostId, loading = false, onPostCreated }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [dynamicPosts, setDynamicPosts] = useState([]);
   const { profile } = useAppContext();
-  const handlePostSubmit = (content, mediaUrl) => {
-    const newPost = {
-      id: `dyn-post-${Date.now()}`,
-      type: "post",
-      author: profile.name,
-      role: profile.headline,
-      content,
-      avatarColor: LIGHT_BLUE,
-      mediaUrl,
-    };
-    setDynamicPosts((prev) => [newPost, ...prev]);
+
+  const handlePostSubmit = async (content, mediaFile) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const formData = new FormData();
+      formData.append("content", content);
+
+      if (mediaFile) {
+        formData.append("mediaFile", mediaFile);
+      }
+
+      await api.post("/Posts", formData, {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : {},
+      });
+
+      onPostCreated?.();
+    } catch (error) {
+      console.error("Error creating post:", error);
+    }
   };
 
-  const allPosts = [...dynamicPosts, ...POSTS];
+  const allPosts = [...dynamicPosts, ...feedItems];
+
   const filteredPosts = allPosts.filter((p) =>
     matchesSearch(p, searchQuery)
   );
@@ -115,7 +213,7 @@ function CommunityFeed({ showWritePost, onCloseWritePost, showApplyNow, onCloseA
         }}
       >
         {/* Left: Sidebar (position: "sticky", top: 5, alignSelf: "flex-start" )*/}
-        <Box sx={{ display: { xs: "none", lg: "block" }, position: "sticky", top: 5, alignSelf: "flex-start" }}>
+        <Box sx={{ display: { xs: "none", lg: "block" }, position: "sticky", top: 10, alignSelf: "flex-start" }}>
           <SidebarProfile />
         </Box>
 
@@ -167,11 +265,22 @@ function CommunityFeed({ showWritePost, onCloseWritePost, showApplyNow, onCloseA
                   key={post.id}
                   postId={post.id}
                   company={post.company}
+                  companyName={post.companyName}
+                  companyPhoto={post.companyPhoto}
                   companyLocation={post.companyLocation}
+                  locationMode={post.locationMode}
+                  companyIndustry={post.companyIndustry}
                   jobTitle={post.jobTitle}
                   jobType={post.jobType}
+                  jobCategoryId={post.jobCategoryId}
+                  jobCategoryName={post.jobCategoryName}
+                  jobShortDescription={post.jobShortDescription}
                   jobDescription={post.jobDescription}
-                  highlighted={highlightedPostId === post.id}
+                  Img={post.Img}
+                  likesCount={post.likesCount}
+                  isLikedByMe={post.isLikedByMe}
+                  isSavedByMe={post.isSavedByMe}
+                  highlighted={highlightedPostId === post.id || highlightedPostId === `job-${post.sourceId}`}
                 />
               ) : (
                 <PostCard
@@ -179,10 +288,16 @@ function CommunityFeed({ showWritePost, onCloseWritePost, showApplyNow, onCloseA
                   postId={post.id}
                   author={post.author}
                   role={post.role}
+                  subtitle={post.subtitle}
                   content={post.content}
+                  mediaUrl={post.mediaUrl}
+                  authorPhoto={post.authorPhoto}
                   avatarColor={post.avatarColor}
                   rtl={post.rtl || false}
-                  highlighted={highlightedPostId === post.id}
+                  likesCount={post.likesCount}
+                  isLikedByMe={post.isLikedByMe}
+                  isSavedByMe={post.isSavedByMe}
+                  highlighted={highlightedPostId === post.id || highlightedPostId === `post-${post.sourceId}`}
                   profileType="user"
                 />
               )
@@ -207,6 +322,12 @@ function CommunityFeed({ showWritePost, onCloseWritePost, showApplyNow, onCloseA
 export function CommunityPage() {
   const [showWritePost, setShowWritePost] = useState(false);
   const [showApplyNow, setShowApplyNow] = useState(false);
+  const [feedItems, setFeedItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [pageCount, setPageCount] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { toggleUserSavedPost, } = useAppContext();
   const location = useLocation();
 
@@ -231,6 +352,63 @@ export function CommunityPage() {
   const handleCloseWritePost = useCallback(() => setShowWritePost(false), []);
   const handleOpenApplyNow = useCallback(() => setShowApplyNow(true), []);
   const handleCloseApplyNow = useCallback(() => setShowApplyNow(false), []);
+  const handlePageChange = useCallback((event, value) => setPage(value), []);
+
+  const loadFeed = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await api.get("/Community/feed", {
+        params: { page, pageSize },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      const data = response.data;
+      const items = Array.isArray(data)
+        ? data
+        : data?.items || data?.feed || data?.data || [];
+
+      const normalizedItems = Array.isArray(items)
+        ? items.map((item, index) => normalizeFeedItem(item, index)).filter(Boolean)
+        : [];
+
+      setFeedItems(normalizedItems);
+
+      if (typeof data?.totalPages === "number") {
+        setPageCount(data.totalPages);
+      } else if (typeof data?.totalCount === "number") {
+        setPageCount(Math.max(1, Math.ceil(data.totalCount / pageSize)));
+      } else if (Array.isArray(data)) {
+        setPageCount(Math.max(1, Math.ceil(data.length / pageSize)));
+      }
+    } catch (fetchError) {
+      console.error("Community feed request failed:", fetchError);
+      const responseData = fetchError.response?.data;
+      const errorMessage =
+        responseData?.message ||
+        responseData?.title ||
+        (typeof responseData === "string" ? responseData : JSON.stringify(responseData)) ||
+        fetchError.message ||
+        "Unable to load community feed.";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize]);
+
+  useEffect(() => {
+    loadFeed();
+  }, [loadFeed]);
+
+  const refreshFeed = useCallback(() => {
+    if (page === 1) {
+      loadFeed();
+    } else {
+      setPage(1);
+    }
+  }, [page, loadFeed]);
 
   return (
     <CommunityProvider
@@ -248,7 +426,7 @@ export function CommunityPage() {
           flexDirection: "column",
           alignItems: "center",
           background: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "100% auto",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "top center",
         }}
@@ -269,14 +447,39 @@ export function CommunityPage() {
         {/* Feed */}
         <Box sx={{ width: "100%", flex: 1 }}>
           <CommunityFeed
+            feedItems={feedItems}
+            loading={loading}
             showWritePost={showWritePost}
             onCloseWritePost={handleCloseWritePost}
             showApplyNow={showApplyNow}
             onCloseApplyNow={handleCloseApplyNow}
             highlightedPostId={highlightedPostId}
+            onPostCreated={refreshFeed}
           />
-        </Box>
 
+          {error ? (
+            <Box sx={{ px: { xs: 2, md: 4 }, mt: 2 }}>
+              <Typography sx={{ color: "#C32929", textAlign: "center" }}>
+                {error}
+              </Typography>
+            </Box>
+          ) : null}
+
+          <Stack spacing={2} sx={{ width: "100%", py: 3, px: { xs: 2, md: 4 } }}>
+            <Pagination
+              sx={{ color: "#84fba2", display: "flex", justifyContent: "center" }}
+              count={pageCount}
+              page={page}
+              onChange={handlePageChange}
+              renderItem={(item) => (
+                <PaginationItem
+                  slots={{ previous: ArrowBackIcon, next: ArrowForwardIcon }}
+                  {...item}
+                />
+              )}
+            />
+          </Stack>
+        </Box>
       </Box>
     </CommunityProvider>
   );

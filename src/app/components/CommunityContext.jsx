@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from "react";
+import api from "../../api/axios";
 
-const defaultPostState = (likeCount = 16) => ({
+const defaultPostState = (likeCount = 0) => ({
   liked: false,
   saved: false,
   likeCount,
 });
+
 
 const CommunityContext = createContext(null);
 
@@ -23,11 +25,7 @@ export function CommunityProvider({
   onCloseApplyNow,
   onSaveGlobal,
 }) {
-  const [posts, setPosts] = useState({
-    post1: defaultPostState(16),
-    post2: defaultPostState(24),
-    post3: defaultPostState(31),
-  });
+  const [posts, setPosts] = useState({});
 
   const [commentText, setCommentText] = useState("");
   const [submittedComments, setSubmittedComments] = useState([]);
@@ -35,31 +33,140 @@ export function CommunityProvider({
   const [newPostMedia, setNewPostMedia] = useState(null);
   const [newPostMediaUrl, setNewPostMediaUrl] = useState(null);
 
-  const onLike = useCallback((postId) => {
-    setPosts((prev) => ({
-      ...prev,
-      [postId]: {
-        ...prev[postId],
-        liked: !prev[postId].liked,
-        likeCount: prev[postId].liked
-          ? prev[postId].likeCount - 1
-          : prev[postId].likeCount + 1,
-      },
-    }));
+  const onLike = useCallback(async (postId, initialState) => {
+    // Optimistic UI update
+    // setPosts((prev) => {
+    //   const current = prev[postId] ?? initialState;//?? defaultPostState();
+    //   return {
+    //     ...prev,
+    //     [postId]: {
+    //       ...current,
+    //       liked: !current.liked,
+    //       likeCount: current.liked ? current.likeCount - 1 : current.likeCount + 1,
+    //     },
+    //   };
+    // });
+    setPosts((prev) => {
+      const current =
+        prev[postId] ??
+        initialState ?? {
+          liked: false,
+          saved: false,
+          likeCount: 0,
+        };
+
+      return {
+        ...prev,
+        [postId]: {
+          ...current,
+          liked: !current.liked,
+          likeCount: current.liked
+            ? current.likeCount - 1
+            : current.likeCount + 1,
+        },
+      };
+    });
+
+    // Determine actual numeric ID and endpoint
+    let endpoint = null;
+    if (typeof postId === "string") {
+      if (postId.startsWith("dyn-")) return; // Don't call API for unsaved dynamic posts
+
+      const parts = postId.split("-");
+      if (parts[0] === "post" && parts.length >= 3) {
+        endpoint = `/Posts/${parts[1]}/like`;
+      } else if (parts[0] === "job" && parts.length >= 3) {
+        endpoint = `/Jobs/${parts[1]}/like`;
+      } else {
+        endpoint = `/Posts/${postId}/like`;
+      }
+    } else {
+      endpoint = `/Posts/${postId}/like`;
+    }
+
+    if (endpoint) {
+      try {
+        const token = localStorage.getItem("token");
+        await api.post(endpoint, {}, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+      } catch (error) {
+        console.error("Failed to like item:", error);
+        // Revert optimistic update on failure
+        setPosts((prev) => {
+          const current = prev[postId] ?? initialState;//?? defaultPostState();
+          return {
+            ...prev,
+            [postId]: {
+              ...current,
+              liked: !current.liked,
+              likeCount: current.liked ? current.likeCount - 1 : current.likeCount + 1,
+            },
+          };
+        });
+      }
+    }
   }, []);
 
-  const onSave = useCallback((postId) => {
-    setPosts((prev) => ({
-      ...prev,
-      [postId]: {
-        ...prev[postId],
-        saved: !prev[postId].saved,
-      },
-    }));
-    onSaveGlobal?.(postId);
+  const onSave = useCallback(async (postId, initialState) => {
+    debugger;
+    // Optimistic toggle
+    // setPosts((prev) => {
+    //   const current = prev[postId] ?? initialState ;//?? defaultPostState();
+    //   return { ...prev, [postId]: { ...current, saved: !current.saved } };
+    // });
+    setPosts((prev) => {
+      const current =prev[postId] ??initialState ?? {
+          liked: false,
+          saved: false,
+          likeCount: 0,
+        };
+
+      return {
+        ...prev,
+        [postId]: {
+          ...current,
+          saved: !current.saved,
+        },
+      };
+    });
+
+    // Determine endpoint
+    let endpoint = null;
+    if (typeof postId === "string") {
+      if (postId.startsWith("dyn-")) return;
+      const parts = postId.split("-");
+      if (parts[0] === "post" && parts.length >= 3) {
+        endpoint = `/Posts/${parts[1]}/save`;
+      } else if (parts[0] === "job" && parts.length >= 3) {
+        endpoint = `/Jobs/${parts[1]}/save`;
+      } else {
+        endpoint = `/Posts/${postId}/save`;
+      }
+    } else {
+      endpoint = `/Posts/${postId}/save`;
+    }
+
+    if (endpoint) {
+      try {
+        const token = localStorage.getItem("token");
+        await api.post(endpoint, {}, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        onSaveGlobal?.(postId);
+      } catch (error) {
+        console.error("Failed to save item:", error);
+        // Revert on failure
+        setPosts((prev) => {
+          const current = prev[postId] ?? initialState;//?? defaultPostState();
+          return { ...prev, [postId]: { ...current, saved: !current.saved } };
+        });
+      }
+    }
   }, [onSaveGlobal]);
 
   const onSubmitComment = useCallback(() => {
+    debugger;
     const trimmed = commentText.trim();
     if (!trimmed) return;
     setSubmittedComments((prev) => [
@@ -67,7 +174,7 @@ export function CommunityProvider({
       {
         id: Date.now().toString(),
         text: trimmed,
-        author: "Mina Morcos",
+        author: "Marina Abdallah",
         time: "Just now",
       },
     ]);
@@ -85,6 +192,7 @@ export function CommunityProvider({
   }, []);
 
   const onSubmitPost = useCallback(() => {
+    debugger;
     setNewPostContent("");
     setNewPostMedia(null);
     setNewPostMediaUrl(null);

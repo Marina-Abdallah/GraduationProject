@@ -13,6 +13,14 @@ import { CompanyCommunityPage } from "./pages/CompanyCommunity";
 import { CompanyFeaturesPage } from "./pages/CompanyFeatures";
 import { CompanyAiChatPage } from "./pages/CompanyAiChatPage";
 import { CompanyProfile } from "./pages/CompanyProfile";
+import  SplashScreen  from "./pages/LandingPages/SplashScreen/SplashScreen";
+import  LandingPage  from "./pages/LandingPages/LandingPage/LandingPage";
+import  AdminDashboardPage  from "./pages/AdminDashboardPage";
+import  EditSettingsPage  from "./pages/EditSettingsPage";
+import  RequestsPage  from "./pages/RequestsPage";
+import  {PotatoPage}  from "./pages/PotatoPage";
+
+// Auth Pages
 import UserSignUp from "./pages/UserSignUp";
 import UserLogin from "./pages/UserLogin";
 import CompanyLogin from "./pages/CompanyLogin";
@@ -22,7 +30,9 @@ import CompanySignUp from "./pages/CompanySignUp";
 import { AppProvider } from "./components/AppContext";
 
 const router = createBrowserRouter([
-  { path: "/", Component: UserLogin },
+  {path: "/", Component: SplashScreen},
+  { path: "/LandingPage", Component: LandingPage },
+  {path: "/UserLogin", Component: UserLogin},
   { path: "/UserSignUp", Component: UserSignUp },
   { path: "/CompanyLogin", Component: CompanyLogin },
   { path: "/CompanySignUp", Component: CompanySignUp },
@@ -41,7 +51,11 @@ const router = createBrowserRouter([
   { path: "/company/cv-scoring", Component: CompanyAiChatPage },
   { path: "/company/ai-chat", Component: CompanyAiChatPage },
   { path: "/CompanyProfile", Component: CompanyProfile },
-  { path: "*", Component: UserLogin },
+  { path: "/AdminDashboardPage", Component: AdminDashboardPage },
+  {path: "/EditSettingsPage", Component: EditSettingsPage}, 
+  {path: "/RequestsPage", Component: RequestsPage},
+  {path: "/PotatoPage", Component: PotatoPage},
+  { path: "*", Component: SplashScreen },
 ]);
 
 export default function App() {

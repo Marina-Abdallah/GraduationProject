@@ -24,7 +24,7 @@ import SendIcon from "@mui/icons-material/Send";
 import CategoryIcon from "@mui/icons-material/Category";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { useAppContext } from "../components/AppContext";
-import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
+import defaultPhoto from "../../assets/defaultCompanyImg.png";
 
 // ── Brand colors ────────────────────────────────────────────────────────────
 const NAVY = "#13206d";

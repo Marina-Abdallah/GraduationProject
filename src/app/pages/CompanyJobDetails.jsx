@@ -29,7 +29,7 @@ import { Footer } from "../components/Footer";
 import { ApplicantsList } from "../components/ApplicantsList";
 import { COMPANY_JOBS } from "../../data/companyJobs";
 import { useAppContext } from "../components/AppContext";
-import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
+import defaultPhoto from "../../assets/defaultCompanyImg.png";
 
 const BANNER_MAP = {
   frontend: bannerFrontend,
@@ -85,7 +85,7 @@ export function CompanyJobDetailsPage() {
           alignItems: "center",
           justifyContent: "center",
           background: `url(${backgroundImg})`,
-          backgroundSize: "cover",
+          backgroundSize: "100% auto",
           backgroundPosition: "top center",
           gap: 3,
         }}
@@ -126,7 +126,7 @@ export function CompanyJobDetailsPage() {
         flexDirection: "column",
         alignItems: "center",
         background: `url(${backgroundImg})`,
-        backgroundSize: "cover",
+        backgroundSize: "100% auto",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center",
       }}

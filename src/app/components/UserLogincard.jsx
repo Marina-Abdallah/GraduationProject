@@ -10,6 +10,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import GoogleIcon from '@mui/icons-material/Google';
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "./AppContext";
 import api from "../../api/axios";
 import { useAppContext } from "./AppContext";
 
@@ -69,8 +70,12 @@ function UserLoginCard() {
       if (res.data.id) localStorage.setItem("userId", res.data.id);
       else if (res.data.userId) localStorage.setItem("userId", res.data.userId);
 
-      // go to home
-      navigate("/MyJobApplication");
+      // Check user role and navigate accordingly
+      if (res.data.roles && res.data.roles.includes("Admin")) {
+        navigate("/AdminDashboardPage");
+      } else {
+        navigate("/MyJobApplication");
+      }
 
     } catch (err) {
       console.log(err.response?.data);

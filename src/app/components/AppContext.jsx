@@ -107,11 +107,14 @@ export function AppProvider({ children }) {
           headline: data.headline,
           major: data.major,
           photo: photoUrl || defaultPhoto,
-          resumeFileName: data.cvUrl,
+          resumeFileName: data.cvName ?? "",
+          resumeScore: data.cvScore ?? 0,
         }));
-
       } catch (error) {
-        console.error("Error fetching profile data:", error);
+        // Suppress 404 errors - user may not exist or API may be unavailable
+        if (error.response?.status !== 404 && error.code !== 'ERR_NETWORK') {
+          console.error("Error fetching profile data:", error);
+        }
       }
     };
 
@@ -144,7 +147,10 @@ export function AppProvider({ children }) {
           photo: photoUrl,
         }));
       } catch (error) {
-        console.error("Error fetching company data:", error);
+        // Suppress 404 errors (user may not be a company) and network errors
+        if (error.response?.status !== 404 && error.code !== 'ERR_NETWORK') {
+          console.error("Error fetching company data:", error);
+        }
       }
     };
 
@@ -176,7 +182,10 @@ export function AppProvider({ children }) {
           setIndustries(normalized.filter((item) => item.id !== undefined));
         }
       } catch (error) {
-        console.error("Error fetching industries:", error);
+        // Suppress network errors - API may be unavailable
+        if (error.code !== 'ERR_NETWORK') {
+          console.error("Error fetching industries:", error);
+        }
       }
     };
 
@@ -207,7 +216,10 @@ export function AppProvider({ children }) {
           setSkills(formattedSkills);
         }
       } catch (error) {
-        console.error("Error fetching skills:", error);
+        // Suppress network errors - API may be unavailable
+        if (error.code !== 'ERR_NETWORK') {
+          console.error("Error fetching skills:", error);
+        }
       }
     };
 
@@ -267,7 +279,9 @@ export function AppProvider({ children }) {
       if (updates.headline !== undefined) dto.headline = updates.headline;
       if (updates.major !== undefined) dto.major = updates.major;
       if (updates.university !== undefined) dto.university = updates.university;
-      if (updates.resumeFileName !== undefined) dto.cvUrl = updates.resumeFileName;
+      if (updates.resumeFileName !== undefined) dto.cvName = updates.resumeFileName;
+      // NOTE: resumeScore is NOT in UpdateProfileDto — it is persisted by POST /cv/score/{userId}.
+      // We do NOT send it in the PATCH to avoid backend rejection.
       if (updates.phone !== undefined) dto.phone = updates.phone;
       if (updates.birthdate !== undefined) dto.birthdate = updates.birthdate;
       if (updates.address !== undefined) dto.address = updates.address;
@@ -302,6 +316,7 @@ export function AppProvider({ children }) {
             ? `https://localhost:7292${data.pictureUrl}`
             : prev.photo,
           resumeFileName: data.cvUrl ?? prev.resumeFileName,
+          resumeScore: data.resumeScore ?? prev.resumeScore,
         }));
       }
     } catch (err) {

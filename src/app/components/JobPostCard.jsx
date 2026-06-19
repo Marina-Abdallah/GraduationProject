@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Box,
   Card,
@@ -22,7 +22,7 @@ import { useCommunity } from "./CommunityContext";
 import { useAppContext } from "../components/AppContext";
 import bannerImg from "../../assets/ApplyJobBackground.jpg";
 import defaultPhoto from "../../assets/defaultImg.png";
-import defaultCompanyPhoto from "../../assets/defaultCompanyImg.jpg";
+import defaultCompanyPhoto from "../../assets/defaultCompanyImg.png";
 
 
 const NAVY = "#13206d";
@@ -32,24 +32,52 @@ const GOLD = "#FBBC04";
 const RED = "#C32929";
 
 export function JobPostCard({
-  postId = "post3",
-  company , 
-  jobTitle , 
-  companyLocation , 
-  jobType ,
-  jobCategory ,
-  jobShortDescription ,
+  postId,
+  company,
+  companyPhoto,
+  companyName,
+  companyIndustry,
+  locationMode,
+  jobTitle,
+  companyLocation,
+  jobType,
+  jobCategoryName,
+  jobShortDescription,
+  jobDescription,
   Img,
+  likesCount = 0,
+  isLikedByMe = false,
+  isSavedByMe = false,
+  highlighted = false,
 }) {
+  const companyLabel =
+    typeof company === "string"
+      ? company
+      : companyName ?? company?.name ?? "Unknown company";
+  const companyImage = company?.photo || companyPhoto;
+  const displayedJobDescription = jobShortDescription ?? jobDescription ?? "";
+
   const { posts, onLike, onSave, onApplyNow } = useCommunity();
   const { profile } = useAppContext();
-  const postState = posts[postId] ?? { liked: false, saved: false, likeCount: 0 };
+  const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount };
+  const postState = posts[postId] ?? initialState;
   const { liked, saved, likeCount } = postState;
 
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
   const [localComments, setLocalComments] = useState([]);
   //const { company } = useAppContext();
+
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (highlighted && cardRef.current) {
+      const timer = setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [highlighted]);
 
 
   const handleSubmitComment = () => {
@@ -77,13 +105,19 @@ export function JobPostCard({
 
   return (
     <Card
+      ref={cardRef}
       elevation={0}
       sx={{
         bgcolor: "white",
         borderRadius: "16px",
-        boxShadow: "0 4px 20px rgba(19,32,109,0.07)",
-        border: "1px solid rgba(19,32,109,0.05)",
+        boxShadow: highlighted
+          ? `0 0 0 3px ${GREEN}, 0 8px 32px rgba(132,251,162,0.45)`
+          : "0 4px 20px rgba(19,32,109,0.07)",
+        border: highlighted
+          ? `2px solid ${GREEN}`
+          : "1px solid rgba(19,32,109,0.05)",
         overflow: "hidden",
+        transition: "box-shadow 0.5s ease, border-color 0.5s ease",
       }}
     >
       {/* Header */}
@@ -98,8 +132,8 @@ export function JobPostCard({
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {/* <MSLogo size={52} /> */}
           <Avatar
-            src={company.photo || defaultCompanyPhoto}
-            alt={company.name}
+            src={companyImage || defaultCompanyPhoto}
+            alt={companyLabel}
             sx={{
               width: 52,
               height: 52,
@@ -120,21 +154,23 @@ export function JobPostCard({
                 fontWeight: 700,
                 fontSize: 17,
                 fontFamily: "'Inter', sans-serif",
-                lineHeight: 1.3,
+                lineHeight: 1,
               }}
             >
-              {company}
+              {companyLabel}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <LocationOnOutlinedIcon sx={{ fontSize: 13, color: LIGHT_BLUE }} />
+              {/* <LocationOnOutlinedIcon sx={{ fontSize: 13, color: LIGHT_BLUE }} /> */}
               <Typography
                 sx={{
-                  color: LIGHT_BLUE,
-                  fontSize: 13,
+                  color: NAVY,
+                  fontSize: 12,
+                  opacity: 0.7,
                   fontFamily: "'Inter', sans-serif",
                 }}
               >
-                {companyLocation}
+                {companyIndustry}
+                {/* {companyIndustry ? `${companyIndustry} • ${companyLocation}` : companyLocation} */}
               </Typography>
             </Box>
           </Box>
@@ -143,7 +179,7 @@ export function JobPostCard({
         <Tooltip title={saved ? "Unsave post" : "Save post"}>
           <IconButton
             size="small"
-            onClick={(e) => { e.stopPropagation(); onSave(postId); }}
+            onClick={(e) => { e.stopPropagation(); onSave(postId, initialState); }}
             sx={{ color: GOLD }}
           >
             {saved ? (
@@ -197,9 +233,9 @@ export function JobPostCard({
           }}
         >
 
-            <Avatar
-            src={company.photo || defaultCompanyPhoto}
-            alt={company.name}
+          <Avatar
+            src={companyImage || defaultCompanyPhoto}
+            alt={companyLabel}
             sx={{
               width: 36,
               height: 36,
@@ -223,17 +259,22 @@ export function JobPostCard({
                 lineHeight: 1.2,
               }}
             >
-              {company}
+              {companyLabel}
             </Typography>
-            <Typography
-              sx={{
-                color: "rgba(255,255,255,0.8)",
-                fontSize: 12,
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              {companyLocation}
-            </Typography>
+            {locationMode && (
+              <>
+                <Typography
+                  sx={{
+                    color: "rgba(255,255,255,0.8)",
+                    fontSize: 12,
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
+                  {companyLocation ? `${companyLocation} • ${locationMode}` : locationMode}
+
+                </Typography>
+              </>
+            )}
           </Box>
         </Box>
       </Box>
@@ -276,8 +317,27 @@ export function JobPostCard({
                 height: 22,
               }}
             />
-            <Chip
-              label={jobCategory}
+           
+            {locationMode && (
+              <>
+                <Chip
+                  label={locationMode}
+                  size="small"
+                  sx={{
+                    bgcolor: `rgba(132,251,162,0.18)`,
+                    color: NAVY,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    border: `1px solid rgba(132,251,162,0.4)`,
+                    borderRadius: "8px",
+                    height: 22,
+                  }}
+                />
+                
+              </>
+            )}
+             <Chip
+              label={jobCategoryName}
               size="small"
               sx={{
                 bgcolor: `rgba(132,251,162,0.18)`,
@@ -290,6 +350,7 @@ export function JobPostCard({
               }}
             />
           </Box>
+          
           <Typography
             sx={{
               color: NAVY,
@@ -300,7 +361,7 @@ export function JobPostCard({
               maxWidth: 400,
             }}
           >
-            {jobShortDescription}
+            {displayedJobDescription}
           </Typography>
         </Box>
 
@@ -334,7 +395,7 @@ export function JobPostCard({
       {/* Action bar */}
       <Box sx={{ px: "20px", py: "12px", display: "flex", alignItems: "center", gap: 1 }}>
         <Box
-          onClick={() => setShowComments((v) => !v)}
+          onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -366,7 +427,7 @@ export function JobPostCard({
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
           <IconButton
             size="small"
-            onClick={(e) => { e.stopPropagation(); onLike(postId); }}
+            onClick={(e) => { e.stopPropagation(); onLike(postId, initialState); }}
             sx={{ transition: "transform 0.15s", "&:hover": { transform: "scale(1.15)" } }}
           >
             {liked ? (
@@ -389,7 +450,7 @@ export function JobPostCard({
       </Box>
 
       {/* Collapsible comments */}
-      <Collapse in={showComments}>
+      <Collapse in={showComments} onClick={(e) => e.stopPropagation()}>
         <Box sx={{ px: "20px", pb: "16px", display: "flex", flexDirection: "column", gap: 2 }}>
           {localComments.map((c) => (
             <Box key={c.id} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>

@@ -27,10 +27,11 @@ const LIGHT_BLUE = "#90baef";
 const GOLD = "#FBBC04";
 const RED = "#C32929";
 
-export function PostCard({ postId, author, role, content, avatarColor, rtl = false, highlighted = false, profileType }) {
+export function PostCard({ postId, author, role, subtitle, content, mediaUrl, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType, likesCount = 0, isLikedByMe = false, isSavedByMe = false }) {
   const { posts, onLike, onSave } = useCommunity();
   const { profile, company } = useAppContext();
-  const postState = posts[postId] ?? { liked: false, saved: false, likeCount: 0 };
+  const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount };
+  const postState = posts[postId] ?? initialState;
   const { liked, saved, likeCount } = postState;
 
   const [showComments, setShowComments] = useState(false);
@@ -91,6 +92,7 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
     .toUpperCase();
 
   const bgColor = avatarColor || LIGHT_BLUE;
+  const userPhoto = authorPhoto || defaultPhoto;
 
   return (
     <Card
@@ -114,18 +116,19 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Avatar
+              src={userPhoto}
+              alt={author}
               sx={{
                 width: 52,
                 height: 52,
                 bgcolor: bgColor,
-                border: `2px solid ${bgColor}55`,
                 fontWeight: 700,
                 color: NAVY,
                 fontSize: 18,
                 fontFamily: "'Inter', sans-serif",
               }}
             >
-              {initials}
+              {!userPhoto && initials}
             </Avatar>
             <Box>
               <Typography
@@ -134,7 +137,7 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
                   fontWeight: 700,
                   fontSize: 17,
                   fontFamily: "'Inter', sans-serif",
-                  lineHeight: 1.3,
+                  lineHeight: 1,
                 }}
               >
                 {author}
@@ -142,12 +145,12 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
               <Typography
                 sx={{
                   color: NAVY,
-                  fontSize: 14,
+                  fontSize: 12,
                   opacity: 0.7,
                   fontFamily: "'Inter', sans-serif",
                 }}
               >
-                {role}
+                {subtitle || role}
               </Typography>
             </Box>
           </Box>
@@ -156,7 +159,7 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
             {/* Follow button */}
             <Tooltip title={followed ? "Unfollow" : `Follow ${author}`}>
               <Box
-                onClick={() => setFollowed((v) => !v)}
+                onClick={(e) => { e.stopPropagation(); setFollowed((v) => !v); }}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -201,7 +204,7 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
             <Tooltip title={saved ? "Unsave post" : "Save post"}>
               <IconButton
                 size="small"
-                onClick={(e) => { e.stopPropagation(); onSave(postId); }}
+                onClick={(e) => { e.stopPropagation(); onSave(postId, initialState); }}
                 sx={{ color: GOLD }}
               >
                 {saved ? (
@@ -230,13 +233,38 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
           {content}
         </Typography>
 
+        {/* Media image */}
+        {mediaUrl && (
+          <Box
+            sx={{
+              borderRadius: "12px",
+              overflow: "hidden",
+              maxHeight: 400,
+              mt: -0.5,
+            }}
+          >
+            <img
+              src={mediaUrl}
+              alt="post media"
+              style={{
+                width: "100%",
+                maxHeight: 400,
+                objectFit: "cover",
+                display: "block",
+                borderRadius: 12,
+              }}
+              onError={(e) => { e.target.style.display = "none"; }}
+            />
+          </Box>
+        )}
+
         <Divider sx={{ borderColor: `${NAVY}18` }} />
 
         {/* Action bar */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {/* Comment trigger */}
           <Box
-            onClick={() => setShowComments((v) => !v)}
+            onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -269,7 +297,7 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
             <IconButton
               size="small"
-              onClick={(e) => { e.stopPropagation(); onLike(postId); }}
+              onClick={(e) => { e.stopPropagation(); onLike(postId, initialState); }}
               sx={{ transition: "transform 0.15s", "&:hover": { transform: "scale(1.15)" } }}
             >
               {liked ? (
@@ -292,7 +320,7 @@ export function PostCard({ postId, author, role, content, avatarColor, rtl = fal
         </Box>
 
         {/* Collapsible comments section */}
-        <Collapse in={showComments}>
+        <Collapse in={showComments} onClick={(e) => e.stopPropagation()}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
             {/* Submitted comments list */}
             {localComments.map((c) => (

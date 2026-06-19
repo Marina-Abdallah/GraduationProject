@@ -1,0 +1,78 @@
+.hero-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s;
+  border-radius: 20px;
+}
+.hero-card:hover {
+  transform: translateY(-5px);
+}
+
+/* المحتوى */
+.hero-content {
+  text-align: center;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ================= HERO ================= */
+.hero-card.hero {
+  background: transparent;
+}
+
+.hero-card.hero .hero-icon {
+  width: 400px;
+  margin-top: 40px;
+}
+
+.hero-card.hero h2 {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.hero-card.hero p {
+  font-size: 24px;
+}
+
+/* ================= FEATURE ================= */
+.hero-card.feature {
+  background: #ffffff;
+  max-width: 320px;
+  padding: 20px;
+}
+
+/* الايقونة */
+.hero-card.feature .hero-icon {
+  margin-bottom: 15px;
+}
+
+/* العنوان */
+.hero-card.feature h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* النص */
+.hero-card.feature p {
+  font-size: 14px;
+  color: #6c7a92;
+}
+
+/* الزرار */
+.hero-btn {
+  background-color: #84fba2;
+  color: #13206d;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 20px auto 0 auto;
+  display: block;
+}

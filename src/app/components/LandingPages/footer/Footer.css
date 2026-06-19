@@ -1,0 +1,97 @@
+.footer {
+  width: 65%;
+  margin: 0 auto;
+  background: white !important;
+  padding: 30px 50px;
+  border-radius: 90px 90px 0 0;
+  box-shadow: 0 -4px 10px rgba(132, 251, 132, 50%);
+}
+
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.footer-logo {
+  max-width: 250px;
+}
+
+/*.logo-icon {
+  background-color: #1e2a78;
+  color: #7dec9b;
+  padding: 5px 10px;
+  margin-right: 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 22px;
+}
+
+.pro {
+  font-weight: 700;
+  color: #7dec9b;
+  font-size: 28px;
+}
+
+.grow {
+  font-weight: 700;
+  font-size: 28px;
+  color: #1e2a78;
+}
+  */
+
+.footer-logo p {
+  margin: 15px 0 10px 0;
+  font-weight: 700;
+  font-size: 21px;
+}
+
+.get-started-btn {
+  padding: 10px 30px;
+  background-color: #1e2a78;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.footer-links {
+  display: flex;
+  gap: 40px;
+  font-size: 14px;
+  font-weight: 600;
+   
+  
+}
+
+.footer-links h4 {
+  font-weight: 700;
+  margin-bottom: 12px;
+ color: #1e2a78;
+  margin-left: 10px;
+}
+
+.footer-links p {
+  margin-bottom: 8px;
+  cursor: pointer;
+  color: #1e2a78;
+}
+
+.footer-bottom {
+  border-top: 1px solid #1e2a78;
+  padding-top: 15px;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  color: #1e2a78;
+  font-weight: 500;
+}
+.logo-container img {
+  width: 208px;
+  height: 52px;
+  padding-left: 0px;
+  margin-left: -20px;
+  
+}
+

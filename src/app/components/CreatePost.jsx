@@ -6,6 +6,7 @@ import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import { useCommunity } from "./CommunityContext";
 import { useAppContext } from "../components/AppContext";
 import defaultPhoto from "../../assets/defaultImg.png";
+import api from "../../api/axios";
 
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
@@ -14,6 +15,7 @@ const LIGHT_BLUE = "#90baef";
 export function CreatePost() {
   const { onWritePost } = useCommunity();
   const { profile } = useAppContext();
+
 
   return (
     <Box
@@ -88,62 +90,9 @@ export function CreatePost() {
             Post
           </Box>
       </Box>
-
-      {/* <Divider sx={{ my: 1.5, borderColor: `${NAVY}12` }} /> */}
-
-      {/* Bottom quick actions */}
-      {/* <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 1 }}>
-        <QuickAction icon={<ImageOutlinedIcon />} label="Photo / Video" onClick={onWritePost} />
-        <QuickAction icon={<ShareOutlinedIcon />} label="Share Link" onClick={onWritePost} />
-        <Box sx={{ ml: "auto" }}>
-          <Box
-            onClick={onWritePost}
-            sx={{
-              bgcolor: GREEN,
-              color: NAVY,
-              fontWeight: 700,
-              fontSize: 13,
-              fontFamily: "'Inter', sans-serif",
-              px: 2.5,
-              py: 0.7,
-              borderRadius: "20px",
-              cursor: "pointer",
-              "&:hover": { bgcolor: "#6ef094" },
-              transition: "background 0.2s",
-              userSelect: "none",
-            }}
-          >
-            Post
-          </Box>
-        </Box> 
-      </Box>*/}
     </Box>
   );
+
 }
 
-function QuickAction({ icon, label, onClick }) {
-  return (
-    <Box
-      onClick={onClick}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.8,
-        color: NAVY,
-        opacity: 0.65,
-        fontSize: 13,
-        fontFamily: "'Inter', sans-serif",
-        fontWeight: 500,
-        cursor: "pointer",
-        px: 1,
-        py: 0.5,
-        borderRadius: "8px",
-        "&:hover": { opacity: 1, bgcolor: "rgba(19,32,109,0.05)" },
-        transition: "all 0.15s",
-      }}
-    >
-      {React.cloneElement(icon, { sx: { fontSize: 18 } })}
-      <span style={{ whiteSpace: "nowrap" }}>{label}</span>
-    </Box>
-  );
-}
+

@@ -9,7 +9,7 @@ import bannerGraphic from "../../assets/GraphicJob.png";
 import bannerUIUX1 from "../../assets/UI&UXJob1.png";
 import bannerSoftware from "../../assets/SoftwareJob.png";
 import bannerUIUX2 from "../../assets/UI&UXJob2.png";
-import defaultPhoto from "../../assets/defaultCompanyImg.jpg";
+import defaultPhoto from "../../assets/defaultCompanyImg.png";
 import { useAppContext } from "../components/AppContext";
 
 const BANNER_MAP = {

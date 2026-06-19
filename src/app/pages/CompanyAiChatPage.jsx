@@ -8,7 +8,6 @@ import {
   Alert,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import { CompanyNavbar } from "../components/CompanyNavbar";
 import SendIcon from "@mui/icons-material/Send";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
@@ -450,7 +449,7 @@ export function CompanyAiChatPage() {
       sx={{
         height: "100vh",
         background: `url(${backgroundImg})`,
-        backgroundSize: "cover",
+        backgroundSize: "100% auto",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center",        
         display: "flex",

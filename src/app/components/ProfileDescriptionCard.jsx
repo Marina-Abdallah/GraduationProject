@@ -10,6 +10,37 @@ import {
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import CheckIcon from "@mui/icons-material/Check";
 import { useAppContext } from "./AppContext";
+import api from "../../api/axios";
+
+/** Decode the JWT stored in localStorage and return the userId string. */
+function getUserIdFromToken() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return "";
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(
+      decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      )
+    );
+    return (
+      payload.sub ||
+      payload.nameid ||
+      payload.id ||
+      payload.UserId ||
+      payload[
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+      ] ||
+      ""
+    );
+  } catch {
+    return "";
+  }
+}
 
 const inputFieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -43,53 +74,66 @@ export function ProfileDescriptionCard() {
   const [draft, setDraft] = useState({});
   const [scoring, setScoring] = useState(false);
   const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleEdit = () => {
-    setDraft({
-      bio: profile.bio,
-      headline: profile.headline,
-      major: profile.major,
-    });
+    setDraft({ bio: profile.bio, headline: profile.headline, major: profile.major });
     setEditMode(true);
   };
-
-  const handleSave = () => {
-    updateProfile(draft);
-    setEditMode(false);
-  };
-
-  const handleCancel = () => {
-    setEditMode(false);
-    setDraft({});
-  };
+  const handleSave = () => { updateProfile(draft); setEditMode(false); };
+  const handleCancel = () => { setEditMode(false); setDraft({}); };
 
   const val = (key) => (editMode ? draft[key] : profile[key]) ?? "";
   const set = (key) => (e) => setDraft((prev) => ({ ...prev, [key]: e.target.value }));
 
+  // ── File picker (local preview only) ─────────────────────────────────────
   const handleResumeUpload = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      updateProfile({ resumeFileName: file.name, resumeScore: 0 });
-    }
+    if (file) setSelectedFile(file);
     e.target.value = "";
   };
 
-  const handleScoreIt = () => {
-    if (!profile.resumeFileName) return;
+  // ── Upload then score in one click ───────────────────────────────────────
+  // 1. POST /me/profile/cv   (field: cv)
+  // 2. POST /cv/score/{cvId}
+  const handleScoreIt = async () => {
+    if (!selectedFile) return;
     setScoring(true);
-    // Simulate scoring
-    let current = 0;
-    const interval = setInterval(() => {
-      current += Math.floor(Math.random() * 15) + 5;
-      if (current >= 85) {
-        current = 85;
-        clearInterval(interval);
-        setScoring(false);
-      }
-      updateProfile({ resumeScore: current });
-    }, 180);
-  };
+    try {
+      const token = localStorage.getItem("token");
+      const userId = getUserIdFromToken();
 
+      // Step 1 – upload the file
+      const fd = new FormData();
+      fd.append("cv", selectedFile);
+      const uploadRes = await api.post("/Users/me/profile/cv", fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("CV upload response:", uploadRes.data);
+      const cvId = uploadRes.data?.id;
+      const fileName = uploadRes.data?.fileName ?? selectedFile.name;
+
+      updateProfile({ resumeFileName: fileName });
+
+      // Step 2 – score the uploaded CV
+      const scoreRes = await api.post(`/cv/score/${cvId}`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("CV score response:", scoreRes.data);
+      const score =
+        scoreRes.data?.score ?? scoreRes.data?.percentage ?? scoreRes.data?.ResumeScore ??
+        scoreRes.data?.scorePercentage ?? 0;
+      updateProfile({ resumeScore: score });
+    } catch (err) {
+      console.error("CV score error:", err.response?.data || err.message);
+      alert("Failed to score CV. Check console for details.");
+    } finally {
+      setScoring(false);
+    }
+  };
   return (
     <Box
       sx={{
@@ -212,6 +256,8 @@ export function ProfileDescriptionCard() {
       {/* Resume */}
       <Box>
         <Typography sx={labelSx}>My Resume</Typography>
+
+        {/* File picker row */}
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <Box
             onClick={() => fileInputRef.current?.click()}
@@ -231,7 +277,7 @@ export function ProfileDescriptionCard() {
           >
             <Typography
               sx={{
-                color: profile.resumeFileName ? "rgba(19,32,109,0.75)" : "rgba(19,32,109,0.4)",
+                color: (selectedFile || profile.resumeFileName) ? "rgba(19,32,109,0.75)" : "rgba(19,32,109,0.4)",
                 fontSize: "14px",
                 fontFamily: "'Inter', sans-serif",
                 overflow: "hidden",
@@ -240,24 +286,33 @@ export function ProfileDescriptionCard() {
                 flex: 1,
               }}
             >
-              {profile.resumeFileName || "Upload Your Resume to score it"}
+              {selectedFile?.name
+                // New local file picked — show its name
+                ? selectedFile.name
+                // Persisted CV — extract just the basename from the server path
+                : profile.resumeFileName
+                  ? profile.resumeFileName.split(/[\/\\]/).pop()
+                  : "Click to choose a resume file…"}
             </Typography>
-            <Typography
-              sx={{
-                color: "rgba(19,32,109,0.5)",
-                fontSize: "14px",
-                fontFamily: "'Inter', sans-serif",
-                ml: 2,
-                flexShrink: 0,
-              }}
-            >
-              {profile.resumeScore}%
-            </Typography>
+            {profile.resumeScore > 0 && (
+              <Typography
+                sx={{
+                  color: "rgba(19,32,109,0.5)",
+                  fontSize: "14px",
+                  fontFamily: "'Inter', sans-serif",
+                  ml: 2,
+                  flexShrink: 0,
+                }}
+              >
+                {profile.resumeScore}%
+              </Typography>
+            )}
           </Box>
 
+          {/* Score it — uploads then scores in one step */}
           <Button
             onClick={handleScoreIt}
-            disabled={!profile.resumeFileName || scoring}
+            disabled={!selectedFile || scoring}
             sx={{
               bgcolor: "#84fba2",
               color: "#13206d",
@@ -276,20 +331,17 @@ export function ProfileDescriptionCard() {
           </Button>
         </Box>
 
-        {/* Progress bar shown when score > 0 */}
+        {/* Progress bar */}
         {profile.resumeScore > 0 && (
           <Box sx={{ mt: 1 }}>
             <LinearProgress
               variant="determinate"
-              value={profile.resumeScore}
+              value={Math.min(profile.resumeScore, 100)}
               sx={{
                 height: 6,
                 borderRadius: 3,
                 bgcolor: "rgba(19,32,109,0.1)",
-                "& .MuiLinearProgress-bar": {
-                  borderRadius: 3,
-                  bgcolor: "#84fba2",
-                },
+                "& .MuiLinearProgress-bar": { borderRadius: 3, bgcolor: "#84fba2" },
               }}
             />
             <Typography sx={{ color: "#13206d", fontSize: "12px", mt: 0.5, opacity: 0.7 }}>
