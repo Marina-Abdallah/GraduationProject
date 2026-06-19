@@ -69,8 +69,10 @@ export function AppProvider({ children }) {
   const [userSavedPostIds, setUserSavedPostIds] = useState(new Set());
   const [companySavedPostIds, setCompanySavedPostIds] = useState(new Set());
   const [authToken, setAuthTokenState] = useState(() => localStorage.getItem("token"));
+
   const setAuthToken = useCallback((token) => {
     setAuthTokenState(token);
+
     if (token) {
       localStorage.setItem("token", token);
     } else {
@@ -454,7 +456,7 @@ export function AppProvider({ children }) {
         companySavedPosts,
         toggleUserSavedPost,
         toggleCompanySavedPost,
-        setAuthToken
+        setAuthToken,
       }}
     >
       {children}
