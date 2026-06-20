@@ -468,50 +468,84 @@ export function CompanyCommunityPage() {
   // New post submitted from WritePostDialog
 
   const handlePostSubmit = async (content, mediaFile) => {
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const formData = new FormData();
-    formData.append("content", content);
+      const formData = new FormData();
+      formData.append("content", content);
 
-    if (mediaFile) {
-      formData.append("mediaFile", mediaFile);
+      if (mediaFile) {
+        formData.append("mediaFile", mediaFile);
+      }
+
+      await api.post("/Posts", formData, {
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : {},
+      });
+
+      setWritePostOpen(false);
+      refreshFeed();
+    } catch (error) {
+      console.error("Error creating post:", error);
+    }
+  };
+
+  // New job submitted from CreateJobDialog — receives the API response object
+  const handleJobSubmit = (apiJob) => {
+    if (!apiJob) {
+      // No response body — just reload the feed
+      refreshFeed();
+      return;
     }
 
-    await api.post("/Posts", formData, {
-      headers: token
-        ? { Authorization: `Bearer ${token}` }
-        : {},
-    });
+    // jobCategoryName: prefer what the server returns, fall back to the
+    // category name the user selected in the form (_formCategory)
+    const resolvedCategoryName =
+      apiJob.jobCategoryName ||
+      apiJob._formCategory ||
+      "";
 
-    onPostCreated?.();
-  } catch (error) {
-    console.error("Error creating post:", error);
-  }
-};
+    // companyIndustry is never returned by POST /Jobs — use the company
+    // context which was loaded when the company logged in
+    const resolvedIndustry =
+      apiJob.companyIndustry ||
+      company.industry ||
+      "";
 
-  // New job submitted from CreateJobDialog
-  const handleJobSubmit = (jobData) => {
+    // Normalise the API response into the same shape used by normalizeFeedItem
     const newJob = {
-      id: `dyn-job-${Date.now()}`,
+      id: `dyn-job-${apiJob.id ?? Date.now()}`,
+      sourceId: apiJob.id,
       type: "job",
-      company: company.name || "[COMPANY NAME]",
-      jobTitle: jobData.jobTitle,
-      jobCategory: jobData.category,
-      jobShortDescription: jobData.jobShortDescription || `${jobData.jobTitle} at ${company.name || "[COMPANY NAME]"}.`,
-      jobType: jobData.jobType,
-      jobLocationMode: jobData.locationMode,
-      companyLocation: jobData.city || company.location || "[LOCATION]",
-      jobsalaryType: jobData.salaryType,
-      jobsalaryMin: jobData.salaryMin,
-      jobsalaryMax: jobData.salaryMax,
-      jobSkills: jobData.skills,
-      jobbannerImg: jobData.bannerImage,
-      jobAboutRole: jobData.aboutRole,
-      jobResponsibilities: jobData.responsibilities,
-      jobRequirements: jobData.requirements,
+
+      company: apiJob.companyName || company.name || "[COMPANY NAME]",
+      companyName: apiJob.companyName || company.name || "[COMPANY NAME]",
+      companyPhoto: normalizeImageUrl(apiJob.companyPictureUrl) || company.photo || null,
+      companyIndustry: resolvedIndustry,
+
+      companyLocation: apiJob.cityOffice || company.location || "[LOCATION]",
+      locationMode: apiJob.locationMode || "",
+
+      jobTitle: apiJob.title,
+      jobType: apiJob.jobType,
+      jobCategoryId: apiJob.jobCategoryId,
+      jobCategoryName: resolvedCategoryName,
+
+      jobShortDescription: apiJob.shortDescription || "",
+
+      Img: normalizeImageUrl(apiJob.bannerImageUrl),
+
+      likesCount: apiJob.likesCount || 0,
+      isLikedByMe: false,
+      isSavedByMe: false,
+
+      createdAt: apiJob.createdAt || new Date().toISOString(),
     };
+
     setDynamicPosts((prev) => [newJob, ...prev]);
+    // Also refresh the feed in the background so pagination stays accurate
+    refreshFeed();
   };
 
   return (

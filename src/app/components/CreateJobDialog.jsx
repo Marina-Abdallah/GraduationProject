@@ -12,6 +12,7 @@ import {
   InputBase,
   InputAdornment,
   Avatar,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 //import AttachMoneyIcon              from "@mui/icons-material/AttachMoney";
@@ -21,6 +22,7 @@ import SendIcon from "@mui/icons-material/Send";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { useAppContext } from "../components/AppContext";
 import defaultPhoto from "../../assets/defaultCompanyImg.png";
+import api from "../../api/axios";
 
 // ── Brand colors ─────────────────────────────────────────────────────────────
 const NAVY = "#13206d";
@@ -28,6 +30,10 @@ const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
 
 const CATEGORIES = ["IT & Software", "Engineering", "Healthcare", "Business & Management", "Marketing & Sales", "Finance & Accounting", "Human Resources", "Design & Creative", "Education", "Customer Service", "Operations & Logistics", "Legal", "Hospitality & Tourism", "Research & Science"];
+
+// IDs are 1-based sequential — "Design & Creative" (index 7, id 8) confirmed from API response
+const CATEGORY_IDS = Object.fromEntries(CATEGORIES.map((name, i) => [name, i + 1]));
+
 const LOCATION_MODES = ["On-site", "Remote", "Hybrid"];
 const JOB_TYPES = ["Full-time", "Part-time", "Internship", "Apprenticeship", "Temporary", "Contract", "Other"];
 
@@ -74,8 +80,10 @@ const selectSx = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 export function CreateJobDialog({ open, onClose, onSubmit }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const [jobTitle, setJobTitle] = useState("");
-  const [category, setCategory] = useState("Design");
+  const [category, setCategory] = useState("Design & Creative");
   const [locationMode, setLocationMode] = useState("On-site");
   const [jobType, setJobType] = useState("Full-time");
   const [city, setCity] = useState("");
@@ -114,7 +122,7 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
 
   // ── Submit / reset ────────────────────────────────────────────────────────
   const resetForm = () => {
-    setJobTitle(""); setCategory("Design"); setLocationMode("On-site"); setJobType("Full-time"); setCity("");
+    setJobTitle(""); setCategory("Design & Creative"); setLocationMode("On-site"); setJobType("Full-time"); setCity("");
     setSkills(["UI Design", "Figma", "Prototyping"]); setSkillInput("");
     setSalaryType("range"); setSalaryMin(""); setSalaryMax("");
     setAboutRole(""); setShortDesc(""); setResponsibilities(""); setRequirements("");
@@ -125,11 +133,11 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
   const isFormValid =
     jobTitle.trim() &&
     category.trim() &&
+    shortDesc.trim() &&
     locationMode.trim() &&
     jobType.trim() &&
     city.trim() &&
     bannerImage &&
-    skills.length > 0 &&
     aboutRole.trim() &&
     responsibilities.trim() &&
     requirements.trim() &&
@@ -138,29 +146,85 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
       (salaryMin.trim() && salaryMax.trim())
     );
 
-  const handlePost = () => {
-    if (!isFormValid) return;
-    onSubmit?.({
-      jobTitle: jobTitle.trim(),
-      category,
-      shortDesc,
-      locationMode,
-      jobType,
-      city: city.trim(),
-      skills: [...skills],
-      salaryType,
-      salaryMin,
-      salaryMax,
-      aboutRole: aboutRole.trim(),
-      responsibilities: responsibilities.trim(),
-      requirements: requirements.trim(),
-      bannerImage,
-      bannerPreview,
-    });
-    resetForm(); onClose();
+  const handlePost = async () => {
+    if (!isFormValid || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const isSalaryInInterview = salaryType === "discuss";
+
+      const formData = new FormData();
+      formData.append("Title", jobTitle.trim());
+      formData.append("ShortDescription", shortDesc.trim());
+      formData.append("LocationMode", locationMode);
+      formData.append("JobType", jobType);
+      formData.append("CityOffice", city.trim());
+      formData.append("IsSalaryInInterview", isSalaryInInterview ? "true" : "false");
+      formData.append("AboutRole", aboutRole.trim());
+      formData.append("Responsibilities", responsibilities.trim());
+      formData.append("Requirements", requirements.trim());
+
+      // JobCategoryId is not in the swagger schema but is required by the server
+      const categoryId = CATEGORY_IDS[category];
+      if (categoryId) formData.append("JobCategoryId", String(categoryId));
+
+      if (!isSalaryInInterview) {
+        if (salaryMin) formData.append("SalaryFrom", Number(salaryMin).toString());
+        if (salaryMax) formData.append("SalaryTo", Number(salaryMax).toString());
+      }
+
+      if (bannerImage) {
+        formData.append("bannerImage", bannerImage);
+      }
+
+      // ── Diagnostic: log every field being sent ────────────────────────
+      console.group("POST /Jobs — FormData fields");
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value instanceof File ? `[File: ${value.name} (${value.size} bytes)]` : value);
+      }
+      console.groupEnd();
+
+      const response = await api.post("/Jobs", formData, {
+        headers: {
+          // Do NOT set Content-Type manually — axios will set it automatically
+          // with the correct multipart boundary
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      onSubmit?.({
+        ...response.data,
+        // Augment with form-state values the API response may not return
+        _formCategory: category,
+      });
+      resetForm();
+      onClose();
+    } catch (err) {
+      // ── Diagnostic: dump the full server error ────────────────────────
+      console.group("POST /Jobs — Server Error");
+      console.error("Status:", err.response?.status);
+      console.error("Headers:", err.response?.headers);
+      console.error("Body:", err.response?.data);
+      console.error("Full error:", err);
+      console.groupEnd();
+
+      const responseData = err.response?.data;
+      const errorMessage =
+        responseData?.errors
+          ? Object.values(responseData.errors).flat().join(" | ")
+          : responseData?.message ||
+            responseData?.title ||
+            (typeof responseData === "string" ? responseData : null) ||
+            "Failed to post job. Please try again.";
+      setSubmitError(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
   };
   const handleSaveDraft = () => { resetForm(); onClose(); };
-  const handleClose = () => { resetForm(); onClose(); };
+  const handleClose = () => { if (submitting) return; resetForm(); setSubmitError(null); onClose(); };
 
   return (
     <Dialog
@@ -548,21 +612,38 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
             />
           </div>
 
+          {/* ── Error message ──────────────────────────────────────────── */}
+          {submitError && (
+            <div style={{
+              background: "rgba(195,41,41,0.08)",
+              border: "1.5px solid rgba(195,41,41,0.25)",
+              borderRadius: 12,
+              padding: "10px 14px",
+              marginBottom: 14,
+              color: "#C32929",
+              fontSize: 13,
+              fontFamily: "'Inter', sans-serif",
+              lineHeight: 1.5,
+            }}>
+              {submitError}
+            </div>
+          )}
+
           {/* ── POST JOB button (green gradient, same as ApplyNowOverlay) */}
           <Button
             fullWidth variant="contained"
-            endIcon={<SendIcon />}
+            endIcon={submitting ? <CircularProgress size={18} sx={{ color: NAVY }} /> : <SendIcon />}
             onClick={handlePost}
-            disabled={!isFormValid}
+            disabled={!isFormValid || submitting}
             sx={{
               py: 1.6, borderRadius: "14px",
-              background: isFormValid
+              background: isFormValid && !submitting
                 ? `linear-gradient(135deg, ${GREEN} 0%, #6ef094 100%)`
                 : "rgba(132,251,162,0.3)",
               color: NAVY, fontWeight: 700, fontSize: 16, textTransform: "none",
               boxShadow: jobTitle.trim() ? `0 4px 18px rgba(132,251,162,0.5)` : "none",
               "&:hover": {
-                background: jobTitle.trim()
+                background: jobTitle.trim() && !submitting
                   ? `linear-gradient(135deg, #6ef094 0%, ${GREEN} 100%)`
                   : "rgba(132,251,162,0.3)",
                 boxShadow: jobTitle.trim() ? `0 6px 24px rgba(132,251,162,0.65)` : "none",
@@ -570,7 +651,7 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
               "&.Mui-disabled": { background: "rgba(132,251,162,0.25)", color: `${NAVY}55` },
             }}
           >
-            Post Job
+            {submitting ? "Posting…" : "Post Job"}
           </Button>
 
           {/* ── SAVE AS DRAFT button (outlined, same as ApplyNowOverlay) */}
