@@ -162,7 +162,7 @@ function normalizeFeedItem(item, index = 0) {
 }
 // ─── Inner layout (uses CommunityProvider context) ────────────────────────────
 
-function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showApplyNow, onCloseApplyNow, highlightedPostId, loading = false, onPostCreated }) {
+function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showApplyNow, onCloseApplyNow, applyJobId, highlightedPostId, loading = false, onPostCreated }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [dynamicPosts, setDynamicPosts] = useState([]);
   const { profile } = useAppContext();
@@ -195,6 +195,10 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
   const filteredPosts = allPosts.filter((p) =>
     matchesSearch(p, searchQuery)
   );
+
+  console.log("feedItems", feedItems.length);
+  console.log("dynamicPosts", dynamicPosts.length);
+  console.log("allPosts", allPosts.length);
 
   return (
     <>
@@ -264,6 +268,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                 <JobPostCard
                   key={post.id}
                   postId={post.id}
+                  jobId={post.sourceId}
                   company={post.company}
                   companyName={post.companyName}
                   companyPhoto={post.companyPhoto}
@@ -313,7 +318,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
         onSubmit={handlePostSubmit}
         profileType="user"
       />}
-      <ApplyNowOverlay open={showApplyNow} onClose={onCloseApplyNow} />
+      <ApplyNowOverlay open={showApplyNow} onClose={onCloseApplyNow} jobId={applyJobId} />
     </>
   );
 }
@@ -322,6 +327,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
 export function CommunityPage() {
   const [showWritePost, setShowWritePost] = useState(false);
   const [showApplyNow, setShowApplyNow] = useState(false);
+  const [applyJobId, setApplyJobId] = useState(null);
   const [feedItems, setFeedItems] = useState([]);
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -350,8 +356,14 @@ export function CommunityPage() {
 
   const handleOpenWritePost = useCallback(() => setShowWritePost(true), []);
   const handleCloseWritePost = useCallback(() => setShowWritePost(false), []);
-  const handleOpenApplyNow = useCallback(() => setShowApplyNow(true), []);
-  const handleCloseApplyNow = useCallback(() => setShowApplyNow(false), []);
+  const handleOpenApplyNow = useCallback((jobId) => {
+    setApplyJobId(jobId);
+    setShowApplyNow(true);
+  }, []);
+  const handleCloseApplyNow = useCallback(() => {
+    setShowApplyNow(false);
+    setApplyJobId(null);
+  }, []);
   const handlePageChange = useCallback((event, value) => setPage(value), []);
 
   const loadFeed = useCallback(async () => {
@@ -365,10 +377,14 @@ export function CommunityPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
 
+      console.log("response.data =", response.data);
+
       const data = response.data;
       const items = Array.isArray(data)
         ? data
         : data?.items || data?.feed || data?.data || [];
+
+      console.log("items length =", items.length);
 
       const normalizedItems = Array.isArray(items)
         ? items.map((item, index) => normalizeFeedItem(item, index)).filter(Boolean)
@@ -453,6 +469,7 @@ export function CommunityPage() {
             onCloseWritePost={handleCloseWritePost}
             showApplyNow={showApplyNow}
             onCloseApplyNow={handleCloseApplyNow}
+            applyJobId={applyJobId}
             highlightedPostId={highlightedPostId}
             onPostCreated={refreshFeed}
           />

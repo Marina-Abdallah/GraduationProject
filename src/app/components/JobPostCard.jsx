@@ -33,6 +33,7 @@ const RED = "#C32929";
 
 export function JobPostCard({
   postId,
+  jobId,
   company,
   companyPhoto,
   companyName,
@@ -367,7 +368,7 @@ export function JobPostCard({
 
         {/* Apply Now button */}
         <Box
-          onClick={(e) => { e.stopPropagation(); onApplyNow(); }}
+          onClick={(e) => { e.stopPropagation(); onApplyNow(jobId); }}
           sx={{
             bgcolor: GREEN,
             color: NAVY,

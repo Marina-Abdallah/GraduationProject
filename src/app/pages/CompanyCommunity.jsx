@@ -302,6 +302,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
             <JobPostCard
               key={post.id}
               postId={post.id}
+              jobId={post.sourceId}
               company={post.company}
               companyName={post.companyName}
               companyPhoto={post.companyPhoto}
@@ -374,6 +375,7 @@ export function CompanyCommunityPage() {
   const [writePostOpen, setWritePostOpen] = useState(false);
   const [createJobOpen, setCreateJobOpen] = useState(false);
   const [applyJobOpen, setApplyJobOpen] = useState(false);
+  const [applyJobId, setApplyJobId] = useState(null);
   const [errorOpen, setErrorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -460,10 +462,11 @@ export function CompanyCommunityPage() {
   );
 
   // Apply Now handler — always opens the overlay; overlay handles the error internally
-  const handleApplyNow = () => {
+  const handleApplyNow = (jobId) => {
     if (isCompanyAccount) {
       setErrorOpen(true);
     } else {
+      setApplyJobId(jobId);
       setApplyJobOpen(true);
     }
   };
@@ -674,7 +677,8 @@ export function CompanyCommunityPage() {
       <ApplyNowOverlay
         isCompanyAccount={isCompanyAccount}
         open={applyJobOpen}
-        onClose={() => setApplyJobOpen(false)}
+        onClose={() => { setApplyJobOpen(false); setApplyJobId(null); }}
+        jobId={applyJobId}
       />
 
       {/* Error: company cannot apply */}
