@@ -1,57 +1,6 @@
 import React from 'react';
 
-const activities = [
-  {
-    id: 1,
-    type: 'approval',
-    text: 'Microsoft Corporation was approved',
-    time: '2 min ago',
-    color: '#84fba2',
-    icon: '✓',
-  },
-  {
-    id: 2,
-    type: 'request',
-    text: 'Ejada Systems submitted a registration request',
-    time: '18 min ago',
-    color: '#90baef',
-    icon: '📋',
-  },
-  {
-    id: 3,
-    type: 'job',
-    text: 'New job posted: Senior React Developer at Google',
-    time: '1 hr ago',
-    color: '#13206d',
-    icon: '💼',
-  },
-  {
-    id: 4,
-    type: 'user',
-    text: '12 new students joined the platform',
-    time: '2 hr ago',
-    color: '#84fba2',
-    icon: '👤',
-  },
-  {
-    id: 5,
-    type: 'job',
-    text: 'Backend Developer position filled at Amazon',
-    time: '4 hr ago',
-    color: '#90baef',
-    icon: '🎯',
-  },
-  {
-    id: 6,
-    type: 'request',
-    text: 'Apple Inc. submitted a registration request',
-    time: '6 hr ago',
-    color: '#13206d',
-    icon: '📋',
-  },
-];
-
-export function RecentActivity() {
+export function RecentActivity({ activities = [] }) {
   return (
     <div
       style={{

@@ -9,17 +9,17 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const data = [
-  { day: 'Mon', completed: 42 },
-  { day: 'Tue', completed: 68 },
-  { day: 'Wed', completed: 55 },
-  { day: 'Thu', completed: 89 },
-  { day: 'Fri', completed: 74 },
-  { day: 'Sat', completed: 96 },
-  { day: 'Sun', completed: 61 },
+const defaultData = [
+  { day: 'Mon', completed: 0 },
+  { day: 'Tue', completed: 0 },
+  { day: 'Wed', completed: 0 },
+  { day: 'Thu', completed: 0 },
+  { day: 'Fri', completed: 0 },
+  { day: 'Sat', completed: 0 },
+  { day: 'Sun', completed: 0 },
 ];
 
-export function JobsTrend() {
+export function JobsTrend({ data = defaultData }) {
   return (
     <div
       style={{

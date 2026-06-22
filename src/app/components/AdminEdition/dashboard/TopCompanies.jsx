@@ -1,13 +1,5 @@
 import React from 'react';
 
-const companies = [
-  { name: 'Microsoft Corporation', industry: 'Software', jobs: 42, hired: 28, status: 'Active' },
-  { name: 'Google LLC', industry: 'Technology', jobs: 38, hired: 21, status: 'Active' },
-  { name: 'Amazon Web Services', industry: 'Cloud / E-Commerce', jobs: 31, hired: 19, status: 'Active' },
-  { name: 'Meta Platforms', industry: 'Social Media', jobs: 26, hired: 14, status: 'Active' },
-  { name: 'Ejada Systems', industry: 'Software', jobs: 18, hired: 12, status: 'Active' },
-];
-
 function InitialsAvatar({ name, bg }) {
   const initials = name
     .split(' ')
@@ -38,7 +30,7 @@ function InitialsAvatar({ name, bg }) {
 
 const avatarColors = ['#13206d', '#3b82f6', '#f97316', '#8b5cf6', '#84fba2'];
 
-export function TopCompanies() {
+export function TopCompanies({ companies = [] }) {
   return (
     <div
       style={{

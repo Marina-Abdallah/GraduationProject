@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Typography } from '@mui/material';
 import { AdminNavbar } from '../components/AdminNavbar';
 import { Footer } from '../components/Footer';
 import { StatsCard } from '../components/AdminEdition/dashboard/StatsCard';
@@ -8,17 +8,150 @@ import { UsersRoleChart } from '../components/AdminEdition/dashboard/UsersRoleCh
 import { RecentActivity } from '../components/AdminEdition/dashboard/RecentActivity';
 import { JobsTrend } from '../components/AdminEdition/dashboard/JobsTrend';
 import { TopCompanies } from '../components/AdminEdition/dashboard/TopCompanies';
+import api from '../../api/axios';
 import backgroundImg from "../../assets/Background.png";
 
-const stats = [
-  { title: 'Total Users', value: '12,456', growth: '12% this month', positive: true, icon: '👥' },
-  { title: 'Active Companies', value: '248', growth: '8% this week', positive: true, icon: '🏢' },
-  { title: 'Jobs Posted', value: '1,892', growth: '24% this week', positive: true, icon: '💼' },
-  { title: 'Revenue', value: '$84,230', growth: '15% this month', positive: true, icon: '📈' },
+const formatNumber = (value) => {
+  if (value == null) return '0';
+  return Number(value).toLocaleString();
+};
+
+const formatRelativeTime = (dateString) => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+
+  if (diffMinutes < 1) return 'Just now';
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hr ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+
+  return date.toLocaleDateString();
+};
+
+const buildStats = (dashboard) => [
+  {
+    title: 'Total Users',
+    value: formatNumber(dashboard?.totalUsers),
+    growth: '12% this month',
+    positive: true,
+    icon: '👥',
+  },
+  {
+    title: 'Active Companies',
+    value: formatNumber(dashboard?.approvedCompanies),
+    growth: '8% this week',
+    positive: true,
+    icon: '🏢',
+  },
+  {
+    title: 'Jobs Posted',
+    value: formatNumber(dashboard?.totalJobs),
+    growth: '24% this week',
+    positive: true,
+    icon: '💼',
+  },
+  {
+    title: 'Revenue',
+    value: `$${formatNumber(dashboard?.totalApplications)}`,
+    growth: '15% this month',
+    positive: true,
+    icon: '📈',
+  },
 ];
 
+const buildAnalyticsData = (dashboard) => {
+  const jobsTrend = dashboard?.jobsTrend ?? [];
+  const applicationsTrend = dashboard?.applicationsTrend ?? [];
+
+  return jobsTrend.map((item, index) => ({
+    day: item.label,
+    users: applicationsTrend[index]?.count ?? 0,
+    jobs: item.count ?? 0,
+  }));
+};
+
+const buildUsersRoleData = (dashboard) => [
+  { name: 'Students', value: dashboard?.totalUsers ?? 0 },
+  { name: 'Companies', value: dashboard?.totalCompanies ?? 0 },
+  { name: 'Admins', value: 0 },
+];
+
+const buildJobsTrendData = (dashboard) =>
+  (dashboard?.applicationsTrend ?? []).map((item) => ({
+    day: item.label,
+    completed: item.count ?? 0,
+  }));
+
+const buildRecentActivity = (dashboard) =>
+  (dashboard?.recentJobs ?? []).map((job) => ({
+    id: job.jobId,
+    type: 'job',
+    text: `New job posted: ${job.title}`,
+    time: formatRelativeTime(job.createdAt),
+    color: '#13206d',
+    icon: '💼',
+  }));
+
+const buildTopCompanies = (dashboard) =>
+  (dashboard?.topCompanies ?? []).map((company) => ({
+    name: company.name,
+    industry: 'Software',
+    jobs: company.jobsCount ?? 0,
+    hired: company.applicationsCount ?? 0,
+    status: company.status === 'Approved' ? 'Active' : company.status,
+  }));
 
 export default function AdminDashboardPage() {
+  const [dashboard, setDashboard] = useState(null);
+  const [error, setError] = useState('');
+
+  const fetchDashboard = useCallback(async () => {
+    setError('');
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Admin authentication token not found. Please sign in as an admin.');
+      return;
+    }
+
+    try {
+      const response = await api.get('/Admin/dashboard', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setDashboard(response.data);
+    } catch (err) {
+      console.error('Failed to fetch admin dashboard:', err);
+      setError(
+        err.response?.data?.message ||
+          err.response?.data ||
+          'Failed to load dashboard data. Please try again.'
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  const stats = buildStats(dashboard);
+  const analyticsData = buildAnalyticsData(dashboard);
+  const usersRoleData = buildUsersRoleData(dashboard);
+  const jobsTrendData = buildJobsTrendData(dashboard);
+  const recentActivity = buildRecentActivity(dashboard);
+  const topCompanies = buildTopCompanies(dashboard);
+
   return (
     <Box
       sx={{
@@ -77,6 +210,12 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
+          {error && (
+            <Typography color="error" sx={{ fontFamily: 'Inter, sans-serif', fontSize: 14 }}>
+              {typeof error === 'string' ? error : 'Failed to load dashboard data.'}
+            </Typography>
+          )}
+
           {/* Stats row */}
           <div style={{ display: 'flex', gap: 20 }}>
             {stats.map((s) => (
@@ -86,18 +225,18 @@ export default function AdminDashboardPage() {
 
           {/* Charts row */}
           <div style={{ display: 'flex', gap: 20 }}>
-            <AnalyticsChart />
-            <UsersRoleChart />
+            <AnalyticsChart data={analyticsData} />
+            <UsersRoleChart data={usersRoleData} />
           </div>
 
           {/* Activity + Jobs row */}
           <div style={{ display: 'flex', gap: 20 }}>
-            <RecentActivity />
-            <JobsTrend />
+            <RecentActivity activities={recentActivity} />
+            <JobsTrend data={jobsTrendData} />
           </div>
 
           {/* Top companies */}
-          <TopCompanies />
+          <TopCompanies companies={topCompanies} />
         </div>
       </div>
 

@@ -1,15 +1,15 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-const data = [
-  { name: 'Students', value: 7452 },
-  { name: 'Companies', value: 3104 },
-  { name: 'Admins', value: 248 },
+const defaultData = [
+  { name: 'Students', value: 0 },
+  { name: 'Companies', value: 0 },
+  { name: 'Admins', value: 0 },
 ];
 
 const COLORS = ['#13206d', '#84fba2', '#90baef'];
 
-export function UsersRoleChart() {
+export function UsersRoleChart({ data = defaultData }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   return (

@@ -10,17 +10,17 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const data = [
-  { day: 'Mon', users: 120, jobs: 45 },
-  { day: 'Tue', users: 180, jobs: 62 },
-  { day: 'Wed', users: 156, jobs: 58 },
-  { day: 'Thu', users: 210, jobs: 79 },
-  { day: 'Fri', users: 195, jobs: 91 },
-  { day: 'Sat', users: 240, jobs: 83 },
-  { day: 'Sun', users: 198, jobs: 67 },
+const defaultData = [
+  { day: 'Mon', users: 0, jobs: 0 },
+  { day: 'Tue', users: 0, jobs: 0 },
+  { day: 'Wed', users: 0, jobs: 0 },
+  { day: 'Thu', users: 0, jobs: 0 },
+  { day: 'Fri', users: 0, jobs: 0 },
+  { day: 'Sat', users: 0, jobs: 0 },
+  { day: 'Sun', users: 0, jobs: 0 },
 ];
 
-export function AnalyticsChart() {
+export function AnalyticsChart({ data = defaultData }) {
   return (
     <div
       style={{
