@@ -264,13 +264,15 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false, jobId
     : (jobData?.location || "Location");
   const displayType = jobData?.jobType || jobData?.type || "Full-time";
   const displayCategory = jobData?.jobCategoryName || jobData?.category || "";
-  const displaySkills = Array.isArray(jobData?.skills)
-    ? jobData.skills
-    : Array.isArray(jobData?.jobSkills)
-      ? jobData.jobSkills
-      : typeof jobData?.skills === "string"
-        ? jobData.skills.split(",").map(s => s.trim())
-        : [];
+  const displaySkills = Array.isArray(jobData?.requiredSkills)
+    ? jobData.requiredSkills
+    : Array.isArray(jobData?.skills)
+      ? jobData.skills
+      : Array.isArray(jobData?.jobSkills)
+        ? jobData.jobSkills
+        : typeof jobData?.skills === "string"
+          ? jobData.skills.split(",").map(s => s.trim())
+          : [];
   const displayAbout = jobData?.aboutRole || jobData?.about || jobData?.jobDescription || jobData?.shortDescription || "";
   const displayResponsibilities = parseStringToList(jobData?.responsibilities || "");
   const displayRequirements = parseStringToList(jobData?.requirements || "");
@@ -741,25 +743,6 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false, jobId
                 }}
               >
                 {submitting ? "Submitting..." : "Submit Application"}
-              </Button>
-
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<BookmarkBorderIcon />}
-                sx={{
-                  mt: 1.5,
-                  py: 1.4,
-                  borderRadius: "14px",
-                  borderColor: "rgba(19,32,109,0.2)",
-                  color: NAVY,
-                  fontWeight: 700,
-                  fontSize: 15,
-                  textTransform: "none",
-                  "&:hover": { borderColor: NAVY, background: "rgba(19,32,109,0.04)" },
-                }}
-              >
-                Save for Later
               </Button>
 
               {/* Terms */}
