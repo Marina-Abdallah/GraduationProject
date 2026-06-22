@@ -59,13 +59,6 @@ const buildStats = (dashboard) => [
     positive: true,
     icon: '💼',
   },
-  {
-    title: 'Revenue',
-    value: `$${formatNumber(dashboard?.totalApplications)}`,
-    growth: '15% this month',
-    positive: true,
-    icon: '📈',
-  },
 ];
 
 const buildAnalyticsData = (dashboard) => {
@@ -179,16 +172,29 @@ export default function AdminDashboardPage() {
       </Box>
 
       {/* Main white card */}
-     <div style={{ padding: '32px 8.33%',flex:1}}>
-        <div
-          style={{
+      <Box
+        sx={{
+          flex: 1,
+          width: { xs: '100%', md: '80%' },
+          maxWidth: '100%',
+          alignSelf: 'center',
+          mx: 'auto',
+          boxSizing: 'border-box',
+          px: { xs: 2, sm: 3, md: 4, lg: 5, xl: 6 },
+          py: { xs: 3, md: 4 },
+        }}
+      >
+        <Box
+          sx={{
             background: 'rgba(255,255,255,0.85)',
-            borderRadius: 16,
+            borderRadius: '16px',
             backdropFilter: 'blur(8px)',
-            padding:'32px',
+            p: '32px',
             display: 'flex',
             flexDirection: 'column',
-            gap: 24,
+            gap: '24px',
+            width: '100%',
+            boxSizing: 'border-box',
           }}
         >
           {/* Page title */}
@@ -217,28 +223,61 @@ export default function AdminDashboardPage() {
           )}
 
           {/* Stats row */}
-          <div style={{ display: 'flex', gap: 20 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: '20px',
+              width: '100%',
+              flexDirection: { xs: 'column', md: 'row' },
+              '& > *': {
+                flex: { xs: '1 1 auto', md: '1 1 0' },
+                minWidth: { md: 0 },
+              },
+            }}
+          >
             {stats.map((s) => (
               <StatsCard key={s.title} {...s} />
             ))}
-          </div>
+          </Box>
 
           {/* Charts row */}
-          <div style={{ display: 'flex', gap: 20 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: '20px',
+              width: '100%',
+              flexDirection: { xs: 'column', lg: 'row' },
+              '& > *': {
+                minWidth: 0,
+              },
+            }}
+          >
             <AnalyticsChart data={analyticsData} />
             <UsersRoleChart data={usersRoleData} />
-          </div>
+          </Box>
 
           {/* Activity + Jobs row */}
-          <div style={{ display: 'flex', gap: 20 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: '20px',
+              width: '100%',
+              flexDirection: { xs: 'column', lg: 'row' },
+              '& > *': {
+                minWidth: 0,
+              },
+            }}
+          >
             <RecentActivity activities={recentActivity} />
             <JobsTrend data={jobsTrendData} />
-          </div>
+          </Box>
 
           {/* Top companies */}
-          <TopCompanies companies={topCompanies} />
-        </div>
-      </div>
+          <Box sx={{ width: '100%', minWidth: 0 }}>
+            <TopCompanies companies={topCompanies} />
+          </Box>
+        </Box>
+      </Box>
 
       <Footer />
     </Box>

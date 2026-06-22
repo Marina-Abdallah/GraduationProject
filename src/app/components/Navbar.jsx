@@ -1,37 +1,139 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import logo from "../../assets/Logo.png";
 import ProGrow from "../../assets/ProGrow.png";
 
 import Button from "@mui/material/Button";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
+import Box from "@mui/material/Box";
 
 import { useNavigate, useLocation } from "react-router-dom";
+
+const dropdownMenuSx = {
+  position: "absolute",
+  top: "calc(100% + 6px)",
+  left: 0,
+  right: 0,
+  width: "100%",
+  zIndex: 1300,
+  borderRadius: "14px",
+  backgroundColor: "#ffffff",
+  boxShadow:
+    "0 4px 20px rgba(19, 32, 109, 0.08), 0 1px 4px rgba(19, 32, 109, 0.04)",
+  border: "1px solid rgba(19, 32, 109, 0.08)",
+  overflow: "hidden",
+  p: "6px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "2px",
+  transformOrigin: "top center",
+  animation: "navbarDropdownEnter 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+  "@keyframes navbarDropdownEnter": {
+    from: { opacity: 0, transform: "translateY(-4px) scale(0.98)" },
+    to: { opacity: 1, transform: "translateY(0) scale(1)" },
+  },
+};
+
+const dropdownItemSx = {
+  display: "flex",
+  alignItems: "center",
+  width: "100%",
+  minHeight: 40,
+  px: 1.5,
+  py: 1,
+  border: "none",
+  background: "transparent",
+  borderRadius: "8px",
+  fontSize: "0.8125rem",
+  fontWeight: 500,
+  fontFamily: "Inter, sans-serif",
+  color: "#13206d",
+  lineHeight: 1.5,
+  letterSpacing: "0.01em",
+  textAlign: "left",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  transition: "background-color 0.15s ease",
+  boxSizing: "border-box",
+  "&:hover": {
+    backgroundColor: "rgba(19, 32, 109, 0.05)",
+  },
+  "&:active": {
+    backgroundColor: "rgba(19, 32, 109, 0.08)",
+  },
+  "&:focus-visible": {
+    outline: "2px solid rgba(19, 32, 109, 0.18)",
+    outlineOffset: -2,
+  },
+};
+
+const dropdownDividerSx = {
+  height: "1px",
+  backgroundColor: "rgba(19, 32, 109, 0.06)",
+  mx: 1,
+  my: 0.25,
+  flexShrink: 0,
+};
+
+const chevronSx = (open) => ({
+  display: "inline-block",
+  width: 0,
+  height: 0,
+  borderLeft: "4px solid transparent",
+  borderRight: "4px solid transparent",
+  borderTop: "5px solid #ffffff",
+  transition: "transform 0.2s ease",
+  transform: open ? "rotate(180deg)" : "rotate(0deg)",
+});
 
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const open = Boolean(anchorEl);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const handleClick = (event) => setAnchorEl(event.currentTarget);
-  const handleClose = () => setAnchorEl(null);
+  const toggleDropdown = () => setIsOpen((prev) => !prev);
+  const closeDropdown = () => setIsOpen(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen]);
 
   const goToPage = (path) => {
     navigate(path);
-    handleClose();
+    closeDropdown();
   };
 
-  // Improved detection using regex (case-insensitive)
+  const handleMenuKeyDown = (event, path) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      goToPage(path);
+    }
+  };
+
   const isLoginPage = /login/i.test(location.pathname);
   const isSignupPage = /signup/i.test(location.pathname);
 
-  // Determine what to show in the menu
-  // If we are on Signup, show Login options. 
-  // Otherwise (on Login OR Home), show Signup options.
   const showLoginOptions = isSignupPage;
   const showSignupOptions = isLoginPage || (!isLoginPage && !isSignupPage);
+  const dropdownLabel = showSignupOptions ? "Sign Up" : "Login";
 
   return (
      <div className="w-full flex flex-wrap justify-center items-center px-4 md:px-12 max-w-7xl mx-auto mt-0 pt-0">
@@ -47,38 +149,90 @@ function Navbar() {
         </div>
 
         {/* Navigation and Profile on the right */}
-       <Button
-        variant="contained"
-        onClick={handleClick}
-        sx={{
-          backgroundColor: "#13206D",
-          "&:hover": { backgroundColor: "#84FBA2" },
-          borderRadius: "12px",
-          marginRight: "15px",
-          width: 150,
-          textTransform: "none",
-          fontWeight: "bold",
-        }}
-      >
-        {/* Toggle label based on what the menu will contain */}
-        {showSignupOptions ? "Sign Up ▾" : "Login ▾"}
-      </Button>
+        <Box ref={dropdownRef} sx={{ position: "relative", marginRight: "15px", width: 150 }}>
+          <Button
+            variant="contained"
+            onClick={toggleDropdown}
+            aria-expanded={isOpen}
+            aria-haspopup="menu"
+            id="navbar-auth-dropdown-button"
+            sx={{
+              backgroundColor: "#13206D",
+              "&:hover": { backgroundColor: "#84FBA2" },
+              borderRadius: "12px",
+              width: 150,
+              textTransform: "none",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.75,
+            }}
+          >
+            {dropdownLabel}
+            <Box component="span" aria-hidden="true" sx={chevronSx(isOpen)} />
+          </Button>
 
-      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-        {showSignupOptions && (
-          <div>
-            <MenuItem onClick={() => goToPage("/UserSignUp")}>Sign Up as JobSeeker</MenuItem>
-            <MenuItem onClick={() => goToPage("/CompanySignUp")}>Sign Up as Recruiter</MenuItem>
-          </div>
-        )}
+          {isOpen && (
+            <Box
+              role="menu"
+              aria-labelledby="navbar-auth-dropdown-button"
+              sx={dropdownMenuSx}
+            >
+              {showSignupOptions && (
+                <>
+                  <Box
+                    component="button"
+                    role="menuitem"
+                    tabIndex={0}
+                    onClick={() => goToPage("/UserSignUp")}
+                    onKeyDown={(e) => handleMenuKeyDown(e, "/UserSignUp")}
+                    sx={dropdownItemSx}
+                  >
+                    Sign Up as JobSeeker
+                  </Box>
+                  <Box sx={dropdownDividerSx} aria-hidden="true" />
+                  <Box
+                    component="button"
+                    role="menuitem"
+                    tabIndex={0}
+                    onClick={() => goToPage("/CompanySignUp")}
+                    onKeyDown={(e) => handleMenuKeyDown(e, "/CompanySignUp")}
+                    sx={dropdownItemSx}
+                  >
+                    Sign Up as Recruiter
+                  </Box>
+                </>
+              )}
 
-        {showLoginOptions && (
-          <div>
-            <MenuItem onClick={() => goToPage("/UserLogin")}>Login as JobSeeker</MenuItem>
-            <MenuItem onClick={() => goToPage("/CompanyLogin")}>Login as Recruiter</MenuItem>
-          </div>
-        )}
-      </Menu>
+              {showLoginOptions && (
+                <>
+                  <Box
+                    component="button"
+                    role="menuitem"
+                    tabIndex={0}
+                    onClick={() => goToPage("/UserLogin")}
+                    onKeyDown={(e) => handleMenuKeyDown(e, "/UserLogin")}
+                    sx={dropdownItemSx}
+                  >
+                    Login as JobSeeker
+                  </Box>
+                  <Box sx={dropdownDividerSx} aria-hidden="true" />
+                  <Box
+                    component="button"
+                    role="menuitem"
+                    tabIndex={0}
+                    onClick={() => goToPage("/CompanyLogin")}
+                    onKeyDown={(e) => handleMenuKeyDown(e, "/CompanyLogin")}
+                    sx={dropdownItemSx}
+                  >
+                    Login as Recruiter
+                  </Box>
+                </>
+              )}
+            </Box>
+          )}
+        </Box>
       </div>
     </div>
 
