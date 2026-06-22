@@ -401,7 +401,7 @@ export function CompanyJobDetailsPage() {
                 Requirements Skills
               </Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {job.skills.map((req) => (
+                {(job.skills ?? job.requiredSkills ?? []).map((req) => (
                   <Chip
                     key={req}
                     label={req}

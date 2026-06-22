@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,8 @@ import {
   CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-//import AttachMoneyIcon              from "@mui/icons-material/AttachMoney";
+import Popper from "@mui/material/Popper";
+import Autocomplete from "@mui/material/Autocomplete";
 import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import SendIcon from "@mui/icons-material/Send";
@@ -28,18 +29,6 @@ import api from "../../api/axios";
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
-
-const CATEGORIES = ["IT & Software", "Engineering", "Healthcare", "Business & Management", "Marketing & Sales", "Finance & Accounting", "Human Resources", "Design & Creative", "Education", "Customer Service", "Operations & Logistics", "Legal", "Hospitality & Tourism", "Research & Science"];
-
-// IDs are 1-based sequential — "Design & Creative" (index 7, id 8) confirmed from API response
-const CATEGORY_IDS = Object.fromEntries(CATEGORIES.map((name, i) => [name, i + 1]));
-
-const LOCATION_MODES = ["On-site", "Remote", "Hybrid"];
-const JOB_TYPES = ["Full-time", "Part-time", "Internship", "Apprenticeship", "Temporary", "Contract", "Other"];
-
-
-
-
 
 // ── ALL-CAPS field label ──────────────────────────────────────────────────────
 function FieldLabel({ children, optional = false }) {
@@ -83,11 +72,25 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [jobTitle, setJobTitle] = useState("");
-  const [category, setCategory] = useState("Design & Creative");
-  const [locationMode, setLocationMode] = useState("On-site");
-  const [jobType, setJobType] = useState("Full-time");
+
+  const [categories, setCategories] = useState([]);
+  const [category, setCategory] = useState("");
+
+  const [locationModes, setLocationModes] = useState([]);
+  const [locationMode, setLocationMode] = useState("");
+
+  const [jobTypes, setJobTypes] = useState([]);
+  const [jobType, setJobType] = useState("");
+
+  const [loadingMetadata, setLoadingMetadata] = useState(true);
   const [city, setCity] = useState("");
-  const [skills, setSkills] = useState(["UI Design", "Figma", "Prototyping"]);
+
+  const [allSkills, setAllSkills] = useState([]);
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [showInput, setShowInput] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [options, setOptions] = useState([]);
+  const [selectedSkill, setSelectedSkill] = useState(null);
   const [skillInput, setSkillInput] = useState("");
   const [salaryType, setSalaryType] = useState("range");
   const [salaryMin, setSalaryMin] = useState("");
@@ -100,14 +103,142 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
   const [bannerImage, setBannerImage] = useState(null);
   const [bannerPreview, setBannerPreview] = useState("");
 
-  // ── Skills helpers ────────────────────────────────────────────────────────
-  const handleAddSkill = () => {
-    const t = skillInput.trim();
-    if (t && !skills.includes(t)) setSkills(p => [...p, t]);
-    setSkillInput("");
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        setLoadingMetadata(true);
+        const token = localStorage.getItem("token");
+
+        console.log("Token:", token);
+
+        const [categoriesRes, jobTypesRes, locationModesRes, skillsRes] =
+          await Promise.all([
+            api.get("/Jobs/categories", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }),
+            api.get("/Jobs/job-types", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }),
+            api.get("/Jobs/location-modes", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }),
+            api.get("/Users/skills", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }),
+          ]);
+
+        console.log("Categories:", categoriesRes.data);
+        console.log("Job Types:", jobTypesRes.data);
+        console.log("Location Modes:", locationModesRes.data);
+        console.log("Skills:", skillsRes.data);
+
+        setCategories(categoriesRes.data || []);
+        setJobTypes(jobTypesRes.data || []);
+        setLocationModes(locationModesRes.data || []);
+        setAllSkills(skillsRes.data || []);
+        // Set defaults from API
+        if (categoriesRes.data?.length) {
+          setCategory(categoriesRes.data[0].id);
+        }
+
+        if (jobTypesRes.data?.length) {
+          setJobType(jobTypesRes.data[0].id);
+        }
+
+        if (locationModesRes.data?.length) {
+          setLocationMode(locationModesRes.data[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load job metadata", err);
+      } finally {
+        setLoadingMetadata(false);
+      }
+    };
+
+    if (open) {
+      fetchMetadata();
+    }
+  }, [open]);
+
+  useEffect(() => {
+
+    if (!searchQuery.trim()) {
+      setOptions([]);
+      return;
+    }
+
+    const filtered = allSkills.filter(skill => {
+
+      const name =
+        skill.name ||
+        skill.skillName ||
+        skill.title ||
+        "";
+
+      const skillId = skill.id || skill.skillId;
+
+      return (
+        name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+        &&
+        !selectedSkills.some(
+          s => (s.id || s.skillId) === skillId
+        )
+      );
+
+    });
+
+
+    setOptions(filtered);
+
+  }, [searchQuery, allSkills, selectedSkills]);
+
+  const handleAddMore = () => {
+    setShowInput((prev) => !prev);
+    setSearchQuery("");
+    setSelectedSkill(null);
   };
-  const handleSkillKey = (e) => { if (e.key === "Enter") { e.preventDefault(); handleAddSkill(); } };
-  const handleRemoveSkill = (s) => setSkills(p => p.filter(x => x !== s));
+
+  const handleAddSkill = (skill) => {
+    const targetSkill = skill || selectedSkill;
+    if (targetSkill) {
+      const skillId = targetSkill.id || targetSkill.skillId;
+      const skillName = targetSkill.name || targetSkill.skillName || targetSkill.title || "Skill";
+
+      if (!selectedSkills.some(s => (s.id || s.skillId) === skillId)) {
+        setSelectedSkills(prev => [...prev, { id: skillId, name: skillName }]);
+      }
+      setSelectedSkill(null);
+      setSearchQuery("");
+      setShowInput(false);
+    }
+  };
+
+  const handleDeleteSkill = (skillObj) => {
+    const skillId = skillObj.id || skillObj.skillId;
+    setSelectedSkills(prev => prev.filter(s => (s.id || s.skillId) !== skillId));
+  };
+
+  // ── Skills helpers ────────────────────────────────────────────────────────
+
+  const handleSkillKey = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      if (options.length > 0) {
+        handleAddSkill(options[0]);
+      }
+    }
+  };
 
   const handleBannerUpload = (e) => {
     const file = e.target.files[0];
@@ -122,8 +253,9 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
 
   // ── Submit / reset ────────────────────────────────────────────────────────
   const resetForm = () => {
-    setJobTitle(""); setCategory("Design & Creative"); setLocationMode("On-site"); setJobType("Full-time"); setCity("");
-    setSkills(["UI Design", "Figma", "Prototyping"]); setSkillInput("");
+    setJobTitle(""); setCategory(categories[0]?.id || ""); setLocationMode(locationModes[0]?.id || ""); setJobType(jobTypes[0]?.id || ""); setCity("");
+    setSkillInput("");
+    setSelectedSkills([]);
     setSalaryType("range"); setSalaryMin(""); setSalaryMax("");
     setAboutRole(""); setShortDesc(""); setResponsibilities(""); setRequirements("");
     setBannerImage(null);
@@ -132,10 +264,10 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
 
   const isFormValid =
     jobTitle.trim() &&
-    category.trim() &&
+    category &&
     shortDesc.trim() &&
-    locationMode.trim() &&
-    jobType.trim() &&
+    locationMode &&
+    jobType &&
     city.trim() &&
     bannerImage &&
     aboutRole.trim() &&
@@ -158,17 +290,14 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
       const formData = new FormData();
       formData.append("Title", jobTitle.trim());
       formData.append("ShortDescription", shortDesc.trim());
-      formData.append("LocationMode", locationMode);
-      formData.append("JobType", jobType);
+      formData.append("JobCategoryId", category);
+      formData.append("LocationModeId", locationMode);
+      formData.append("JobTypeId", jobType);
       formData.append("CityOffice", city.trim());
       formData.append("IsSalaryInInterview", isSalaryInInterview ? "true" : "false");
       formData.append("AboutRole", aboutRole.trim());
       formData.append("Responsibilities", responsibilities.trim());
       formData.append("Requirements", requirements.trim());
-
-      // JobCategoryId is not in the swagger schema but is required by the server
-      const categoryId = CATEGORY_IDS[category];
-      if (categoryId) formData.append("JobCategoryId", String(categoryId));
 
       if (!isSalaryInInterview) {
         if (salaryMin) formData.append("SalaryFrom", Number(salaryMin).toString());
@@ -178,6 +307,14 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
       if (bannerImage) {
         formData.append("bannerImage", bannerImage);
       }
+
+      // ── REQUIRED SKILLS ──
+      selectedSkills.forEach((skill) => {
+        formData.append(
+          "RequiredSkillIds",
+          (skill.id || skill.skillId).toString()
+        );
+      });
 
       // ── Diagnostic: log every field being sent ────────────────────────
       console.group("POST /Jobs — FormData fields");
@@ -215,9 +352,9 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
         responseData?.errors
           ? Object.values(responseData.errors).flat().join(" | ")
           : responseData?.message ||
-            responseData?.title ||
-            (typeof responseData === "string" ? responseData : null) ||
-            "Failed to post job. Please try again.";
+          responseData?.title ||
+          (typeof responseData === "string" ? responseData : null) ||
+          "Failed to post job. Please try again.";
       setSubmitError(errorMessage);
     } finally {
       setSubmitting(false);
@@ -225,6 +362,18 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
   };
   const handleSaveDraft = () => { resetForm(); onClose(); };
   const handleClose = () => { if (submitting) return; resetForm(); setSubmitError(null); onClose(); };
+  const FixedTopPopper = (props) => (
+    <Popper
+      {...props}
+      placement="top-start"
+      modifiers={[
+        {
+          name: "flip",
+          enabled: false,
+        },
+      ]}
+    />
+  );
 
   return (
     <Dialog
@@ -314,8 +463,14 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
               onChange={(e) => setCategory(e.target.value)}
               sx={selectSx}
             >
-              {CATEGORIES.map((c) => (
-                <MenuItem key={c} value={c} sx={{ fontSize: 14, color: NAVY }}>{c}</MenuItem>
+              {categories.map((c) => (
+                <MenuItem
+                  key={c.id}
+                  value={c.id}
+                  sx={{ fontSize: 14, color: NAVY }}
+                >
+                  {c.name}
+                </MenuItem>
               ))}
             </Select>
           </div>
@@ -347,8 +502,14 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
               onChange={(e) => setJobType(e.target.value)}
               sx={selectSx}
             >
-              {JOB_TYPES.map((c) => (
-                <MenuItem key={c} value={c} sx={{ fontSize: 14, color: NAVY }}>{c}</MenuItem>
+              {jobTypes.map((type) => (
+                <MenuItem
+                  key={type.id}
+                  value={type.id}
+                  sx={{ fontSize: 14, color: NAVY }}
+                >
+                  {type.name}
+                </MenuItem>
               ))}
             </Select>
           </div>
@@ -360,21 +521,21 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
               display: "flex", border: `1.5px solid rgba(19,32,109,0.18)`,
               borderRadius: 14, overflow: "hidden", background: "rgba(19,32,109,0.03)", height: 40,
             }}>
-              {LOCATION_MODES.map((mode, i) => (
+              {locationModes.map((mode, i) => (
                 <div
-                  key={mode}
-                  onClick={() => setLocationMode(mode)}
+                  key={mode.id}
+                  onClick={() => setLocationMode(mode.id)}
                   style={{
                     flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 13, fontWeight: locationMode === mode ? 700 : 500,
+                    fontSize: 13, fontWeight: locationMode === mode.id ? 700 : 500,
                     fontFamily: "'Inter', sans-serif", cursor: "pointer",
-                    background: locationMode === mode ? GREEN : "transparent",
-                    color: locationMode === mode ? NAVY : `${NAVY}70`,
-                    borderRight: i < LOCATION_MODES.length - 1 ? "1px solid rgba(19,32,109,0.1)" : "none",
+                    background: locationMode === mode.id ? GREEN : "transparent",
+                    color: locationMode === mode.id ? NAVY : `${NAVY}70`,
+                    borderRight: i < locationModes.length - 1 ? "1px solid rgba(19,32,109,0.1)" : "none",
                     transition: "all 0.15s", userSelect: "none",
                   }}
                 >
-                  {mode}
+                  {mode.name}
                 </div>
               ))}
             </div>
@@ -456,39 +617,71 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
           </div>
 
           {/* ── REQUIRED SKILLS ────────────────────────────────────────── */}
-          <div>
-            <FieldLabel>REQUIRED SKILLS</FieldLabel>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10, minHeight: 28 }}>
-              {skills.map((skill) => (
-                <Chip
-                  key={skill} label={skill} size="small"
-                  onDelete={() => handleRemoveSkill(skill)}
-                  sx={{
-                    background: "rgba(132,251,162,0.18)", color: NAVY, fontWeight: 600,
-                    fontSize: 13, border: `1px solid rgba(132,251,162,0.5)`, borderRadius: "8px",
-                    "& .MuiChip-deleteIcon": { color: `${NAVY}70`, "&:hover": { color: "#C32929" } },
-                  }}
-                />
-              ))}
-            </div>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              border: `1.5px solid rgba(19,32,109,0.18)`, borderRadius: 14,
-              padding: "8px 14px", background: "white",
-            }}>
-              <AddIcon sx={{ fontSize: 15, color: `${NAVY}45` }} />
-              <InputBase
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={handleSkillKey}
-                placeholder="Type a skill and press Enter…"
+          <FieldLabel>REQUIRED SKILLS</FieldLabel>
+
+          <Autocomplete
+            multiple
+            options={allSkills}
+            value={selectedSkills}
+            onChange={(e, newValue) =>
+              setSelectedSkills(newValue)
+            }
+            disableCloseOnSelect
+            filterSelectedOptions
+            renderTags={() => null}   // hide chips inside input
+            getOptionLabel={(option) =>
+              option.name ||
+              option.skillName ||
+              option.title ||
+              ""
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Search skills..."
+                sx={inputSx}
+              />
+            )}
+            slots={{
+              popper: FixedTopPopper,
+            }}
+          />
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 8,
+              //marginBottom: 10,
+              marginTop: 10,
+            }}
+          >
+            {selectedSkills.map((skill) => (
+              <Chip
+                key={skill.id || skill.skillId}
+                label={
+                  skill.name ||
+                  skill.skillName ||
+                  skill.title
+                }
+                onDelete={() =>
+                  setSelectedSkills((prev) =>
+                    prev.filter(
+                      (s) =>
+                        (s.id || s.skillId) !==
+                        (skill.id || skill.skillId)
+                    )
+                  )
+                }
                 sx={{
-                  flex: 1, fontSize: 14, color: NAVY, fontFamily: "'Inter', sans-serif",
-                  "& input::placeholder": { color: `${NAVY}55`, opacity: 1 },
+                  background: "rgba(132,251,162,0.18)", color: NAVY, fontWeight: 600,
+                  fontSize: 13, border: `1px solid rgba(132,251,162,0.5)`, borderRadius: "8px",
+                  "& .MuiChip-deleteIcon": { color: `${NAVY}70`, "&:hover": { color: "#C32929" } },
                 }}
               />
-            </div>
+            ))}
           </div>
+
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════
@@ -652,21 +845,6 @@ export function CreateJobDialog({ open, onClose, onSubmit }) {
             }}
           >
             {submitting ? "Posting…" : "Post Job"}
-          </Button>
-
-          {/* ── SAVE AS DRAFT button (outlined, same as ApplyNowOverlay) */}
-          <Button
-            fullWidth variant="outlined"
-            startIcon={<BookmarkBorderIcon />}
-            onClick={handleSaveDraft}
-            sx={{
-              mt: 1.5, py: 1.4, borderRadius: "14px",
-              borderColor: "rgba(19,32,109,0.2)", color: NAVY,
-              fontWeight: 700, fontSize: 15, textTransform: "none",
-              "&:hover": { borderColor: NAVY, background: "rgba(19,32,109,0.04)" },
-            }}
-          >
-            Save as Draft
           </Button>
 
           {/* Terms */}

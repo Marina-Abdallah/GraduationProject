@@ -36,11 +36,14 @@ export function PostCard({ postId, author, role, subtitle, content, mediaUrl, au
 
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
-  const [localComments, setLocalComments] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
   // ── Follow state ────────────────────────────────────────────────
   const [followed, setFollowed] = useState(false);
   // ── Highlight / scroll ref ──────────────────────────────────────
   const cardRef = useRef(null);
+
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     if (highlighted && cardRef.current) {
@@ -60,20 +63,92 @@ export function PostCard({ postId, author, role, subtitle, content, mediaUrl, au
     if (profileType === "user") return profile?.photo;
     return "Unknown";
   };
-  const handleSubmitComment = () => {
-    const trimmed = commentInput.trim();
-    if (!trimmed) return;
-    setLocalComments((prev) => [
-      ...prev,
+  console.log(
+    `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`
+  );
+
+  const fetchComments = async () => {
+  try {
+    setLoadingComments(true);
+
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`,
       {
-        id: Date.now().toString(),
-        text: trimmed,
-        author: displayName() || "UnKnown",
-        avatarSrc: displayPhoto() || defaultPhoto,
-        time: "Just now",
-      },
-    ]);
-    setCommentInput("");
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log("API Error:", errorText);
+      throw new Error(errorText);
+    }
+
+    const data = await response.json();
+
+    const formattedComments = data.map((c) => ({
+      id: c.id,
+      author: c.authorName,   // temporary until you return user name
+      avatarSrc: c.authorPicture,
+      time: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
+      text: c.content,
+      replies: c.replies || [],
+    }));
+
+    setComments(formattedComments);
+
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+  } finally {
+    setLoadingComments(false);
+  }
+};
+
+  const createComment = async (text) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Posts/${postId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            content: text,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log("POST Error:", errorText);
+        throw new Error(errorText);
+      }
+
+      const newComment = await response.json();
+
+      setComments((prev) => [...prev, newComment]);
+
+      return true;
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      return false;
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    const trimmed = commentInput.trim();
+
+    if (!trimmed) return;
+
+    const success = await createComment(trimmed);
+
+    if (success) {
+      setCommentInput("");
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -264,7 +339,14 @@ export function PostCard({ postId, author, role, subtitle, content, mediaUrl, au
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {/* Comment trigger */}
           <Box
-            onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const nextState = !showComments;
+              setShowComments(nextState);
+              if (nextState) {
+                fetchComments();
+              }
+            }}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -287,8 +369,8 @@ export function PostCard({ postId, author, role, subtitle, content, mediaUrl, au
             <span>
               {showComments
                 ? "Hide comments"
-                : localComments.length > 0
-                  ? `${localComments.length} comment${localComments.length > 1 ? "s" : ""}`
+                : comments.length > 0
+                  ? `${comments.length} comment${comments.length > 1 ? "s" : ""}`
                   : "Write a comment on this post"}
             </span>
           </Box>
@@ -323,7 +405,7 @@ export function PostCard({ postId, author, role, subtitle, content, mediaUrl, au
         <Collapse in={showComments} onClick={(e) => e.stopPropagation()}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
             {/* Submitted comments list */}
-            {localComments.map((c) => (
+            {comments.map((c) => (
               <Box key={c.id} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
                 <Avatar
                   src={c.avatarSrc}

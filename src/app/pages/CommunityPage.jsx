@@ -263,7 +263,9 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
               </Typography>
             </Box>
           ) : (
+            
             filteredPosts.map((post) =>
+              
               post.type === "job" ? (
                 <JobPostCard
                   key={post.id}
@@ -290,7 +292,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
               ) : (
                 <PostCard
                   key={post.id}
-                  postId={post.id}
+                  postId={post.sourceId}
                   author={post.author}
                   role={post.role}
                   subtitle={post.subtitle}
