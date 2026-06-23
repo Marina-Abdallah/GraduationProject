@@ -42,7 +42,7 @@ export function JobDetailsModal({ job, open, onClose }) {
 
           {/* Logo & Company */}
           <div className="absolute bottom-6 left-6 flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white bg-white shrink-0">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-white shrink-0">
               <ImageWithFallback
                 src={job.logoImage}
                 alt={job.company}
@@ -62,15 +62,15 @@ export function JobDetailsModal({ job, open, onClose }) {
             {job.title}
           </h1>
 
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-[#13206d] text-lg font-medium">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[#13206d] text-lg font-medium">
             <div><span className="font-bold">Job Title:</span> {job.title}</div>
             <div><span className="font-bold">Job Type:</span> {job.type}</div>
             <div><span className="font-bold">Location Mode:</span> {job.jobMode}</div>
-            <div className="w-full text-center mt-2"><span className="font-bold">City & Office:</span> {job.cityOffice}</div>
+            <div><span className="font-bold">City & Office</span> {job.cityOffice}</div>
           </div>
 
           {/* Divider */}
-          <div className="w-full max-w-2xl mx-auto h-[2px] bg-[#84fba2] my-4"></div>
+          <div className="w-full max-w-2xl mx-auto h-[2px] bg-[#84fba2] "></div>
 
           <div className="text-[#13206d]">
             <h3 className="text-2xl font-bold mb-3">Job Description:</h3>
@@ -85,7 +85,7 @@ export function JobDetailsModal({ job, open, onClose }) {
               {(job.requiredSkills ?? job.jobSkills ?? []).map((skill, index) => (
                 <div
                   key={index}
-                  className="bg-[#84fba2] text-[#13206d] px-6 py-2 rounded-xl text-lg font-medium shadow-sm"
+                  className="bg-[rgba(132,251,162,0.18)] font-bold text-[#13206d] border border-[rgba(132,251,162,0.5)] px-6 py-2 rounded-xl text-lg shadow-sm"
                 >
                   {skill}
                 </div>

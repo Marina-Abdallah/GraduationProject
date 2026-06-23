@@ -23,7 +23,7 @@ export function JobApplicationCard({ job, onClick }) {
 
         {/* Logo and Company Details overlapping banner */}
         <div className="absolute bottom-4 left-4 flex items-center gap-3">
-          <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shrink-0">
+          <div className="w-14 h-14 rounded-full overflow-hidden bg-white shrink-0">
             <ImageWithFallback
               src={job.logoImage}
               alt={job.company}
