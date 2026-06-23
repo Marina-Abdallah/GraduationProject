@@ -6,7 +6,6 @@ import { ApplicationFilters } from "../components/ApplicationFilters";
 import { JobApplicationCard } from "../components/JobApplicationCard";
 import { JobDetailsModal } from "../components/JobDetailsModal";
 import { Footer } from "../components/Footer";
-import { jobs } from "../../data/jobs";
 import backgroundImg from "../../assets/Background.png";
 import "../../styles/App.css";
 import api from "../../api/axios";
@@ -14,6 +13,80 @@ import api from "../../api/axios";
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
 const LIGHT_BLUE = "#90baef";
+const BASE_URL = "https://localhost:7292";
+
+const STATUS_COLOR_MAP = {
+  pending:  "#FBBF24",
+  accepted: "#10B981",
+  rejected: "#EF4444",
+};
+
+function getStatusColor(statusName = "") {
+  return STATUS_COLOR_MAP[statusName.toLowerCase()] ?? "#94A3B8";
+}
+
+function formatAppliedDate(dateStr) {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days < 1)  return "today";
+  if (days < 7)  return `${days} day${days > 1 ? "s" : ""} ago`;
+  if (days < 30) { const w = Math.floor(days / 7);  return `${w} week${w > 1 ? "s" : ""} ago`; }
+  const m = Math.floor(days / 30);
+  return `${m} month${m > 1 ? "s" : ""} ago`;
+}
+
+function toAbsoluteUrl(url) {
+  if (!url) return null;
+  return url.startsWith("http") ? url : `${BASE_URL}${url}`;
+}
+
+/** Map API response shape → component field names */
+function normalizeApplication(app) {
+  const statusName =
+    app.statusName ??
+    app.status ??
+    app.applicationStatus ??
+    "";
+
+  return {
+    ...app,
+
+    id: app.id,
+
+    title: app.jobTitle ?? "",
+    company: app.companyName ?? "",
+
+    location: app.jobLocation ?? "",
+    cityOffice: app.jobCityOffice ?? "",
+
+    type: app.jobType ?? "",
+
+    // Card Description
+    shortDescription: app.jobShortDescription ?? "",
+
+    // Modal Description
+    aboutRole: app.jobAboutRole ?? "",
+
+    jobMode: app.jobLocationMode ?? "",
+
+    applied: formatAppliedDate(app.createdAt),
+
+    status: statusName,
+    statusColor: getStatusColor(statusName),
+
+    bannerImage: toAbsoluteUrl(
+      app.jobBannerImageUrl
+    ),
+
+    logoImage: toAbsoluteUrl(
+      app.companyPhotoUrl
+    ),
+
+    requiredSkills:
+      app.requiredSkillsName ?? [],
+  };
+}
 
 export function MyJobApplication() {
   const getApplication = async () => {
@@ -29,8 +102,15 @@ export function MyJobApplication() {
           Authorization: `Bearer ${token}`,
         },
       });
-      setApplications(res.data);
-      console.log(res.data);
+
+      const raw = Array.isArray(res.data)
+        ? res.data
+        : res.data?.items ?? res.data?.data ?? [];
+
+      const normalized = raw.map(normalizeApplication);
+      setApplications(normalized);
+      console.log("raw:", res.data);
+      console.log("normalized:", normalized);
     } catch (err) {
       console.log(err);
     }
@@ -43,12 +123,12 @@ export function MyJobApplication() {
   // Filter logic
   const filteredJobs = useMemo(() => {
     return applications.filter((job) => {
-      // Search logic (title, company, status)
+      // Search using normalized field names
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
-        job.jobTitle.toLowerCase().includes(searchLower) ||
-        job.companyName.toLowerCase().includes(searchLower) ||
-        job.statusName.toLowerCase().includes(searchLower);
+        (job.title  ?? "").toLowerCase().includes(searchLower) ||
+        (job.company ?? "").toLowerCase().includes(searchLower) ||
+        (job.status  ?? "").toLowerCase().includes(searchLower);
 
       // Tab filter logic
       const matchesFilter =

@@ -5,7 +5,7 @@ import api from "../../api/axios";
 
 
 export function JobApplicationCard({ job, onClick }) {
-  
+
   return (
     <div
       className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col h-auto"
@@ -40,8 +40,8 @@ export function JobApplicationCard({ job, onClick }) {
       {/* Content */}
       <div className="p-6 flex flex-col">
         <h2 className="text-[#13206d] text-xl font-bold mb-2 text-center">{job.title}</h2>
-        <p className="text-gray-600 text-center mb-4 line-clamp-2 leading-relaxed text-[14px]">
-          A <span className="font-bold text-[#13206d]">{job.type}</span> {job.jobDescription.replace(`A ${job.type} `, "")}
+        <p className="text-gray-600 text-center mb-4 line-clamp-3 leading-relaxed text-[14px]">
+          {job.shortDescription}
         </p>
 
         {/* Divider */}

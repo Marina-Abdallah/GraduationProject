@@ -131,6 +131,10 @@ function normalizeFeedItem(item, index = 0) {
       likesCount: job.likesCount || 0,
       isLikedByMe: job.isLikedByMe || false,
       isSavedByMe: job.isSavedByMe || false,
+      isFollowedByMe:
+        item.isFollowedByMe ??
+        job.isFollowedByMe ??
+        false,
 
       createdAt: item.createdAt,
     };
@@ -160,6 +164,10 @@ function normalizeFeedItem(item, index = 0) {
       likesCount: post.likesCount || 0,
       isLikedByMe: post.isLikedByMe || false,
       isSavedByMe: post.isSavedByMe || false,
+      isFollowedByMe:
+        item.isFollowedByMe ??
+        post.isFollowedByMe ??
+        false,
 
       createdAt: item.createdAt,
     };

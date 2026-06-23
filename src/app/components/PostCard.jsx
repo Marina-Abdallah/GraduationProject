@@ -95,7 +95,7 @@ useEffect(() => {
       const formattedComments = data.map((c) => ({
         id: c.id,
         author: c.authorName,   // temporary until you return user name
-        avatarSrc: c.authorPicture,
+        avatarSrc: c.authorPictureUrl,
         time: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
         text: c.content,
         replies: c.replies || [],
@@ -107,6 +107,7 @@ useEffect(() => {
       console.error("Error fetching comments:", error);
     } finally {
       setLoadingComments(false);
+      
     }
   };
 

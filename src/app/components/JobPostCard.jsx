@@ -71,12 +71,14 @@ export function JobPostCard({
 
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
-  const [localComments, setLocalComments] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
   //const { company } = useAppContext();
   // ── Follow state ────────────────────────────────────────────────
   const [isFollowing, setIsFollowing] = useState(isFollowedByMe);
 
   useEffect(() => {
+    console.log("isFollowedByMe from API:", isFollowedByMe);
     setIsFollowing(isFollowedByMe);
   }, [isFollowedByMe]);
 
@@ -91,22 +93,91 @@ export function JobPostCard({
     }
   }, [highlighted]);
 
+  const fetchComments = async () => {
+    try {
+      setLoadingComments(true);
 
-  const handleSubmitComment = () => {
-    const trimmed = commentInput.trim();
-    if (!trimmed) return
-    setLocalComments((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        text: trimmed,
-        author: profile.name || "[NAME]",
-        avatarSrc: profile.photo || defaultPhoto,
-        time: "Just now",
-      },
-    ]);
-    setCommentInput("");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/jobs/${jobId}/comments`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log("API Error:", errorText);
+        throw new Error(errorText);
+      }
+
+      const data = await response.json();
+
+      const formattedComments = data.map((c) => ({
+        id: c.id,
+        author: c.authorName,   // temporary until you return user name
+        avatarSrc: c.authorPictureUrl,
+        time: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
+        text: c.content,
+        replies: c.replies || [],
+      }));
+
+      setComments(formattedComments);
+
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    } finally {
+      setLoadingComments(false);
+
+    }
   };
+
+  const createComment = async (text) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/Jobs/${jobId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            content: text,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log("POST Error:", errorText);
+        throw new Error(errorText);
+      }
+
+      const newComment = await response.json();
+
+      setComments((prev) => [...prev, newComment]);
+
+      return true;
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      return false;
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    const trimmed = commentInput.trim();
+
+    if (!trimmed) return;
+
+    const success = await createComment(trimmed);
+
+    if (success) {
+      setCommentInput("");
+    }
+  };
+
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -187,7 +258,7 @@ export function JobPostCard({
             </Box>
           </Box>
         </Box>
-       
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           {/* Follow button */}
           {!isOwnCompany && (
@@ -196,9 +267,13 @@ export function JobPostCard({
                 onClick={async (e) => {
                   e.stopPropagation();
                   if (!companyId) return;
+
                   try {
-                    await toggleFollow(companyId, "company");
-                    setIsFollowing(prev => !prev);
+                    const followed = await toggleFollow(companyId, "company");
+
+                    console.log("follow API returned:", followed);
+
+                    setIsFollowing(followed);
                   } catch (err) {
                     console.error("Error following/unfollowing company:", err);
                   }
@@ -464,8 +539,16 @@ export function JobPostCard({
 
       {/* Action bar */}
       <Box sx={{ px: "20px", py: "12px", display: "flex", alignItems: "center", gap: 1 }}>
+        {/* Comment trigger */}
         <Box
-          onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const nextState = !showComments;
+            setShowComments(nextState);
+            if (nextState) {
+              fetchComments();
+            }
+          }}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -488,8 +571,8 @@ export function JobPostCard({
           <span>
             {showComments
               ? "Hide comments"
-              : localComments.length > 0
-                ? `${localComments.length} comment${localComments.length > 1 ? "s" : ""}`
+              : comments.length > 0
+                ? `${comments.length} comment${comments.length > 1 ? "s" : ""}`
                 : "Write a comment on this post"}
           </span>
         </Box>
@@ -519,103 +602,125 @@ export function JobPostCard({
         </Box>
       </Box>
 
-      {/* Collapsible comments */}
-      <Collapse in={showComments} onClick={(e) => e.stopPropagation()}>
-        <Box sx={{ px: "20px", pb: "16px", display: "flex", flexDirection: "column", gap: 2 }}>
-          {localComments.map((c) => (
-            <Box key={c.id} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+      {/* Collapsible comments section */}
+        <Collapse in={showComments} onClick={(e) => e.stopPropagation()}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            {/* Submitted comments list */}
+            {comments.map((c) => (
+              <Box key={c.id} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                <Avatar
+                  src={c.avatarSrc}
+                  alt={c.author}
+                  sx={{ width: 36, height: 36, border: `2px solid ${GREEN}` }}
+                />
+                <Box
+                  sx={{
+                    bgcolor: "rgba(144,186,239,0.08)",
+                    borderRadius: "12px 12px 12px 0",
+                    px: 2,
+                    py: 1,
+                    flex: 1,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.4 }}>
+                    <Typography
+                      sx={{
+                        color: NAVY,
+                        fontWeight: 700,
+                        fontSize: 13,
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >
+                      {c.author}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: NAVY,
+                        fontSize: 11,
+                        opacity: 0.45,
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >
+                      {c.time}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    sx={{
+                      color: NAVY,
+                      fontSize: 14,
+                      fontFamily: "'Inter', sans-serif",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {c.text}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+
+            {/* Comment input */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Avatar
-                src={c.avatarSrc}
-                alt={c.author}
-                sx={{ width: 36, height: 36, border: `2px solid ${GREEN}` }}
+                src={profile.photo || defaultPhoto}
+                alt={profile.name}
+                sx={{ width: 36, height: 36, border: `2px solid ${GREEN}`, flexShrink: 0 }}
               />
               <Box
                 sx={{
-                  bgcolor: "rgba(144,186,239,0.08)",
-                  borderRadius: "12px 12px 12px 0",
-                  px: 2,
-                  py: 1,
                   flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  border: `1.5px solid ${GREEN}`,
+                  borderRadius: "24px",
+                  px: 2,
+                  py: 0.8,
+                  gap: 1,
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.4 }}>
-                  <Typography sx={{ color: NAVY, fontWeight: 700, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
-                    {c.author}
-                  </Typography>
-                  <Typography sx={{ color: NAVY, fontSize: 11, opacity: 0.45, fontFamily: "'Inter', sans-serif" }}>
-                    {c.time}
-                  </Typography>
-                </Box>
-                <Typography sx={{ color: NAVY, fontSize: 14, fontFamily: "'Inter', sans-serif", lineHeight: 1.5 }}>
-                  {c.text}
-                </Typography>
+                <textarea
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Write a comment…"
+                  rows={1}
+                  style={{
+                    flex: 1,
+                    resize: "none",
+                    border: "none",
+                    outline: "none",
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    color: NAVY,
+                    background: "transparent",
+                    lineHeight: 1.5,
+                    maxHeight: 100,
+                    overflowY: "auto",
+                  }}
+                  onInput={(e) => {
+                    const el = e.currentTarget;
+                    el.style.height = "auto";
+                    el.style.height = Math.min(el.scrollHeight, 100) + "px";
+                  }}
+                />
+                <IconButton
+                  size="small"
+                  disabled={!commentInput.trim()}
+                  onClick={handleSubmitComment}
+                  sx={{
+                    bgcolor: commentInput.trim() ? GREEN : "transparent",
+                    color: NAVY,
+                    "&:hover": { bgcolor: "#6ef094" },
+                    "&.Mui-disabled": { opacity: 0.35 },
+                    transition: "background 0.2s",
+                    flexShrink: 0,
+                  }}
+                >
+                  <SendIcon sx={{ fontSize: 16 }} />
+                </IconButton>
               </Box>
             </Box>
-          ))}
-
-          {/* Comment input */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Avatar
-              src={profile.photo || defaultPhoto}
-              alt={profile.name}
-              sx={{ width: 36, height: 36, border: `2px solid ${GREEN}`, flexShrink: 0 }}
-            />
-            <Box
-              sx={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                border: `1.5px solid ${GREEN}`,
-                borderRadius: "24px",
-                px: 2,
-                py: 0.8,
-                gap: 1,
-              }}
-            >
-              <textarea
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Write a comment…"
-                rows={1}
-                style={{
-                  flex: 1,
-                  resize: "none",
-                  border: "none",
-                  outline: "none",
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14,
-                  color: NAVY,
-                  background: "transparent",
-                  lineHeight: 1.5,
-                  maxHeight: 100,
-                  overflowY: "auto",
-                }}
-                onInput={(e) => {
-                  const el = e.currentTarget;
-                  el.style.height = "auto";
-                  el.style.height = Math.min(el.scrollHeight, 100) + "px";
-                }}
-              />
-              <IconButton
-                size="small"
-                disabled={!commentInput.trim()}
-                onClick={handleSubmitComment}
-                sx={{
-                  bgcolor: commentInput.trim() ? GREEN : "transparent",
-                  color: NAVY,
-                  "&:hover": { bgcolor: "#6ef094" },
-                  "&.Mui-disabled": { opacity: 0.35 },
-                  transition: "background 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                <SendIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Box>
           </Box>
-        </Box>
-      </Collapse>
+        </Collapse>
     </Card>
   );
 }

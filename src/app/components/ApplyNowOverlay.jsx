@@ -500,7 +500,7 @@ export function ApplyNowOverlay({ open, onClose, isCompanyAccount = false, jobId
                 Application Not Submitted
               </h3>
               <p style={{ color: NAVY, opacity: 0.65, fontSize: 15, margin: "0 auto", maxWidth: 320, lineHeight: 1.6 }}>
-                {submitErrorMsg || "An error occurred during submission."}
+                {submitErrorMsg || "you have already applied for this position."}
               </p>
               <button
                 onClick={() => setSubmitResult(null)}
