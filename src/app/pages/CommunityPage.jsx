@@ -102,6 +102,7 @@ function normalizeFeedItem(item, index = 0) {
       type: "job",
 
       company: job.companyName,
+      companyId: job.companyId,
       companyName: job.companyName,
       companyPhoto: normalizeImageUrl(job.companyPictureUrl),
       companyIndustry: job.companyIndustry || "",
@@ -271,6 +272,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   key={post.id}
                   postId={post.id}
                   jobId={post.sourceId}
+                  companyId={post.companyId}
                   company={post.company}
                   companyName={post.companyName}
                   companyPhoto={post.companyPhoto}
@@ -286,6 +288,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   Img={post.Img}
                   likesCount={post.likesCount}
                   isLikedByMe={post.isLikedByMe}
+                  isFollowedByMe={post.isFollowedByMe}
                   isSavedByMe={post.isSavedByMe}
                   highlighted={highlightedPostId === post.id || highlightedPostId === `job-${post.sourceId}`}
                 />
@@ -294,6 +297,8 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   key={post.id}
                   postId={post.sourceId}
                   author={post.author}
+                  authorId={post.authorId}
+                  authorType={post.authorType}
                   role={post.role}
                   subtitle={post.subtitle}
                   content={post.content}
@@ -303,6 +308,7 @@ function CommunityFeed({ feedItems = [], showWritePost, onCloseWritePost, showAp
                   rtl={post.rtl || false}
                   likesCount={post.likesCount}
                   isLikedByMe={post.isLikedByMe}
+                  isFollowedByMe={post.isFollowedByMe}
                   isSavedByMe={post.isSavedByMe}
                   highlighted={highlightedPostId === post.id || highlightedPostId === `post-${post.sourceId}`}
                   profileType="user"
@@ -332,7 +338,7 @@ export function CommunityPage() {
   const [applyJobId, setApplyJobId] = useState(null);
   const [feedItems, setFeedItems] = useState([]);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 5;
   const [pageCount, setPageCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

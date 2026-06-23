@@ -18,6 +18,8 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import SendIcon from "@mui/icons-material/Send";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
+import CheckIcon from "@mui/icons-material/Check";
 import { useCommunity } from "./CommunityContext";
 import { useAppContext } from "../components/AppContext";
 import bannerImg from "../../assets/ApplyJobBackground.jpg";
@@ -34,6 +36,7 @@ const RED = "#C32929";
 export function JobPostCard({
   postId,
   jobId,
+  companyId,
   company,
   companyPhoto,
   companyName,
@@ -48,6 +51,7 @@ export function JobPostCard({
   Img,
   likesCount = 0,
   isLikedByMe = false,
+  isFollowedByMe = false,
   isSavedByMe = false,
   highlighted = false,
 }) {
@@ -59,15 +63,22 @@ export function JobPostCard({
   const displayedJobDescription = jobShortDescription ?? jobDescription ?? "";
 
   const { posts, onLike, onSave, onApplyNow } = useCommunity();
-  const { profile } = useAppContext();
-  const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount };
+  const { profile, toggleFollow, loggedInId } = useAppContext();
+  const isOwnCompany = loggedInId && Number(loggedInId) === Number(companyId);
+  const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount, followed: isFollowedByMe };
   const postState = posts[postId] ?? initialState;
-  const { liked, saved, likeCount } = postState;
+  const { liked, saved, likeCount, followed } = postState;
 
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
   const [localComments, setLocalComments] = useState([]);
   //const { company } = useAppContext();
+  // ── Follow state ────────────────────────────────────────────────
+  const [isFollowing, setIsFollowing] = useState(isFollowedByMe);
+
+  useEffect(() => {
+    setIsFollowing(isFollowedByMe);
+  }, [isFollowedByMe]);
 
   const cardRef = useRef(null);
 
@@ -176,20 +187,78 @@ export function JobPostCard({
             </Box>
           </Box>
         </Box>
+       
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          {/* Follow button */}
+          {!isOwnCompany && (
+            <Tooltip title={isFollowing ? "Unfollow" : `Follow ${companyLabel}`}>
+              <Box
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!companyId) return;
+                  try {
+                    await toggleFollow(companyId, "company");
+                    setIsFollowing(prev => !prev);
+                  } catch (err) {
+                    console.error("Error following/unfollowing company:", err);
+                  }
+                }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  color: NAVY,
+                  fontWeight: 600,
+                  fontSize: 14,
+                  fontFamily: "'Inter', sans-serif",
+                  border: `1.5px solid ${NAVY}30`,
+                  borderRadius: "20px",
+                  px: 1.5,
+                  py: 0.5,
+                  cursor: "pointer",
+                  "&:hover": { borderColor: GREEN, color: GREEN },
+                  transition: "all 0.25s",
+                  mr: 0.5,
+                  ...(isFollowing
+                    ? {
+                      bgcolor: GREEN,
+                      color: NAVY,
+                      border: `1.5px solid ${GREEN}`,
+                      "&:hover": { bgcolor: "#6ef094", borderColor: "#6ef094" },
+                    }
+                    : {
+                      bgcolor: "transparent",
+                      color: NAVY,
+                      border: `1.5px solid ${NAVY}30`,
+                      "&:hover": { borderColor: GREEN, color: GREEN },
+                    }),
 
-        <Tooltip title={saved ? "Unsave post" : "Save post"}>
-          <IconButton
-            size="small"
-            onClick={(e) => { e.stopPropagation(); onSave(postId, initialState); }}
-            sx={{ color: GOLD }}
-          >
-            {saved ? (
-              <BookmarkIcon sx={{ fontSize: 24 }} />
-            ) : (
-              <BookmarkBorderIcon sx={{ fontSize: 24 }} />
-            )}
-          </IconButton>
-        </Tooltip>
+                }}
+              >
+                {isFollowing ? (
+                  <CheckIcon sx={{ fontSize: 15 }} />
+                ) : (
+                  <PersonAddOutlinedIcon sx={{ fontSize: 15 }} />
+                )}
+                <span>{isFollowing ? "Following" : "Follow"}</span>
+              </Box>
+            </Tooltip>
+          )}
+          {/* Save button */}
+          <Tooltip title={saved ? "Unsave post" : "Save post"}>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); onSave(postId, initialState); }}
+              sx={{ color: GOLD }}
+            >
+              {saved ? (
+                <BookmarkIcon sx={{ fontSize: 24 }} />
+              ) : (
+                <BookmarkBorderIcon sx={{ fontSize: 24 }} />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* Banner image */}
@@ -318,7 +387,7 @@ export function JobPostCard({
                 height: 22,
               }}
             />
-           
+
             {locationMode && (
               <>
                 <Chip
@@ -334,10 +403,10 @@ export function JobPostCard({
                     height: 22,
                   }}
                 />
-                
+
               </>
             )}
-             <Chip
+            <Chip
               label={jobCategoryName}
               size="small"
               sx={{
@@ -351,7 +420,7 @@ export function JobPostCard({
               }}
             />
           </Box>
-          
+
           <Typography
             sx={{
               color: NAVY,

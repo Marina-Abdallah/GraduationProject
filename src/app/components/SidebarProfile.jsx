@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Box,
   Avatar,
@@ -49,7 +49,11 @@ function StatBox({ value, label }) {
 }
 
 export function SidebarProfile() {
-  const { profile, skills } = useAppContext();
+  const { profile, skills, followCounts, fetchFollowCounts } = useAppContext();
+
+  useEffect(() => {
+    fetchFollowCounts();
+  }, [fetchFollowCounts]);
 
   return (
     <Box
@@ -156,9 +160,9 @@ export function SidebarProfile() {
       <Box sx={{ display: "flex", width: "100%", alignItems: "center" }}>
         <StatBox value="20" label="Posts" />
         <Divider orientation="vertical" flexItem sx={{ borderColor: `${NAVY}20`, mx: 0.5 }} />
-        <StatBox value="100" label="Followers" />
+        <StatBox value={followCounts.followers} label="Followers" />
         <Divider orientation="vertical" flexItem sx={{ borderColor: `${NAVY}20`, mx: 0.5 }} />
-        <StatBox value="250" label="Following" />
+        <StatBox value={followCounts.followings} label="Following" />
       </Box>
 
       <Divider sx={{ width: "100%", borderColor: `${NAVY}18` }} />

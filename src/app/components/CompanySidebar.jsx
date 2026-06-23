@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Box, Typography, Divider, Button, Avatar } from "@mui/material";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
@@ -43,7 +43,7 @@ function StatBox({ value, label }) {
 }
 
 export function CompanySidebar() {
-  const { company, industries=[] } = useAppContext();
+  const { company, industries=[], followCounts, fetchFollowCounts } = useAppContext();
   const navigate = useNavigate();
 
   return (
@@ -173,13 +173,13 @@ export function CompanySidebar() {
           flexItem
           sx={{ borderColor: `${NAVY}20`, mx: 0.3 }}
         />
-        <StatBox value="1M" label="Followers" />
+        <StatBox value={followCounts.followers} label="Followers" />
         <Divider
           orientation="vertical"
           flexItem
           sx={{ borderColor: `${NAVY}20`, mx: 0.3 }}
         />
-        <StatBox value="1K" label="Following" />
+        <StatBox value={followCounts.followings} label="Following" />
       </Box>
 
       <Divider sx={{ width: "100%", borderColor: `${NAVY}18` }} />

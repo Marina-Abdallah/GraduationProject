@@ -108,6 +108,7 @@ function normalizeFeedItem(item, index = 0) {
       type: "job",
 
       company: job.companyName,
+      companyId: job.companyId,
       companyName: job.companyName,
       companyPhoto: normalizeImageUrl(job.companyPictureUrl),
       companyIndustry: job.companyIndustry || "",
@@ -303,6 +304,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
               key={post.id}
               postId={post.id}
               jobId={post.sourceId}
+              companyId={post.companyId}
               company={post.company}
               companyName={post.companyName}
               companyPhoto={post.companyPhoto}
@@ -317,6 +319,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
               jobDescription={post.jobDescription}
               Img={post.Img}
               likesCount={post.likesCount}
+              isFollowedByMe={post.isFollowedByMe}
               isLikedByMe={post.isLikedByMe}
               isSavedByMe={post.isSavedByMe}
               highlighted={highlightedPostId === post.id || highlightedPostId === `job-${post.sourceId}`}
@@ -324,8 +327,10 @@ function CommunityFeed({ posts, highlightedPostId }) {
           ) : (
             <PostCard
               key={post.id}
-              postId={post.id}
+              postId={post.sourceId}
               author={post.author}
+              authorId={post.authorId}
+              authorType={post.authorType}
               role={post.role}
               subtitle={post.subtitle}
               content={post.content}
@@ -335,6 +340,7 @@ function CommunityFeed({ posts, highlightedPostId }) {
               rtl={post.rtl || false}
               likesCount={post.likesCount}
               isLikedByMe={post.isLikedByMe}
+              isFollowedByMe={post.isFollowedByMe}
               isSavedByMe={post.isSavedByMe}
               highlighted={highlightedPostId === post.id || highlightedPostId === `post-${post.sourceId}`}
               profileType="company"
@@ -388,7 +394,7 @@ export function CompanyCommunityPage() {
   // Pagination & Fetch States
   const [feedItems, setFeedItems] = useState([]);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 5;
   const [pageCount, setPageCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

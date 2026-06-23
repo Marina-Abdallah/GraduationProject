@@ -61,6 +61,83 @@ const DEFAULT_COMPANY = {
 
 const DEFAULT_SKILLS = [];
 
+const getUserIdFromToken = (token) => {
+  try {
+    if (!token) return null;
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(
+      decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      )
+    );
+    return (
+      payload.sub ||
+      payload.nameid ||
+      payload.id ||
+      payload.UserId ||
+      payload[
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+      ] ||
+      null
+    );
+  } catch {
+    return null;
+  }
+};
+
+const getRoleFromToken = (token) => {
+  try {
+    if (!token) return null;
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(
+      decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      )
+    );
+    return (
+      payload.role ||
+      payload[
+      "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+      ] ||
+      null
+    );
+  } catch {
+    return null;
+  }
+};
+
+const getAuthorTypeFromToken = (token) => {
+  try {
+    if (!token) return null;
+
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+
+    const payload = JSON.parse(
+      decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(
+            (c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
+          )
+          .join("")
+      )
+    );
+
+    return payload.AuthorType || payload.authorType || null;
+  } catch {
+    return null;
+  }
+};
+
 export function AppProvider({ children }) {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [company, setCompany] = useState(DEFAULT_COMPANY);
@@ -69,6 +146,31 @@ export function AppProvider({ children }) {
   const [userSavedPostIds, setUserSavedPostIds] = useState(new Set());
   const [companySavedPostIds, setCompanySavedPostIds] = useState(new Set());
   const [authToken, setAuthTokenState] = useState(() => localStorage.getItem("token"));
+  const [followCounts, setFollowCounts] = useState({ followers: 0, followings: 0 });
+
+  const loggedInId = authToken ? getUserIdFromToken(authToken) : null;
+  const loggedInRole = authToken ? getRoleFromToken(authToken) : null;
+  const authorType = authToken ? getAuthorTypeFromToken(authToken) : null;
+
+  const isCompany = authorType === "Recruiter";
+  const isUser = authorType === "JobSeeker";
+
+  console.log({
+    loggedInId,
+    loggedInRole,
+    companyName: company.name,
+    isCompany,
+  });
+
+  useEffect(() => {
+    if (!authToken) return;
+
+    const payload = JSON.parse(atob(authToken.split(".")[1]));
+
+    console.log("JWT PAYLOAD:", payload);
+    console.log("AuthorType:", authorType);
+    console.log("Role:", loggedInRole);
+  }, [authToken, authorType, loggedInRole]);
 
   const setAuthToken = useCallback((token) => {
     setAuthTokenState(token);
@@ -79,6 +181,125 @@ export function AppProvider({ children }) {
       localStorage.removeItem("token");
     }
   }, []);
+
+
+  const fetchFollowCounts = useCallback(async () => {
+    if (!authToken || !loggedInId) return;
+    try {
+      let response;
+      if (isCompany) {
+        response = await api.get(`/follows/overview/company/${loggedInId}/counts`, {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+      } else {
+        response = await api.get(`/follows/profile/user/${loggedInId}/counts`, {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+      }
+      if (response.data) {
+        setFollowCounts({
+          followers: response.data.followers ?? 0,
+          followings: response.data.followings ?? 0
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching follow counts:", err);
+    }
+  }, [authToken, loggedInId, isCompany]);
+
+  useEffect(() => {
+    fetchFollowCounts();
+  }, [fetchFollowCounts]);
+
+  const toggleFollowUser = useCallback(async (targetUserId) => {
+    if (!authToken) return false;
+    try {
+      const response = await api.post(`/Follows/user/${targetUserId}/follow`, {}, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      fetchFollowCounts();
+      return response.data.followed;
+    } catch (err) {
+      console.error("Error toggling user follow:", err);
+      throw err;
+    }
+  }, [authToken, fetchFollowCounts]);
+
+  const toggleFollowCompany = useCallback(async (targetCompanyId) => {
+    if (!authToken) return false;
+    try {
+      const response = await api.post(`/Follows/company/${targetCompanyId}/follow`, {}, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      fetchFollowCounts();
+
+      console.log("Follow response:", response.data);
+
+
+      return response.data.followed;
+    } catch (err) {
+      console.error("Error toggling company follow:", err);
+      throw err;
+    }
+  }, [authToken, fetchFollowCounts]);
+
+  const toggleCompanyFollowUser = useCallback(async (companyId, targetUserId) => {
+    if (!authToken) return false;
+    try {
+      const response = await api.post(`/Follows/company/${companyId}/follow/user/${targetUserId}`, {}, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      fetchFollowCounts();
+      return response.data.followed;
+    } catch (err) {
+      console.error("Error toggling company follow user:", err);
+      throw err;
+    }
+  }, [authToken, fetchFollowCounts]);
+
+  const toggleCompanyFollowCompany = useCallback(async (companyId, targetCompanyId) => {
+    if (!authToken) return false;
+    try {
+      const response = await api.post(`/Follows/company/${companyId}/follow/company/${targetCompanyId}`, {}, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      fetchFollowCounts();
+      return response.data.followed;
+    } catch (err) {
+      console.error("Error toggling company follow company:", err);
+      throw err;
+    }
+  }, [authToken, fetchFollowCounts]);
+
+  const toggleFollow = useCallback(async (targetId, targetType) => {
+    const typeLower = targetType?.toLowerCase();
+
+    const isTargetUser =
+    typeLower === "user" ||
+      typeLower === "jobseeker" ||
+      typeLower === "recruiter";
+
+    if (isCompany) {
+      if (isTargetUser) {
+        return await toggleCompanyFollowUser(loggedInId, targetId);
+      }
+
+      return await toggleCompanyFollowCompany(loggedInId, targetId);
+    }
+
+    if (isTargetUser) {
+      return await toggleFollowUser(targetId);
+    }
+
+    return await toggleFollowCompany(targetId);
+  }, [
+    isCompany,
+    loggedInId,
+    toggleCompanyFollowUser,
+    toggleCompanyFollowCompany,
+    toggleFollowUser,
+    toggleFollowCompany
+  ]);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -457,6 +678,12 @@ export function AppProvider({ children }) {
         toggleUserSavedPost,
         toggleCompanySavedPost,
         setAuthToken,
+        loggedInId,
+        isCompany,
+        isUser,
+        followCounts,
+        fetchFollowCounts,
+        toggleFollow,
       }}
     >
       {children}
