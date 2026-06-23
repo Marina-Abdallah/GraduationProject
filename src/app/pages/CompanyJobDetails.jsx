@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -14,31 +14,17 @@ import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 
-// Banner images
-import bannerFrontend from "../../assets/FrontendJob.png";
-import bannerBackend from "../../assets/BackendJob.png";
-import bannerGraphic from "../../assets/GraphicJob.png";
-import bannerUIUX1 from "../../assets/UI&UXJob1.png";
-import bannerSoftware from "../../assets/SoftwareJob.png";
-import bannerUIUX2 from "../../assets/UI&UXJob2.png";
-import backgroundImg from "../../assets/Background.png";
 
 import { JobActionDialog } from "../components/JobActivationDialog";
 import { CompanyNavbar } from "../components/CompanyNavbar";
 import { Footer } from "../components/Footer";
 import { ApplicantsList } from "../components/ApplicantsList";
-import { COMPANY_JOBS } from "../../data/companyJobs";
 import { useAppContext } from "../components/AppContext";
+import api from "../../api/axios";
+
+import backgroundImg from "../../assets/Background.png";
 import defaultPhoto from "../../assets/defaultCompanyImg.png";
 
-const BANNER_MAP = {
-  frontend: bannerFrontend,
-  backend: bannerBackend,
-  graphic: bannerGraphic,
-  uiux1: bannerUIUX1,
-  software: bannerSoftware,
-  uiux2: bannerUIUX2,
-};
 
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
@@ -48,33 +34,174 @@ const LIGHT_BLUE = "#90baef";
 export function CompanyJobDetailsPage() {
   const { jobId } = useParams();
   const navigate = useNavigate();
-  const [jobs, setJobs] = React.useState(COMPANY_JOBS);
-  const job = jobs.find((j) => j.id === jobId);
-  const { company } = useAppContext();
+  const [job, setJob] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [openActionDialog, setOpenActionDialog] = useState(false);
-  const [jobStatus, setJobStatus] = useState(job.status);
+  const [jobStatus, setJobStatus] = useState("Pending");
 
   const isActive = jobStatus === "Active";
+  const API_BASE_URL = "https://localhost:7292";
 
-
-  const handleConfirmAction = () => {
-    const updatedStatus = isActive ? "Closed" : "Active";
-
-    const jobIndex = COMPANY_JOBS.findIndex(
-      (j) => j.id === jobId
-    );
-
-    if (jobIndex !== -1) {
-      COMPANY_JOBS[jobIndex].status = updatedStatus;
+  useEffect(() => {
+    if (job) {
+      setJobStatus(job.jobStatus);
     }
+  }, [job]);
 
-    setJobStatus(updatedStatus);
-    setOpenActionDialog(false);
+  useEffect(() => {
+    const fetchJobDetails = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const [jobResponse, applicantsResponse] = await Promise.all([
+          api.get(`/Jobs/${jobId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+
+          api.get(`/Jobs/applications/${jobId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ]);
+
+        const jobData = jobResponse.data;
+        const applicantsData = applicantsResponse.data;
+
+        console.log("Job API:", jobData);
+        console.log("Applicants API:", applicantsData);
+
+        setJob({
+          id: jobData.id,
+
+          title: jobData.title,
+          description: jobData.description,
+          shortDescription: jobData.shortDescription,
+
+          location: jobData.location,
+          locationMode: jobData.locationMode,
+
+          jobType: jobData.jobType,
+          cityOffice: jobData.cityOffice,
+
+          salaryFrom: jobData.salaryFrom,
+          salaryTo: jobData.salaryTo,
+
+          bannerImageUrl: jobData.bannerImageUrl,
+
+          aboutRole: jobData.aboutRole,
+          responsibilities: jobData.responsibilities,
+          requirements: jobData.requirements,
+
+          companyId: jobData.companyId,
+          companyName: jobData.companyName,
+          companyPictureUrl: jobData.companyPictureUrl,
+
+          createdAt: jobData.createdAt,
+
+          jobStatus: jobData.jobStatus,
+
+          skills:
+            jobData.requiredSkills ??
+            jobData.requiredSkillsName ??
+            [],
+
+          applicationsCount:
+            jobData.applicantsCount ?? 0,
+
+          applicants: applicantsData.map((app) => ({
+            id: app.applicantId,
+
+            name: app.applicantName,
+
+            title: app.applicantHeadline,
+
+            avatar: app.applicantPictureUrl
+              ? `${API_BASE_URL}${app.applicantPictureUrl}`
+              : defaultPhoto,
+
+            email: app.applicantEmail,
+
+            phoneNumber: app.phoneNumber,
+
+            cvId: app.cvId,
+
+            cvFileName: app.cvFileName,
+
+            matchScore: app.cvScore,
+
+            cvScoreReason: app.cvScoreReason,
+
+            status: app.statusName,
+
+            appliedAt: app.createdAt,
+
+            daysAgo: Math.floor(
+              (new Date() - new Date(app.createdAt)) /
+              (1000 * 60 * 60 * 24)
+            ),
+          })),
+        });
+      } catch (error) {
+        console.error("Failed loading job details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobDetails();
+  }, [jobId]);
+
+  const handleConfirmAction = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await api.post(
+        `/Jobs/${jobId}/set-active`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = response.data;
+
+      console.log("Set active response:", data);
+
+      const newStatus = data.isActive
+        ? "Active"
+        : "Closed";
+
+
+      setJobStatus(newStatus);
+
+
+      setJob(prev => ({
+        ...prev,
+        jobStatus: newStatus
+      }));
+
+      setOpenActionDialog(false);
+
+    } catch (error) {
+      console.error(error);
+    }
   };
 
 
   // ── 404 guard ─────────────────────────────────────────────────────────────
+if (loading) {
+  return (
+    <Box sx={{ p: 5 }}>
+      <Typography>Loading...</Typography>
+    </Box>
+  );
+}
   if (!job) {
     return (
       <Box
@@ -115,8 +242,12 @@ export function CompanyJobDetailsPage() {
   }
 
 
-
-  const banner = BANNER_MAP[job.bannerKey] || bannerFrontend;
+  const banner =
+    job.bannerImageUrl
+      ?
+      `${API_BASE_URL}${job.bannerImageUrl}`
+      :
+      "/default-banner.png";
 
   return (
     <Box
@@ -201,8 +332,12 @@ export function CompanyJobDetailsPage() {
           >
             {/* MS Logo */}
             <Avatar
-              src={company.photo || defaultPhoto}
-              alt={company.name}
+              src={
+                job.companyPictureUrl
+                  ? `${API_BASE_URL}${job.companyPictureUrl}`
+                  : defaultPhoto
+              }
+              alt={job.companyName}
               sx={{
                 width: 48,
                 height: 48,
@@ -227,7 +362,7 @@ export function CompanyJobDetailsPage() {
                   lineHeight: 1.2,
                 }}
               >
-                {company.name}
+                {job.companyName}
               </Typography>
               <Typography
                 sx={{
@@ -238,7 +373,7 @@ export function CompanyJobDetailsPage() {
                 }}
               >
                 {/* {job.location} */}
-                {company.address || "[ADDRESS]"}
+                {job.location || "[ADDRESS]"}
               </Typography>
             </Box>
           </Box>
@@ -329,7 +464,7 @@ export function CompanyJobDetailsPage() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
             <CalendarTodayOutlinedIcon sx={{ fontSize: 16, color: LIGHT_BLUE }} />
             <Typography sx={{ color: `${NAVY}80`, fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
-              {job.date}
+              {new Date(job.createdAt).toLocaleDateString()}
             </Typography>
           </Box>
         </Box>

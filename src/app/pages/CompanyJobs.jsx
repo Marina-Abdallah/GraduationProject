@@ -1,41 +1,92 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { CompanyNavbar } from "../components/CompanyNavbar";
-import { Footer }        from "../components/Footer";
-import { JobSearchBar }  from "../components/JobSearchBar";
+import { Footer } from "../components/Footer";
+import { JobSearchBar } from "../components/JobSearchBar";
 import { JobFilterTabs } from "../components/JobFilterTabs";
-import { JobsGrid }      from "../components/JobsGrid";
-import { COMPANY_JOBS }  from "../../data/companyJobs";
-import backgroundImg     from "../../assets/Background.png";
-
+import { JobsGrid } from "../components/JobsGrid";
+import backgroundImg from "../../assets/Background.png";
+import api from "../../api/axios";
 const NAVY = "#13206d";
 
 export function CompanyJobsPage() {
-  const [searchQuery, setSearchQuery]   = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  const fetchJobs = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await api.get("/Jobs/my-jobs", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+
+      const mappedJobs = response.data.map((job) => ({
+        ...job,
+
+        title: job.title,
+        companyName: job.companyName,
+        location: job.location,
+
+        jobStatus: job.jobStatus,
+        applicantsCount: job.applicantsCount,
+
+        createdAt: job.createdAt,
+
+        bannerImageUrl: job.bannerImageUrl,
+        companyPictureUrl: job.companyPictureUrl,
+      }));
+
+
+      console.log("My Jobs:", mappedJobs);
+
+      setJobs(mappedJobs);
+
+    } catch (error) {
+      console.error("Failed loading jobs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  fetchJobs();
+
+}, []);
 
   const filteredJobs = useMemo(() => {
-    let jobs = COMPANY_JOBS;
+    let filtered = [...jobs];
 
     if (activeFilter === "active") {
-      jobs = jobs.filter((j) => j.status === "Active");
+      filtered = filtered.filter(
+        (j) => j.jobStatus?.toLowerCase() === "active"
+      );
     } else if (activeFilter === "closed") {
-      jobs = jobs.filter((j) => j.status === "Closed");
+      filtered = filtered.filter(
+        (j) => j.jobStatus?.toLowerCase() === "closed"
+      );
     }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      jobs = jobs.filter(
+
+      filtered = filtered.filter(
         (j) =>
-          j.title.toLowerCase().includes(q) ||
-          j.company.toLowerCase().includes(q) ||
-          j.location.toLowerCase().includes(q) ||
-          j.status.toLowerCase().includes(q)
+          j.title?.toLowerCase().includes(q) ||
+          j.companyName?.toLowerCase().includes(q) ||
+          j.location?.toLowerCase().includes(q) ||
+          j.jobStatus?.toLowerCase().includes(q)
       );
     }
 
-    return jobs;
-  }, [searchQuery, activeFilter]);
+    return filtered;
+  }, [jobs, searchQuery, activeFilter]);
 
   return (
     <Box

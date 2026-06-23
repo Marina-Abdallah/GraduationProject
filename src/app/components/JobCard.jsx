@@ -1,25 +1,10 @@
 import React from "react";
 import { Box, Card, Typography, Avatar } from "@mui/material";
 import { Link } from "react-router-dom";
-
-// ── Banner images (imported from Figma assets via relative path) ──────────────
-import bannerFrontend from "../../assets/FrontendJob.png";
-import bannerBackend from "../../assets/BackendJob.png";
-import bannerGraphic from "../../assets/GraphicJob.png";
-import bannerUIUX1 from "../../assets/UI&UXJob1.png";
-import bannerSoftware from "../../assets/SoftwareJob.png";
-import bannerUIUX2 from "../../assets/UI&UXJob2.png";
 import defaultPhoto from "../../assets/defaultCompanyImg.png";
 import { useAppContext } from "../components/AppContext";
 
-const BANNER_MAP = {
-  frontend: bannerFrontend,
-  backend: bannerBackend,
-  graphic: bannerGraphic,
-  uiux1: bannerUIUX1,
-  software: bannerSoftware,
-  uiux2: bannerUIUX2,
-};
+
 
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
@@ -69,8 +54,12 @@ function ApplicationsBadge({ count }) {
 
 // ── Main Card ──────────────────────────────────────────────────────────────────
 export function JobCard({ job }) {
-  const banner = BANNER_MAP[job.bannerKey] || bannerFrontend;
-  const isActive = job.status === "Active";
+  const API_BASE_URL = "https://localhost:7292";
+  const banner =
+  job.bannerImageUrl
+    ? `${API_BASE_URL}${job.bannerImageUrl}`
+    : "/default-banner.png";
+  const isActive = job.jobStatus === "Active";
   const { company } = useAppContext();
 
   return (
@@ -104,7 +93,6 @@ export function JobCard({ job }) {
               backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.33) 0%, transparent 100%), url(${banner})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
-              display: "block",
             }}
           />
           {/* company overlay - bottom left of banner */}
@@ -119,8 +107,11 @@ export function JobCard({ job }) {
             }}
           >
             <Avatar
-              src={company.photo || defaultPhoto}
-              alt={company.name}
+              src={
+                job.companyPictureUrl
+                  ? `${API_BASE_URL}${job.companyPictureUrl}`
+                  : defaultPhoto}
+              alt={job.companyName}
               sx={{
                 width: 40,
                 height: 40,
@@ -145,7 +136,7 @@ export function JobCard({ job }) {
                   lineHeight: 1.2,
                 }}
               >
-                {company.name}
+                {job.companyName}
               </Typography>
               <Typography
                 sx={{
@@ -198,7 +189,7 @@ export function JobCard({ job }) {
             >
               Applications:
             </Typography>
-            <ApplicationsBadge count={job.applicationsCount} />
+            <ApplicationsBadge count={job.applicantsCount} />
           </Box>
 
           {/* Divider */}
@@ -224,7 +215,7 @@ export function JobCard({ job }) {
                   fontFamily: "'Inter', sans-serif",
                 }}
               >
-                {job.status}
+                {job.jobStatus}
               </Typography>
             </Box>
             <Typography
@@ -234,7 +225,7 @@ export function JobCard({ job }) {
                 fontFamily: "'Inter', sans-serif",
               }}
             >
-              {job.date}
+              {new Date(job.createdAt).toLocaleDateString()}
             </Typography>
           </Box>
         </Box>
