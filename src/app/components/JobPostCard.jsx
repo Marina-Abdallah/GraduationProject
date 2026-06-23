@@ -83,6 +83,7 @@ export function JobPostCard({
   }, [isFollowedByMe]);
 
   const cardRef = useRef(null);
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     if (highlighted && cardRef.current) {
@@ -98,7 +99,7 @@ export function JobPostCard({
       setLoadingComments(true);
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/jobs/${jobId}/comments`,
+        `${import.meta.env.VITE_API_BASE_URL}/jobs/${jobId}/comments`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -136,7 +137,7 @@ export function JobPostCard({
   const createComment = async (text) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/Jobs/${jobId}/comments`,
+        `${import.meta.env.VITE_API_BASE_URL}/jobs/${jobId}/comments`,
         {
           method: "POST",
           headers: {
@@ -156,8 +157,16 @@ export function JobPostCard({
       }
 
       const newComment = await response.json();
-
-      setComments((prev) => [...prev, newComment]);
+      // Transform to same shape as fetched comments
+      const formatted = {
+        id: newComment.id,
+        author: newComment.authorName,
+        avatarSrc: newComment.authorPictureUrl,
+        time: newComment.createdAt ? new Date(newComment.createdAt).toLocaleString() : "",
+        text: newComment.content,
+        replies: newComment.replies || [],
+      };
+      setComments((prev) => [...prev, formatted]);
 
       return true;
     } catch (error) {
@@ -175,9 +184,10 @@ export function JobPostCard({
 
     if (success) {
       setCommentInput("");
+      // Refresh comment list to ensure UI is up‑to‑date
+      fetchComments();
     }
   };
-
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {

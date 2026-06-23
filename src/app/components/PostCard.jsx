@@ -31,7 +31,7 @@ export function PostCard({ postId, author, authorId, authorType, role, subtitle,
   const { posts, onLike, onSave } = useCommunity();
   const { profile, company, toggleFollow, loggedInId } = useAppContext();
   const isOwnPost = loggedInId && Number(loggedInId) === Number(authorId);
-  const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount ,followed: isFollowedByMe}; // Default followed state is false; you may want to fetch this from the backend in a real app
+  const initialState = { liked: isLikedByMe, saved: isSavedByMe, likeCount: likesCount, followed: isFollowedByMe }; // Default followed state is false; you may want to fetch this from the backend in a real app
   const postState = posts[postId] ?? initialState;
   const { liked, saved, likeCount, followed } = postState;
 
@@ -40,11 +40,11 @@ export function PostCard({ postId, author, authorId, authorType, role, subtitle,
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   // ── Follow state ────────────────────────────────────────────────
-const [isFollowing, setIsFollowing] = useState(isFollowedByMe);
+  const [isFollowing, setIsFollowing] = useState(isFollowedByMe);
 
-useEffect(() => {
-  setIsFollowing(isFollowedByMe);
-}, [isFollowedByMe]);  // ── Highlight / scroll ref ──────────────────────────────────────
+  useEffect(() => {
+    setIsFollowing(isFollowedByMe);
+  }, [isFollowedByMe]);  // ── Highlight / scroll ref ──────────────────────────────────────
   const cardRef = useRef(null);
 
   const token = localStorage.getItem("token");
@@ -68,7 +68,7 @@ useEffect(() => {
     return "Unknown";
   };
   console.log(
-    `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`
+    `${import.meta.env.VITE_API_BASE_URL}/posts/${postId}/comments`
   );
 
   const fetchComments = async () => {
@@ -76,7 +76,7 @@ useEffect(() => {
       setLoadingComments(true);
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}/comments`,
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${postId}/comments`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -107,14 +107,14 @@ useEffect(() => {
       console.error("Error fetching comments:", error);
     } finally {
       setLoadingComments(false);
-      
+
     }
   };
 
   const createComment = async (text) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/Posts/${postId}/comments`,
+        `${import.meta.env.VITE_API_BASE_URL}/posts/${postId}/comments`,
         {
           method: "POST",
           headers: {
@@ -134,8 +134,16 @@ useEffect(() => {
       }
 
       const newComment = await response.json();
-
-      setComments((prev) => [...prev, newComment]);
+      // Transform to same shape as fetched comments
+      const formatted = {
+        id: newComment.id,
+        author: newComment.authorName,
+        avatarSrc: newComment.authorPictureUrl,
+        time: newComment.createdAt ? new Date(newComment.createdAt).toLocaleString() : "",
+        text: newComment.content,
+        replies: newComment.replies || [],
+      };
+      setComments((prev) => [...prev, formatted]);
 
       return true;
     } catch (error) {
@@ -153,6 +161,8 @@ useEffect(() => {
 
     if (success) {
       setCommentInput("");
+      // Refresh the list to guarantee consistency
+      fetchComments();
     }
   };
 
