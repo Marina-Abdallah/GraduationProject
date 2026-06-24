@@ -102,7 +102,8 @@ export function CompanyJobDetailsPage() {
 
           createdAt: jobData.createdAt,
 
-          jobStatus: jobData.jobStatus,
+          isActive: jobData.isActive,
+          jobStatus: jobData.isActive ? "Active" : "Closed",
 
           skills:
             jobData.requiredSkills ??
@@ -110,9 +111,11 @@ export function CompanyJobDetailsPage() {
             [],
 
           applicationsCount:
-            jobData.applicantsCount ?? 0,
+            jobData.totalApplications ?? 0,
 
           applicants: applicantsData.map((app) => ({
+            // Preserve applicant id for UI and also store application id for API actions
+            applicationId: app.id,
             id: app.applicantId,
 
             name: app.applicantName,
@@ -125,7 +128,11 @@ export function CompanyJobDetailsPage() {
 
             email: app.applicantEmail,
 
+            phone: app.phoneNumber,
             phoneNumber: app.phoneNumber,
+
+            portfolioLink: app.portfolioLink || app.applicantPortfolioLink,
+            portofolioLink: app.portfolioLink || app.applicantPortfolioLink,
 
             cvId: app.cvId,
 
@@ -135,7 +142,7 @@ export function CompanyJobDetailsPage() {
 
             cvScoreReason: app.cvScoreReason,
 
-            status: app.statusName,
+            status: app.statusName?.toLowerCase(),
 
             appliedAt: app.createdAt,
 
@@ -161,10 +168,11 @@ export function CompanyJobDetailsPage() {
 
       const response = await api.post(
         `/Jobs/${jobId}/set-active`,
-        {},
+        { isActive: !isActive },
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
@@ -372,8 +380,8 @@ if (loading) {
                   textShadow: "0 1px 4px rgba(0,0,0,0.4)",
                 }}
               >
-                {/* {job.location} */}
-                {job.location || "[ADDRESS]"}
+                {/* Company Address */}
+                {[job.location, job.cityOffice].filter(Boolean).join(", ") || "[ADDRESS]"}
               </Typography>
             </Box>
           </Box>
@@ -444,7 +452,7 @@ if (loading) {
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
             <LocationOnOutlinedIcon sx={{ fontSize: 17, color: LIGHT_BLUE }} />
             <Typography sx={{ color: NAVY, fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
-              {job.location}
+              {[job.location, job.cityOffice].filter(Boolean).join(", ")}
             </Typography>
           </Box>
 

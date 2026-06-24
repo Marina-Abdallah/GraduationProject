@@ -17,6 +17,7 @@ import OtpModal from "./OTPoverlay";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "./AppContext";
 import api from "../../api/axios";
+import { toast } from "sonner";
 
 const NAVY = "#13206d";
 const GREEN = "#84fba2";
@@ -113,11 +114,11 @@ function CompanySignUpCard() {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
-            alert(res.data || "Company registered. OTP sent to email.");
+            toast.success(res.data || "Company registered. OTP sent to email.");
             setOpenOtp(true);
         } catch (err) {
             console.log(err.response?.data);
-            alert("Error registering company");
+            toast.error("Error registering company");
         }
     };
 

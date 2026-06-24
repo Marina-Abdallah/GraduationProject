@@ -12,6 +12,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "./AppContext";
 import api from "../../api/axios";
+import { toast } from "sonner";
 
 
 function CompanyLoginCard() {
@@ -57,18 +58,18 @@ function CompanyLoginCard() {
         Password: password,
       });
 
-      alert("Login successful!");
+      toast.success("Login successful!");
       localStorage.setItem("token", res.data.token);
       setAuthToken(res.data.token);
 
       navigate("/CompanyJobs");
     } catch (err) {
       console.log(err.response?.data);
-      alert(err.response?.data || "Login failed");
+      toast.error(err.response?.data || "Login failed");
     }
   };
   return (
-    <div className="login-card">
+    <form className="login-card" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
       <h1
         style={{
           marginBottom: "10px",
@@ -143,7 +144,7 @@ function CompanyLoginCard() {
 
 
       <Button fullWidth
-        onClick={() => handleLogin()}
+        type="submit"
         sx={{
           fontWeight: 'bold',
           color: '#13206D',
@@ -162,7 +163,9 @@ function CompanyLoginCard() {
           textTransform: 'none',
           boxShadow: 'none', // extra safety
         }}
-        variant="outlined" >
+        variant="outlined" 
+        onClick={() => { window.location.href = api.defaults.baseURL.replace("/api", "") + "/api/Users/google-login"; }}
+      >
         <GoogleIcon style={{ marginRight: 10 }} />
         Continue with Google
       </Button>
@@ -176,7 +179,7 @@ function CompanyLoginCard() {
         },
       }}
         size="small" onClick={() => goToPage("/CompanySignUp")}>Register Now</Button>
-    </div>
+    </form>
   );
 }
 

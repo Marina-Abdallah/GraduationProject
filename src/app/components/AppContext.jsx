@@ -155,21 +155,8 @@ export function AppProvider({ children }) {
   const isCompany = authorType === "Recruiter";
   const isUser = authorType === "JobSeeker";
 
-  console.log({
-    loggedInId,
-    loggedInRole,
-    companyName: company.name,
-    isCompany,
-  });
-
   useEffect(() => {
     if (!authToken) return;
-
-    const payload = JSON.parse(atob(authToken.split(".")[1]));
-
-    console.log("JWT PAYLOAD:", payload);
-    console.log("AuthorType:", authorType);
-    console.log("Role:", loggedInRole);
   }, [authToken, authorType, loggedInRole]);
 
   const setAuthToken = useCallback((token) => {
@@ -199,7 +186,8 @@ export function AppProvider({ children }) {
       if (response.data) {
         setFollowCounts({
           followers: response.data.followers ?? 0,
-          followings: response.data.followings ?? 0
+          followings: response.data.followings ?? 0,
+          posts: response.data.posts ?? 0
         });
       }
     } catch (err) {
@@ -444,11 +432,15 @@ export function AppProvider({ children }) {
       }
     };
 
-    fetchProfileData();
-    fetchCompanyData();
+    if (authorType === "JobSeeker") {
+      fetchProfileData();
+      fetchSkillsData();
+    } else if (authorType === "Recruiter") {
+      fetchCompanyData();
+    }
+    
     fetchIndustriesData();
-    fetchSkillsData();
-  }, [authToken]);
+  }, [authToken, authorType]);
 
   const uploadPhoto = async (file) => {
     try {

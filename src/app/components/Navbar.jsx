@@ -10,9 +10,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 const dropdownMenuSx = {
   position: "absolute",
   top: "calc(100% + 6px)",
-  left: 0,
   right: 0,
-  width: "100%",
+  minWidth: "200px",
   zIndex: 1300,
   borderRadius: "14px",
   backgroundColor: "#ffffff",
@@ -79,7 +78,7 @@ const chevronSx = (open) => ({
   height: 0,
   borderLeft: "4px solid transparent",
   borderRight: "4px solid transparent",
-  borderTop: "5px solid #ffffff",
+  borderTop: "5px solid currentColor",
   transition: "transform 0.2s ease",
   transform: open ? "rotate(180deg)" : "rotate(0deg)",
 });
@@ -158,7 +157,8 @@ function Navbar() {
             id="navbar-auth-dropdown-button"
             sx={{
               backgroundColor: "#13206D",
-              "&:hover": { backgroundColor: "#84FBA2" },
+              color: "#ffffff",
+              "&:hover": { backgroundColor: "#84FBA2", color: "#13206D" },
               borderRadius: "12px",
               width: 150,
               textTransform: "none",

@@ -167,7 +167,7 @@ export function CompanySidebar() {
 
       {/* Stats */}
       <Box sx={{ display: "flex", width: "100%", alignItems: "center" }}>
-        <StatBox value="200" label="Posts" />
+        <StatBox value={followCounts.posts || 0} label="Posts" />
         <Divider
           orientation="vertical"
           flexItem

@@ -11,6 +11,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import CheckIcon from "@mui/icons-material/Check";
 import { useAppContext } from "./AppContext";
 import api from "../../api/axios";
+import { toast } from "sonner";
 
 /** Decode the JWT stored in localStorage and return the userId string. */
 function getUserIdFromToken() {
@@ -129,7 +130,7 @@ export function ProfileDescriptionCard() {
       updateProfile({ resumeScore: score });
     } catch (err) {
       console.error("CV score error:", err.response?.data || err.message);
-      alert("Failed to score CV. Check console for details.");
+      toast.error("Failed to score CV. Check console for details.");
     } finally {
       setScoring(false);
     }

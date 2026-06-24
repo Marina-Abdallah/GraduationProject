@@ -41,7 +41,7 @@ function appliedLabel(daysAgo) {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export function ApplicantCard({ applicant, onAccept, onReject }) {
+export function ApplicantCard({ applicant, onAccept, onReject, onDownloadCV }) {
   const mc = matchColor(applicant.matchScore);
   const color = getAvatarColor(applicant.name);
   const isAccepted = applicant.status === "accepted";
@@ -68,6 +68,7 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
     >
       {/* Avatar */}
       <Avatar
+        src={applicant.avatar}
         sx={{
           width: 52,
           height: 52,
@@ -136,8 +137,8 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            {applicant.portofolioLink ? (
-              <a href={applicant.portofolioLink} target="_blank" rel="noopener noreferrer" style={{ color: "#1a0dab", textDecoration: "underline" }}>
+            {(applicant.portfolioLink || applicant.portofolioLink) ? (
+              <a href={applicant.portfolioLink || applicant.portofolioLink} target="_blank" rel="noopener noreferrer" style={{ color: "#1a0dab", textDecoration: "underline" }}>
                 View Portfolio
               </a>
             ) : (
@@ -152,9 +153,9 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            {applicant.phone ? (
-              <a href={`tel:${applicant.phone}`} style={{ color: "#1a0dab", textDecoration: "underline" }}>
-                {applicant.phone}
+            {(applicant.phone || applicant.phoneNumber) ? (
+              <a href={`tel:${applicant.phone || applicant.phoneNumber}`} style={{ color: "#1a0dab", textDecoration: "underline" }}>
+                {applicant.phone || applicant.phoneNumber}
               </a>
             ) : (
               "No phone number"
@@ -191,11 +192,7 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
         <Tooltip title="View uploaded CV">
           <Button
             variant="contained"
-            href={applicant.cvFile}
-            //onClick={(e) => e.preventDefault()}
-            component="a"
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={onDownloadCV}
             sx={{
               bgcolor: LIGHT_BLUE,
               color: NAVY,
@@ -260,6 +257,7 @@ export function ApplicantCard({ applicant, onAccept, onReject }) {
           </Box>
         ) : (
           <>
+
             {/* Accept */}
             <Button
               onClick={onAccept}

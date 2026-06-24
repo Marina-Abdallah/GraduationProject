@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { CompanyNavbar } from "../components/CompanyNavbar";
 import { Footer } from "../components/Footer";
 import { JobSearchBar } from "../components/JobSearchBar";
@@ -59,6 +59,75 @@ export function CompanyJobsPage() {
   fetchJobs();
 
 }, []);
+
+  // State for applications per job
+  const [applicationsMap, setApplicationsMap] = useState({});
+  const [appsLoading, setAppsLoading] = useState(false);
+
+  // Load applications once jobs are available
+  useEffect(() => {
+    if (!jobs.length) return;
+    const fetchApplications = async () => {
+      setAppsLoading(true);
+      const token = localStorage.getItem("token");
+      const newMap = {};
+      for (const job of jobs) {
+        try {
+          const resp = await api.get(`/Jobs/applications/${job.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          newMap[job.id] = resp.data;
+        } catch (err) {
+          console.error(`Failed loading applications for job ${job.id}:`, err);
+          newMap[job.id] = [];
+        }
+      }
+      setApplicationsMap(newMap);
+      setAppsLoading(false);
+    };
+    fetchApplications();
+  }, [jobs]);
+
+  const handleAccept = async (appId) => {
+    const token = localStorage.getItem("token");
+    try {
+      await api.post(`/Jobs/applications/${appId}/accept`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Update UI optimistically
+      setApplicationsMap((prev) => {
+        const updated = { ...prev };
+        for (const jobId in updated) {
+          updated[jobId] = updated[jobId].map((app) =>
+            app.id === appId ? { ...app, status: "Accepted" } : app
+          );
+        }
+        return updated;
+      });
+    } catch (err) {
+      console.error("Accept failed:", err);
+    }
+  };
+
+  const handleReject = async (appId) => {
+    const token = localStorage.getItem("token");
+    try {
+      await api.post(`/Jobs/applications/${appId}/reject`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setApplicationsMap((prev) => {
+        const updated = { ...prev };
+        for (const jobId in updated) {
+          updated[jobId] = updated[jobId].map((app) =>
+            app.id === appId ? { ...app, status: "Rejected" } : app
+          );
+        }
+        return updated;
+      });
+    } catch (err) {
+      console.error("Reject failed:", err);
+    }
+  };
 
   const filteredJobs = useMemo(() => {
     let filtered = [...jobs];
@@ -127,6 +196,9 @@ export function CompanyJobsPage() {
         </Box>
 
         <JobsGrid jobs={filteredJobs} />
+        {/* Applications per Job */}
+        
+
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "center", width: "100%", pb: 0 }}>

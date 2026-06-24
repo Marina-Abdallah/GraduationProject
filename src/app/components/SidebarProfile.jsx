@@ -158,7 +158,7 @@ export function SidebarProfile() {
 
       {/* Stats */}
       <Box sx={{ display: "flex", width: "100%", alignItems: "center" }}>
-        <StatBox value="20" label="Posts" />
+        <StatBox value={followCounts.posts || 0} label="Posts" />
         <Divider orientation="vertical" flexItem sx={{ borderColor: `${NAVY}20`, mx: 0.5 }} />
         <StatBox value={followCounts.followers} label="Followers" />
         <Divider orientation="vertical" flexItem sx={{ borderColor: `${NAVY}20`, mx: 0.5 }} />

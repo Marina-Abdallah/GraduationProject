@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { ApplicantCard } from "./ApplicantCard";
 import { RejectDialog } from "./RejectDialog";
+import api from "../../api/axios";
 
 const NAVY  = "#13206d";
 const GREEN = "#84fba2";
@@ -26,21 +27,60 @@ export function ApplicantsList({ applicants: initialApplicants }) {
   });
 
   // ── Handlers ─────────────────────────────────────────────────────────────
-  const handleAccept = (id) => {
-    setApplicants((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: "accepted" } : a))
-    );
+  const handleAccept = async (applicant) => {
+    const token = localStorage.getItem("token");
+    const appId = applicant.applicationId ?? applicant.id;
+    try {
+      await api.post(`/Jobs/applications/${appId}/accept`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setApplicants((prev) =>
+        prev.map((a) => (a.id === applicant.id ? { ...a, status: "accepted" } : a))
+      );
+    } catch (err) {
+      console.error("Accept failed:", err);
+    }
+  };
+
+  const handleDownloadCV = async (applicant) => {
+    const token = localStorage.getItem("token");
+    const appId = applicant.applicationId ?? applicant.id;
+    try {
+      const response = await api.get(`/Jobs/applications/${appId}/cv`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', applicant.cvFileName || `cv-${applicant.name}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download CV failed:", err);
+    }
   };
 
   const handleRejectClick = (applicant) => {
     setRejectTarget(applicant);
   };
 
-  const handleRejectConfirm = () => {
+  const handleRejectConfirm = async () => {
     if (!rejectTarget) return;
-    setApplicants((prev) =>
-      prev.map((a) => (a.id === rejectTarget.id ? { ...a, status: "rejected" } : a))
-    );
+    const token = localStorage.getItem("token");
+    const appId = rejectTarget.applicationId ?? rejectTarget.id;
+    try {
+      await api.post(`/Jobs/applications/${appId}/reject`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setApplicants((prev) =>
+        prev.map((a) => (a.id === rejectTarget.id ? { ...a, status: "rejected" } : a))
+      );
+    } catch (err) {
+      console.error("Reject failed:", err);
+    }
     setRejectTarget(null);
   };
 
@@ -106,8 +146,9 @@ export function ApplicantsList({ applicants: initialApplicants }) {
           <ApplicantCard
             key={applicant.id}
             applicant={applicant}
-            onAccept={() => handleAccept(applicant.id)}
+            onAccept={() => handleAccept(applicant)}
             onReject={() => handleRejectClick(applicant)}
+            onDownloadCV={() => handleDownloadCV(applicant)}
           />
         ))}
       </Box>

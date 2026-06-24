@@ -14,6 +14,7 @@ import Box from '@mui/material/Box';
 import OtpModal from "./OTPoverlay";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { toast } from "sonner";
 
 function UserSignUpCard() {
     const [showPassword, setShowPassword] = useState(false);
@@ -68,13 +69,14 @@ function UserSignUpCard() {
             const res = await api.post("/Users/Register", dataToSend);
 
             console.log(res.data);
+            toast.success("User registered. OTP sent to email.");
 
             // open OTP modal
             setOpenOtp(true);
 
         } catch (err) {
             console.log(err.response?.data);
-            alert("Error registering user");
+            toast.error("Error registering user");
         }
     };
 

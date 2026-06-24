@@ -27,6 +27,30 @@ const LIGHT_BLUE = "#90baef";
 const GOLD = "#FBBC04";
 const RED = "#C32929";
 
+const normalizeImageUrl = (url) => {
+  if (!url) return null;
+  const cleanUrl = url.replace(/\\/g, "/");
+  const baseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
+  
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+
+  if (cleanUrl.includes("uploads")) {
+    const match = cleanUrl.match(/(uploads.*)$/);
+    if (match) {
+      const relativePath = match[1].replace(/\\/g, "/");
+      return `${baseUrl}/${relativePath}`;
+    }
+  }
+
+  if (cleanUrl.startsWith("/")) {
+    return `${baseUrl}${cleanUrl}`;
+  }
+
+  return `${baseUrl}/${cleanUrl}`;
+};
+
 export function PostCard({ postId, author, authorId, authorType, role, subtitle, content, mediaUrl, authorPhoto, avatarColor, rtl = false, highlighted = false, profileType, likesCount = 0, isLikedByMe = false, isSavedByMe = false, isFollowedByMe = false }) {
   const { posts, onLike, onSave } = useCommunity();
   const { profile, company, toggleFollow, loggedInId } = useAppContext();
@@ -95,7 +119,7 @@ export function PostCard({ postId, author, authorId, authorType, role, subtitle,
       const formattedComments = data.map((c) => ({
         id: c.id,
         author: c.authorName,   // temporary until you return user name
-        avatarSrc: c.authorPictureUrl,
+        avatarSrc: normalizeImageUrl(c.authorPictureUrl),
         time: c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
         text: c.content,
         replies: c.replies || [],
@@ -138,7 +162,7 @@ export function PostCard({ postId, author, authorId, authorType, role, subtitle,
       const formatted = {
         id: newComment.id,
         author: newComment.authorName,
-        avatarSrc: newComment.authorPictureUrl,
+        avatarSrc: normalizeImageUrl(newComment.authorPictureUrl),
         time: newComment.createdAt ? new Date(newComment.createdAt).toLocaleString() : "",
         text: newComment.content,
         replies: newComment.replies || [],

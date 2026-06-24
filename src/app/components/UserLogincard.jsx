@@ -12,6 +12,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "./AppContext";
 import api from "../../api/axios";
+import { toast } from "sonner";
 
 function UserLoginCard() {
   const { setAuthToken } = useAppContext();
@@ -58,7 +59,7 @@ function UserLoginCard() {
         password
       });
 
-      alert("Login successful!");
+      toast.success("Login successful!");
       // save token and user ID
       localStorage.setItem("token", res.data.token);
       setAuthToken(res.data.token);
@@ -75,13 +76,13 @@ function UserLoginCard() {
     } catch (err) {
       console.log(err.response?.data);
 
-      alert(err.response?.data || "Login failed");
+      toast.error(err.response?.data || "Login failed");
     }
   };
 
 
   return (
-    <div className="login-card">
+    <form className="login-card" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
       <h1
         style={{
           marginBottom: "10px",
@@ -155,9 +156,9 @@ function UserLoginCard() {
         size="small">Forgot Password?</Button>
 
 
-      <Button 
-      fullWidth
-        onClick={() => handleLogin()}
+      <Button
+        fullWidth
+        type="submit"
         sx={{
           fontWeight: 'bold',
           color: '#13206D',
@@ -176,7 +177,9 @@ function UserLoginCard() {
           textTransform: 'none',
           boxShadow: 'none', // extra safety
         }}
-        variant="outlined" >
+        variant="outlined" 
+        onClick={() => { window.location.href = api.defaults.baseURL.replace("/api", "") + "/api/Users/google-login"; }}
+      >
         <GoogleIcon style={{ marginRight: 10 }} />
         Continue with Google
       </Button>
@@ -191,7 +194,7 @@ function UserLoginCard() {
       }}
         size="small"
         onClick={() => goToPage("/UserSignUp")}>Register Now</Button>
-    </div>
+    </form>
   );
 }
 

@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { toast } from "sonner";
 
 function OtpModal({ open, handleClose, redirectPath, email, verifyPath }) {
   const navigate = useNavigate();
@@ -29,31 +30,22 @@ function OtpModal({ open, handleClose, redirectPath, email, verifyPath }) {
   const verifyOtp = async () => {
 
     try {
-
         const code = otp.join("");
-
         const res = await api.post(verifyPath, {
           email,
-            Otp:code
+          Otp: code
         });
-
-        alert(res.data);
-
+        toast.success(res.data);
         handleClose();
-
         navigate(redirectPath);
-
     } catch (err) {
-
         console.log(err.response?.data);
-
-        alert("Invalid OTP");
-
+        toast.error("Invalid OTP");
     }
-};
+  };
 
   const resendOtp = () => {
-    alert("OTP resent!");
+    toast.success("OTP resent!");
   };
 
 

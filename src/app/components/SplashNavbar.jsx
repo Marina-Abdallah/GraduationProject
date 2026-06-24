@@ -9,9 +9,8 @@ import ProGrow from "../../assets/ProGrow.png";
 const dropdownMenuSx = {
   position: "absolute",
   top: "calc(100% + 6px)",
-  left: 0,
   right: 0,
-  width: "100%",
+  minWidth: "200px",
   zIndex: 1300,
   borderRadius: "14px",
   backgroundColor: "#ffffff",
@@ -78,7 +77,7 @@ const chevronSx = (open) => ({
   height: 0,
   borderLeft: "4px solid transparent",
   borderRight: "4px solid transparent",
-  borderTop: "5px solid #1E2A78",
+  borderTop: "5px solid currentColor",
   transition: "transform 0.2s ease",
   transform: open ? "rotate(180deg)" : "rotate(0deg)",
 });

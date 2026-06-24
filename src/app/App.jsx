@@ -19,6 +19,7 @@ import  AdminDashboardPage  from "./pages/AdminDashboardPage";
 import  EditSettingsPage  from "./pages/EditSettingsPage";
 import  RequestsPage  from "./pages/RequestsPage";
 import  {PotatoPage}  from "./pages/PotatoPage";
+import GoogleCallback from "./pages/GoogleCallback";
 
 // Auth Pages
 import UserSignUp from "./pages/UserSignUp";
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
   { path: "/UserSignUp", Component: UserSignUp },
   { path: "/CompanyLogin", Component: CompanyLogin },
   { path: "/CompanySignUp", Component: CompanySignUp },
+  { path: "/google-callback", Component: GoogleCallback },
   { path: "/MyJobApplication", Component: MyJobApplication },
   { path: "/Community", Component: CommunityPage },
   { path: "/Features", Component: FeaturesPage },
@@ -58,10 +60,16 @@ const router = createBrowserRouter([
   { path: "*", Component: SplashScreen },
 ]);
 
+import ErrorBoundary from "./components/ErrorBoundary";
+import { Toaster } from "sonner";
+
 export default function App() {
   return (
-    <AppProvider>
-      <RouterProvider router={router} />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <Toaster position="bottom-right" richColors />
+        <RouterProvider router={router} />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
